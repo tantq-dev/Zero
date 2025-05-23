@@ -21,54 +21,54 @@
     <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="include\imgui\imgui.cpp">
+    <ClCompile Include="vendor\imgui\imgui.cpp">
       <Filter>Source Files\Imgui</Filter>
     </ClCompile>
-    <ClCompile Include="include\imgui\imgui_demo.cpp">
+    <ClCompile Include="vendor\imgui\imgui_demo.cpp">
       <Filter>Source Files\Imgui</Filter>
     </ClCompile>
-    <ClCompile Include="include\imgui\imgui_draw.cpp">
+    <ClCompile Include="vendor\imgui\imgui_draw.cpp">
       <Filter>Source Files\Imgui</Filter>
     </ClCompile>
-    <ClCompile Include="include\imgui\imgui_tables.cpp">
+    <ClCompile Include="vendor\imgui\imgui_tables.cpp">
       <Filter>Source Files\Imgui</Filter>
     </ClCompile>
-    <ClCompile Include="include\imgui\imgui_widgets.cpp">
+    <ClCompile Include="vendor\imgui\imgui_widgets.cpp">
       <Filter>Source Files\Imgui</Filter>
     </ClCompile>
-    <ClCompile Include="include\imgui\backends\imgui_impl_opengl3.cpp">
+    <ClCompile Include="vendor\imgui\backends\imgui_impl_opengl3.cpp">
       <Filter>Source Files\Imgui</Filter>
     </ClCompile>
-    <ClCompile Include="include\imgui\backends\imgui_impl_sdl3.cpp">
+    <ClCompile Include="vendor\imgui\backends\imgui_impl_sdl3.cpp">
       <Filter>Source Files\Imgui</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\imgui\imconfig.h">
+    <ClInclude Include="vendor\imgui\imconfig.h">
       <Filter>Source Files\Imgui</Filter>
     </ClInclude>
-    <ClInclude Include="include\imgui\imgui.h">
+    <ClInclude Include="vendor\imgui\imgui.h">
       <Filter>Source Files\Imgui</Filter>
     </ClInclude>
-    <ClInclude Include="include\imgui\imgui_internal.h">
+    <ClInclude Include="vendor\imgui\imgui_internal.h">
       <Filter>Source Files\Imgui</Filter>
     </ClInclude>
-    <ClInclude Include="include\imgui\imstb_rectpack.h">
+    <ClInclude Include="vendor\imgui\imstb_rectpack.h">
       <Filter>Source Files\Imgui</Filter>
     </ClInclude>
-    <ClInclude Include="include\imgui\imstb_textedit.h">
+    <ClInclude Include="vendor\imgui\imstb_textedit.h">
       <Filter>Source Files\Imgui</Filter>
     </ClInclude>
-    <ClInclude Include="include\imgui\imstb_truetype.h">
+    <ClInclude Include="vendor\imgui\imstb_truetype.h">
       <Filter>Source Files\Imgui</Filter>
     </ClInclude>
-    <ClInclude Include="include\imgui\backends\imgui_impl_opengl3.h">
+    <ClInclude Include="vendor\imgui\backends\imgui_impl_opengl3.h">
       <Filter>Source Files\Imgui</Filter>
     </ClInclude>
-    <ClInclude Include="include\imgui\backends\imgui_impl_sdl3.h">
+    <ClInclude Include="vendor\imgui\backends\imgui_impl_opengl3_loader.h">
       <Filter>Source Files\Imgui</Filter>
     </ClInclude>
-    <ClInclude Include="include\imgui\backends\imgui_impl_opengl3_loader.h">
+    <ClInclude Include="vendor\imgui\backends\imgui_impl_sdl3.h">
       <Filter>Source Files\Imgui</Filter>
     </ClInclude>
   </ItemGroup>
