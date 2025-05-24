@@ -143,6 +143,7 @@
     <ClCompile Include="src\Core\Game.cpp" />
     <ClCompile Include="src\core\Scene.cpp" />
     <ClCompile Include="src\core\ScenePlay.cpp" />
+    <ClCompile Include="src\core\Window.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\ultilities\Logger.cpp" />
     <ClCompile Include="src\Ultilities\Vec2.cpp" />
@@ -161,6 +162,7 @@
     <ClInclude Include="src\core\Game.h" />
     <ClInclude Include="src\core\Scene.h" />
     <ClInclude Include="src\core\ScenePlay.h" />
+    <ClInclude Include="src\core\Window.h" />
     <ClInclude Include="src\ultilities\Logger.h" />
     <ClInclude Include="src\Ultilities\Vec2.h" />
     <ClInclude Include="vendor\entt.hpp" />

@@ -3,27 +3,37 @@
 #include "Logger.h"
 #include "ApplicationConfig.h"
 #include <algorithm>
-#include "ScenePlay.h"
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include "Window.h"
+#include "Scene.h"
+
 namespace Core
 {
     class Game
     {
     private:
-        SDL_Window* m_window = nullptr;
-        SDL_Renderer* m_renderer = nullptr;
+        std::shared_ptr<Window> m_window;
         bool m_isRunning = false;
+        std::unordered_map<std::string, std::shared_ptr<Scene>> m_scenes;
+        std::shared_ptr<Scene> m_activeScene;
+        std::string m_activeSceneName;
+        
     public:
         Game();
         ~Game();
+        
+        void Initialize();
         void Run();
-		SDL_Window* GetWindow() const
-		{
-			return m_window;
-		}
-        SDL_Renderer* GetRenderer() const
-        {
-			return m_renderer;
-        }
+        
+        std::shared_ptr<Window> GetWindow() const { return m_window; }
+        
+        // Scene management
+        void AddScene(const std::string& name, std::shared_ptr<Scene> scene);
+        void SetActiveScene(const std::string& name);
+        std::shared_ptr<Scene> GetActiveScene() const { return m_activeScene; }
+        std::string GetActiveSceneName() const { return m_activeSceneName; }
     };
 }
 

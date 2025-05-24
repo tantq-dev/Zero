@@ -1,4 +1,5 @@
 #include "ScenePlay.h"
+#include <ApplicationConfig.h>
 
 namespace Core
 {

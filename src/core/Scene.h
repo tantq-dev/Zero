@@ -1,28 +1,30 @@
 #pragma once
 #include "entt.hpp"
-#include "Game.h"
-
-//forward declaration of Game class
-class Game;
+#include <memory>
+#include <SDL3/SDL.h>
 
 namespace Core
 {
-	class Scene
-	{
-	public:
-		Scene() = default;
-		~Scene() = default;
-		Scene(const Scene&) = delete; // Disable copy constructor
-		Scene& operator=(const Scene&) = delete; // Disable copy assignment operator
+    class Game;
 
-		virtual void Initialize() = 0;
-		virtual void Update(float deltaTime) = 0;
-		virtual void SRender(SDL_Renderer* render) = 0;
-		virtual void SDoAction() = 0;
-	private:
+    class Scene
+    {
+    public:
+        Scene() = default;
+        virtual ~Scene() = default;
+        Scene(const Scene&) = delete; // Disable copy constructor
+        Scene& operator=(const Scene&) = delete; // Disable copy assignment operator
 
-
-	protected:
-		entt::registry m_Registry; // Entity-Component System registry
-	};
+        virtual void Initialize() = 0;
+        virtual void Update(float deltaTime) = 0;
+        virtual void SRender(SDL_Renderer* renderer) = 0;
+        virtual void SDoAction() = 0;
+        
+        void SetGame(std::shared_ptr<Game> game) { m_Game = game; }
+        std::shared_ptr<Game> GetGame() const { return m_Game; }
+        
+    protected:
+        std::shared_ptr<Game> m_Game; // Pointer to the Game instance
+        entt::registry m_Registry; // Entity-Component System registry
+    };
 }
