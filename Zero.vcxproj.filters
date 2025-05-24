@@ -16,6 +16,21 @@
     <Filter Include="Source Files\Imgui">
       <UniqueIdentifier>{30d2e2ac-fb80-4ff2-b4bb-1c5f109a4325}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Ultilities">
+      <UniqueIdentifier>{e30e9b02-e92f-4765-b8d7-a326943d932b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Ultilities">
+      <UniqueIdentifier>{6605ca0a-2145-411f-80d6-41c55688aa3e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Core">
+      <UniqueIdentifier>{099e1178-669c-44b2-8812-d1dfee71849c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Core">
+      <UniqueIdentifier>{0a8da9e3-a562-4b9c-83bd-99748c56ab13}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Config">
+      <UniqueIdentifier>{7d553353-480d-4146-841a-a8664ee7a879}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -41,6 +56,24 @@
     </ClCompile>
     <ClCompile Include="vendor\imgui\backends\imgui_impl_sdl3.cpp">
       <Filter>Source Files\Imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Ultilities\Vec2.cpp">
+      <Filter>Source Files\Ultilities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\Game.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ultilities\Logger.cpp">
+      <Filter>Source Files\Ultilities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\Scene.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\ScenePlay.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\Window.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -70,6 +103,36 @@
     </ClInclude>
     <ClInclude Include="vendor\imgui\backends\imgui_impl_sdl3.h">
       <Filter>Source Files\Imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Ultilities\Vec2.h">
+      <Filter>Header Files\Ultilities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\Game.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\config\GameConfig.h">
+      <Filter>Header Files\Config</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ultilities\Logger.h">
+      <Filter>Header Files\Ultilities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\config\ApplicationConfig.h">
+      <Filter>Header Files\Config</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\entt.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\Scene.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\Component.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\ScenePlay.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\Window.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
