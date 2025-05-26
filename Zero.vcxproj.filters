@@ -31,6 +31,12 @@
     <Filter Include="Header Files\Config">
       <UniqueIdentifier>{7d553353-480d-4146-841a-a8664ee7a879}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\System">
+      <UniqueIdentifier>{70f54891-3a85-48b3-988e-32bb6bf39b72}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\System">
+      <UniqueIdentifier>{2de80579-e5c0-4cd6-b8b6-7699423ceebd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -74,6 +80,9 @@
     </ClCompile>
     <ClCompile Include="src\core\Window.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\system\PhysicSystem.cpp">
+      <Filter>Source Files\System</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -125,7 +134,7 @@
     <ClInclude Include="src\core\Scene.h">
       <Filter>Header Files\Core</Filter>
     </ClInclude>
-    <ClInclude Include="src\core\Component.h">
+    <ClInclude Include="src\core\Components.h">
       <Filter>Header Files\Core</Filter>
     </ClInclude>
     <ClInclude Include="src\core\ScenePlay.h">
@@ -133,6 +142,9 @@
     </ClInclude>
     <ClInclude Include="src\core\Window.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\PhysicSystem.h">
+      <Filter>Header Files\System</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
