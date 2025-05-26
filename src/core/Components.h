@@ -2,6 +2,7 @@
 #include "Vec2.h"
 #include "SDL3/SDL.h"
 #include <variant>
+
 namespace Components
 {
 
@@ -36,22 +37,55 @@ namespace Components
 		}
 	};
 
-	struct BoxCollider {
+	enum class ColliderType
+	{
+		Circle, Box
+	};
+
+	struct BoxCollider
+	{
 		Vec2 size;
-		BoxCollider() = default;
-		BoxCollider(const Vec2& sz)
-			: size(sz)
-		{
-		}
 	};
 
-	struct CircleCollider {
+	struct CircleCollider
+	{
 		float radius;
-		Vec2 offset;
-
-		Vec2 center(const Vec2& position) const {
-			return position + offset;
+		Vec2 center(const Vec2& position) const
+		{
+			return position;
 		}
 	};
+
+	struct Collider
+	{
+		ColliderType type;
+		std::variant<BoxCollider, CircleCollider> data;
+		bool isColliding = false;
+		static Collider MakeBox(const Vec2& size)
+		{
+			return { ColliderType::Box, BoxCollider{size} };
+		}
+
+		static Collider MakeCircle(float radius)
+		{
+			return { ColliderType::Circle, CircleCollider{radius} };
+		}
+
+		const BoxCollider* AsBox() const
+		{
+			return type == ColliderType::Box ? &std::get<BoxCollider>(data) : nullptr;
+		}
+
+		const CircleCollider* AsCircle() const
+		{
+			return type == ColliderType::Circle ? &std::get<CircleCollider>(data) : nullptr;
+		}
+	};
+
+
+
+
+
+
 
 }

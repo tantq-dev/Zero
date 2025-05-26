@@ -11,8 +11,26 @@ namespace System
 		~PhysicSystem() = default;
 		void Update(float deltaTime, entt::registry& registry);
 	private:
-		void AABBColisionDetect(entt::registry& registry);
-		void CircleColisionDetect(entt::registry& registry);
+		void ColisionDetect(entt::registry& registry);
+		bool CheckAABBCollision(
+			const Components::Transform& t1, const Components::BoxCollider& b1,
+			const Components::Transform& t2, const Components::BoxCollider& b2);
+		bool CheckCircleCollision(
+			const Components::Transform& t1, const Components::CircleCollider& c1,
+			const Components::Transform& t2, const Components::CircleCollider& c2);
+		bool CheckCircleAABBCollision(
+			const Components::Transform& circleTransform,
+			const Components::CircleCollider& circleCollider,
+			const Components::Transform& rectTransform,
+			const Components::BoxCollider& rectCollider);
+		bool CheckCircleCollisionEdge(
+			const Components::Transform& circleTransform,
+			const Components::CircleCollider& circleCollider,
+			const Components::Velocity& vel);
+		bool CheckBoxCollisionEdge(
+			const Components::Transform& boxTransform,
+			const Components::BoxCollider& boxCollider,
+			const Components::Velocity& vel);
 	};
 
 

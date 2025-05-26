@@ -3,105 +3,119 @@
 namespace System {
 	void PhysicSystem::Update(float deltaTime, entt::registry& registry)
 	{
-		AABBColisionDetect(registry);
+		ColisionDetect(registry);
 	}
-	void PhysicSystem::AABBColisionDetect(entt::registry& registry)
+
+	void PhysicSystem::ColisionDetect(entt::registry& registry)
 	{
-		auto group = registry.group<Components::Transform, Components::BoxCollider, Components::Velocity>();
-		for (auto& entity : group)
+		auto group = registry.group(entt::get<Components::Transform, Components::Collider, Components::Velocity>);
+		
+		// Reset collision flags first
+		for (auto entity : group)
 		{
+			auto& collider = group.get<Components::Collider>(entity);
 			auto& transform = group.get<Components::Transform>(entity);
-			auto& vel = group.get<Components::Velocity>(entity);
-			auto& collider = group.get<Components::BoxCollider>(entity);
-			transform.position.x += vel.velocity.x;
-			transform.position.y += vel.velocity.y;
+			auto& velocity = group.get<Components::Velocity>(entity);
+			collider.isColliding = false;
 
-			if (transform.position.x + collider.size.x > ApplicationConfig::DEFAULT_WINDOW_WIDTH && vel.velocity.x > 0
-				|| transform.position.x < 0 && vel.velocity.x < 0)
+			if (collider.type == Components::ColliderType::Box)
 			{
-				vel.velocity.x = -vel.velocity.x; // Reverse direction
+				collider.isColliding = CheckBoxCollisionEdge(transform ,*collider.AsBox(), velocity);
 			}
-
-			if (transform.position.y + collider.size.y > ApplicationConfig::DEFAULT_WINDOW_HEIGHT && vel.velocity.y > 0
-				|| transform.position.y < 0 && vel.velocity.y < 0)
+			else if (collider.type == Components::ColliderType::Circle)
 			{
-				vel.velocity.y = -vel.velocity.y; // Reverse direction
-			}
-
-			// Check for collisions with other entities
-			for (auto& entity2 : group)
-			{
-				if (entity2 == entity)
-				{
-					continue; // Skip self
-				}
-				auto& transform2 = group.get<Components::Transform>(entity2);
-				auto& collider2 = group.get<Components::BoxCollider>(entity2);
-				auto& vel2 = group.get<Components::Velocity>(entity2);
-				bool isColliding1 =
-					transform.position.x < transform2.position.x + collider2.size.x &&
-					transform.position.y + collider.size.y > transform2.position.y;
-
-				bool isColliding2 =
-					transform.position.x + collider.size.x > transform2.position.x &&
-					transform.position.y < transform2.position.y + collider2.size.y;
-
-				if (isColliding1 && isColliding2) {
-					vel.velocity.x = -vel.velocity.x; // Reverse direction on collision
-					vel.velocity.y = -vel.velocity.y; // Reverse direction on collision
-					vel2.velocity.x = -vel2.velocity.x; // Reverse direction on collision
-					vel2.velocity.y = -vel2.velocity.y; // Reverse direction on collision
-				}
+				collider.isColliding = CheckCircleCollisionEdge(transform, *collider.AsCircle(), velocity);
 
 			}
 
 		}
-	}
-	void PhysicSystem::CircleColisionDetect(entt::registry& registry)
-	{
-		auto group = registry.group<Components::Transform, Components::CircleCollider, Components::Velocity>();
-		for (auto& entity : group)
+		
+		// Check collisions - only check each pair once
+		for (auto it1 = group.begin(); it1 != group.end(); ++it1)
 		{
-			auto& transform = group.get<Components::Transform>(entity);
-			auto& vel = group.get<Components::Velocity>(entity);
-			auto& collider = group.get<Components::CircleCollider>(entity);
-			transform.position.x += vel.velocity.x;
-			transform.position.y += vel.velocity.y;
-
-			if (transform.position.x + collider.radius > ApplicationConfig::DEFAULT_WINDOW_WIDTH && vel.velocity.x > 0
-				|| transform.position.x - collider.radius < 0 && vel.velocity.x < 0)
+			auto entity1 = *it1;
+			auto [transform1, collider1] = group.get<Components::Transform, Components::Collider>(entity1);
+			
+			// Start from the next entity to avoid duplicate checks
+			for (auto it2 = it1 + 1; it2 != group.end(); ++it2)
 			{
-				vel.velocity.x = -vel.velocity.x; // Reverse direction
-			}
-
-			if (transform.position.y + collider.radius > ApplicationConfig::DEFAULT_WINDOW_HEIGHT && vel.velocity.y > 0
-				|| transform.position.y - collider.radius < 0 && vel.velocity.y < 0)
-			{
-				vel.velocity.y = -vel.velocity.y; // Reverse direction
-			}
-
-			// Check for collisions with other entities
-			for (auto& entity2 : group)
-			{
-				if (entity2 == entity)
+				auto entity2 = *it2;
+				auto [transform2, collider2] = group.get<Components::Transform, Components::Collider>(entity2);
+				
+				bool collision = false;
+				
+				// Check collision based on collider types
+				if (collider1.type == Components::ColliderType::Box && collider2.type == Components::ColliderType::Box)
 				{
-					continue; // Skip self
+					collision = CheckAABBCollision(transform1, *collider1.AsBox(), transform2, *collider2.AsBox());
 				}
-				auto& transform2 = group.get<Components::Transform>(entity2);
-				auto& collider2 = group.get<Components::CircleCollider>(entity2);
-				auto& vel2 = group.get<Components::Velocity>(entity2);
-				bool isColliding1 = collider2.radius + collider.radius >= abs(transform2.position.x - transform.position.x);
-
-				if (isColliding1) {
-					vel.velocity.x = -vel.velocity.x; // Reverse direction on collision
-					vel.velocity.y = -vel.velocity.y; // Reverse direction on collision
-					vel2.velocity.x = -vel2.velocity.x; // Reverse direction on collision
-					vel2.velocity.y = -vel2.velocity.y; // Reverse direction on collision
+				else if (collider1.type == Components::ColliderType::Circle && collider2.type == Components::ColliderType::Circle)
+				{
+					collision = CheckCircleCollision(transform1, *collider1.AsCircle(), transform2, *collider2.AsCircle());
 				}
-
+				else if (collider1.type == Components::ColliderType::Circle && collider2.type == Components::ColliderType::Box)
+				{
+					collision = CheckCircleAABBCollision(transform1, *collider1.AsCircle(), transform2, *collider2.AsBox());
+				}
+				else if (collider1.type == Components::ColliderType::Box && collider2.type == Components::ColliderType::Circle)
+				{
+					collision = CheckCircleAABBCollision(transform2, *collider2.AsCircle(), transform1, *collider1.AsBox());
+				}
+				
+				// Only set flags if a collision was detected
+				if (collision)
+				{
+					collider1.isColliding = true;
+					collider2.isColliding = true;
+				}
 			}
-
 		}
+	}
+
+	bool PhysicSystem::CheckAABBCollision(const Components::Transform& t1,
+		const Components::BoxCollider& b1, 
+		const Components::Transform& t2, 
+		const Components::BoxCollider& b2)
+	{
+		return	t1.position.x < t2.position.x + b2.size.x &&
+				t1.position.y + b1.size.y > t2.position.y && 
+				t1.position.x + b1.size.x > t2.position.x &&
+				t1.position.y < t2.position.y + b2.size.y;
+
+	}
+	bool PhysicSystem::CheckCircleCollision(const Components::Transform& t1, 
+		const Components::CircleCollider& c1, 
+		const Components::Transform& t2, 
+		const Components::CircleCollider& c2)
+	{
+		float radiusSum = c1.radius + c2.radius;
+		return radiusSum >= abs(t1.position.x - t2.position.x) && radiusSum >= abs(t1.position.y - t2.position.y);
+		
+	}
+	bool PhysicSystem::CheckCircleAABBCollision(const Components::Transform& circleTransform, 
+		const Components::CircleCollider& circleCollider,
+		const Components::Transform& rectTransform,
+		const Components::BoxCollider& rectCollider)
+	{
+
+		return circleTransform.position.x + circleCollider.radius > rectTransform.position.x - rectCollider.size.x / 2 &&
+			circleTransform.position.x - circleCollider.radius < rectTransform.position.x + rectCollider.size.x / 2 &&
+			circleTransform.position.y + circleCollider.radius > rectTransform.position.y - rectCollider.size.y / 2 &&
+			circleTransform.position.y - circleCollider.radius < rectTransform.position.y + rectCollider.size.y / 2;;
+	}
+	bool PhysicSystem::CheckCircleCollisionEdge(const Components::Transform& circleTransform, const Components::CircleCollider& circleCollider, const Components::Velocity& vel)
+	{
+		return circleTransform.position.x + circleCollider.radius > ApplicationConfig::DEFAULT_WINDOW_WIDTH && vel.velocity.x > 0 ||
+			circleTransform.position.x - circleCollider.radius < 0 && vel.velocity.x < 0 ||
+			circleTransform.position.y + circleCollider.radius > ApplicationConfig::DEFAULT_WINDOW_HEIGHT &&vel.velocity.y > 0 ||
+			circleTransform.position.y - circleCollider.radius < 0 && vel.velocity.y < 0;
+	}
+	bool PhysicSystem::CheckBoxCollisionEdge(const Components::Transform& boxTransform, const Components::BoxCollider& boxCollider, const Components::Velocity& vel)
+	{
+		return boxTransform.position.x + boxCollider.size.x > ApplicationConfig::DEFAULT_WINDOW_WIDTH && vel.velocity.x > 0 ||
+			boxTransform.position.x - boxCollider.size.x < 0 && vel.velocity.x < 0 ||
+			boxTransform.position.y + boxCollider.size.y > ApplicationConfig::DEFAULT_WINDOW_HEIGHT && vel.velocity.y > 0 ||
+			boxTransform.position.y - boxCollider.size.y < 0 && vel.velocity.y < 0;
 	}
 }
 
