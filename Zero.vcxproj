@@ -76,7 +76,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)vendor;$(ProjectDir)vendor/imgui/backends;$(ProjectDir)vendor/imgui;$(ProjectDir)src/config;$(ProjectDir)src/ultilities;$(ProjectDir)src/core;D:\Study\SDL-release-3.2.14\include;D:\Study\SDL-release-3.2.14\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)vendor;$(ProjectDir)vendor/imgui/backends;$(ProjectDir)vendor/imgui;$(ProjectDir)src/config;$(ProjectDir)src/ultilities;$(ProjectDir)src/system;$(ProjectDir)src/core;D:\Study\SDL-release-3.2.14\include;D:\Code\SDL-release-3.2.14\include;D:\Study\SDL-release-3.2.14\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
@@ -93,7 +93,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)vendor;$(ProjectDir)vendor/imgui/backends;$(ProjectDir)vendor/imgui;$(ProjectDir)src/config;$(ProjectDir)src/ultilities;$(ProjectDir)src/core;D:\Study\SDL-release-3.2.14\include;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)vendor;$(ProjectDir)vendor/imgui/backends;$(ProjectDir)vendor/imgui;$(ProjectDir)src/config;$(ProjectDir)src/ultilities;$(ProjectDir)src/system;$(ProjectDir)src/core;D:\Study\SDL-release-3.2.14\include;D:\Code\SDL-release-3.2.14\include;</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
@@ -108,7 +108,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)vendor;$(ProjectDir)vendor/imgui/backends;$(ProjectDir)vendor/imgui;$(ProjectDir)src/config;$(ProjectDir)src/ultilities;$(ProjectDir)src/core;D:\Study\SDL-release-3.2.14\include;D:\Study\SDL-release-3.2.14\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)vendor;$(ProjectDir)vendor/imgui/backends;$(ProjectDir)vendor/imgui;$(ProjectDir)src/config;$(ProjectDir)src/ultilities;$(ProjectDir)src/system;$(ProjectDir)src/core;D:\Study\SDL-release-3.2.14\include;D:\Code\SDL-release-3.2.14\include;D:\Study\SDL-release-3.2.14\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
@@ -125,7 +125,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)vendor;$(ProjectDir)vendor/imgui/backends;$(ProjectDir)vendor/imgui;$(ProjectDir)src/config;$(ProjectDir)src/ultilities;$(ProjectDir)src/core;D:\Study\SDL-release-3.2.14\include;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)vendor;$(ProjectDir)vendor/imgui/backends;$(ProjectDir)vendor/imgui;$(ProjectDir)src/config;$(ProjectDir)src/ultilities;$(ProjectDir)src/system;$(ProjectDir)src/core;D:\Study\SDL-release-3.2.14\include;D:\Code\SDL-release-3.2.14\include;</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
@@ -135,16 +135,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\SDL-release-3.2.14\VisualC\SDL\SDL.vcxproj">
-      <Project>{81ce8daf-ebb2-4761-8e45-b71abcca8c68}</Project>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="src\Core\Game.cpp" />
     <ClCompile Include="src\core\Scene.cpp" />
     <ClCompile Include="src\core\ScenePlay.cpp" />
     <ClCompile Include="src\core\Window.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\system\PhysicSystem.cpp" />
     <ClCompile Include="src\ultilities\Logger.cpp" />
     <ClCompile Include="src\Ultilities\Vec2.cpp" />
     <ClCompile Include="vendor\imgui\backends\imgui_impl_opengl3.cpp" />
@@ -158,11 +154,12 @@
   <ItemGroup>
     <ClInclude Include="src\config\ApplicationConfig.h" />
     <ClInclude Include="src\config\GameConfig.h" />
-    <ClInclude Include="src\core\Component.h" />
+    <ClInclude Include="src\core\Components.h" />
     <ClInclude Include="src\core\Game.h" />
     <ClInclude Include="src\core\Scene.h" />
     <ClInclude Include="src\core\ScenePlay.h" />
     <ClInclude Include="src\core\Window.h" />
+    <ClInclude Include="src\system\PhysicSystem.h" />
     <ClInclude Include="src\ultilities\Logger.h" />
     <ClInclude Include="src\Ultilities\Vec2.h" />
     <ClInclude Include="vendor\entt.hpp" />
@@ -175,6 +172,11 @@
     <ClInclude Include="vendor\imgui\imstb_rectpack.h" />
     <ClInclude Include="vendor\imgui\imstb_textedit.h" />
     <ClInclude Include="vendor\imgui\imstb_truetype.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="D:\Code\SDL-release-3.2.14\VisualC\SDL\SDL.vcxproj">
+      <Project>{81ce8daf-ebb2-4761-8e45-b71abcca8c68}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

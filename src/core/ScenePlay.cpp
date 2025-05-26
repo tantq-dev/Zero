@@ -1,59 +1,68 @@
 #include "ScenePlay.h"
 #include <ApplicationConfig.h>
+#include <random>
+
+// Helper function to generate a random float in a given range
+float RandomFloat(float min, float max) {
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	std::uniform_real_distribution<float> dis(min, max);
+	return dis(gen);
+}
 
 namespace Core
 {
 	void ScenePlay::Initialize()
 	{
+		physicSystem = std::make_unique<System::PhysicSystem>();
 		// Create 10 entities with CTransform component
-		for (size_t i = 0; i < 10; i++)
+
+		entt::entity e = m_Registry.create();
+
+		physicSystem = std::make_unique<System::PhysicSystem>();
+
+		// Create 10 entities with CTransform component at random positions
+		for (size_t i = 0; i < 50; i++)
 		{
 			entt::entity e = m_Registry.create();
-			m_Registry.emplace<CTransform>(e, Vec2(i *5.0f * 3 + i, i * 4.0f * 2 + i), Vec2(20.0f, 20.0f),10.0f);
-			m_Registry.emplace<CPhysic>(e, Vec2((float)((i + 1) *10 + i), (float)((i+1)*10 + i)));
-		}
+			float randomX = RandomFloat(0.0f, ApplicationConfig::DEFAULT_WINDOW_WIDTH);
+			float randomY = RandomFloat(0.0f, ApplicationConfig::DEFAULT_WINDOW_HEIGHT);
 
+			float randomVelocityX = RandomFloat(-3.0f, 3.0f);
+			float randomVelocityY = RandomFloat(-3.0f, 3.0f);
+
+			float randomScaleX = RandomFloat(5.0f, 15.0f);
+			float randomScaleY = RandomFloat(5.0f, 15.0f);
+
+			m_Registry.emplace<Components::Transform>(e, Vec2(randomX, randomY), Vec2(randomScaleX, randomScaleY), 10.0f);
+			m_Registry.emplace<Components::Velocity>(e, Vec2(randomVelocityX, randomVelocityY));
+			m_Registry.emplace<Components::BoxCollider>(e, Vec2(randomScaleX, randomScaleX));
+		}
 	}
+
+
 	void ScenePlay::Update(float deltaTime)
 	{
-		auto group = m_Registry.group<CTransform,CPhysic>();
-		for (auto entity: group)
-		{
-			auto& transform = group.get<CTransform>(entity);
-			auto& physic = group.get<CPhysic>(entity);
-			transform.position.x += physic.velocity.x * deltaTime;
-			transform.position.y += physic.velocity.y * deltaTime;
-			
-			if (transform.position.x > ApplicationConfig::DEFAULT_WINDOW_WIDTH && physic.velocity.x > 0 || transform.position.x < 0 && physic.velocity.x < 0) 
-			{
-				physic.velocity.x = -physic.velocity.x; // Reverse direction
-			}
-
-			if (transform.position.y > ApplicationConfig::DEFAULT_WINDOW_HEIGHT && physic.velocity.y > 0 || transform.position.y < 0 && physic.velocity.y < 0) 
-			{
-				physic.velocity.y = -physic.velocity.y; // Reverse direction
-			}
-		
-		}
+		physicSystem->Update(deltaTime, m_Registry);
 	}
 	void ScenePlay::SRender(SDL_Renderer* render)
 	{
-		auto view = m_Registry.view<CTransform>();
+		auto view = m_Registry.view<Components::Transform>();
 
 		for (auto entity : view)
 		{
-			auto& transform = view.get<CTransform>(entity);
-	
-            SDL_FRect rect;
-            rect.x = static_cast<int>(transform.position.x);
-            rect.y = static_cast<int>(transform.position.y);
-            rect.w = static_cast<int>(transform.scale.x);
-            rect.h = static_cast<int>(transform.scale.y);
+			auto& transform = view.get<Components::Transform>(entity);
 
-            SDL_SetRenderDrawColor(render, 255, 255, 255, 255);
-			SDL_RenderFillRect(render,&rect);
+			SDL_FRect rect;
+			rect.x = static_cast<int>(transform.position.x);
+			rect.y = static_cast<int>(transform.position.y);
+			rect.w = static_cast<int>(transform.scale.x);
+			rect.h = static_cast<int>(transform.scale.y);
+
+			SDL_SetRenderDrawColor(render, 255, 255, 255, 255);
+			SDL_RenderFillRect(render, &rect);
 		}
-		
+
 	}
 	void ScenePlay::SDoAction()
 	{

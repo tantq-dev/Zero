@@ -5,7 +5,7 @@ VisualStudioVersion = 17.14.36119.2
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Zero", "Zero.vcxproj", "{CF0F0D8B-5B05-447D-A673-20A058B83E03}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SDL3", "..\..\..\SDL-release-3.2.14\VisualC\SDL\SDL.vcxproj", "{81CE8DAF-EBB2-4761-8E45-B71ABCCA8C68}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SDL3", "D:\Code\SDL-release-3.2.14\VisualC\SDL\SDL.vcxproj", "{81CE8DAF-EBB2-4761-8E45-B71ABCCA8C68}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
