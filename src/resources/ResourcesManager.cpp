@@ -9,7 +9,17 @@ ResourcesManager* ResourcesManager::m_instance = nullptr;
 
 ResourcesManager::ResourcesManager()
 {
-	
+
+
+}
+
+ResourcesManager& ResourcesManager::GetInstance()
+{
+	if (m_instance == nullptr)
+	{
+		m_instance = new ResourcesManager();
+	}
+	return *m_instance;
 }
 
 void ResourcesManager::LoadTexture(const std::string& name, const char* path, SDL_Renderer* renderer)
@@ -39,11 +49,4 @@ void ResourcesManager::LoadTexture(const std::string& name, const char* path, SD
 	m_textures[name] = texture;
 }
 
-ResourcesManager& ResourcesManager::GetInstance()
-{
-	if (m_instance == nullptr)
-	{
-		m_instance = new ResourcesManager();
-	}
-	return *m_instance;
-}
+
