@@ -82,6 +82,18 @@ namespace Components
 		}
 	};
 
+	struct Sprite
+	{
+		SDL_Texture* texture = nullptr;
+		bool flipHorizontal = false;
+		float rotation = 0.0f; // Rotation in radians
+		Sprite() = default;
+		Sprite(SDL_Texture* tex, float rot = 0.0f)
+			: texture(tex)
+		{
+		}
+	};
+
 
 
 

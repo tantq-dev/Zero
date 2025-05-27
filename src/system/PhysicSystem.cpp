@@ -25,9 +25,7 @@ namespace System {
 			else if (collider.type == Components::ColliderType::Circle)
 			{
 				collider.isColliding = CheckCircleCollisionEdge(transform, *collider.AsCircle(), velocity);
-
 			}
-
 		}
 		
 		// Check collisions - only check each pair once
