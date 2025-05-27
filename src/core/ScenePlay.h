@@ -2,6 +2,7 @@
 #include "Scene.h"
 #include "Components.h"
 #include "PhysicSystem.h"
+#include "RenderSystem.h"
 
 namespace Core
 {
@@ -13,13 +14,15 @@ namespace Core
 		ScenePlay() = default;
 		~ScenePlay() = default;
 
-		void Initialize() override;
+		void Initialize(SDL_Renderer& renderer) override;
 		void Update(float deltaTime) override;
-		void SRender(SDL_Renderer* renderer) override;
 		void SDoAction() override;
+		void Render(SDL_Renderer& renderer) override;
 
 	private:
-		std::unique_ptr<System::PhysicSystem> physicSystem;
+		std::unique_ptr<System::PhysicSystem> m_physicSystem;
+		std::unique_ptr<System::RenderSystem> m_renderSystem;
+
 	};
 }
 

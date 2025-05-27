@@ -2,6 +2,7 @@
 #include "entt.hpp"
 #include <memory>
 #include <SDL3/SDL.h>
+#include "ResourcesManager.h""
 
 namespace Core
 {
@@ -15,9 +16,9 @@ namespace Core
         Scene(const Scene&) = delete; // Disable copy constructor
         Scene& operator=(const Scene&) = delete; // Disable copy assignment operator
 
-        virtual void Initialize() = 0;
+        virtual void Initialize(SDL_Renderer& renderer) = 0;
         virtual void Update(float deltaTime) = 0;
-        virtual void SRender(SDL_Renderer* renderer) = 0;
+        virtual void Render(SDL_Renderer& renderer) = 0;
         virtual void SDoAction() = 0;
         
         void SetGame(std::shared_ptr<Game> game) { m_Game = game; }

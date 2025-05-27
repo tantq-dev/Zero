@@ -34,6 +34,12 @@
     <Filter Include="Source Files\System">
       <UniqueIdentifier>{70f54891-3a85-48b3-988e-32bb6bf39b72}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Resources">
+      <UniqueIdentifier>{a411fa2f-6745-4c78-aba6-32285afff328}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Resources">
+      <UniqueIdentifier>{90809ca2-151f-4f09-950f-72bc405083b0}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Header Files\System">
       <UniqueIdentifier>{2de80579-e5c0-4cd6-b8b6-7699423ceebd}</UniqueIdentifier>
     </Filter>
@@ -83,6 +89,12 @@
     </ClCompile>
     <ClCompile Include="src\system\PhysicSystem.cpp">
       <Filter>Source Files\System</Filter>
+    </ClCompile>
+    <ClCompile Include="src\system\RenderSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\resources\ResourcesManager.cpp">
+      <Filter>Source Files\Resources</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -146,5 +158,16 @@
     <ClInclude Include="src\system\PhysicSystem.h">
       <Filter>Header Files\System</Filter>
     </ClInclude>
+    <ClInclude Include="src\system\RenderSystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\resources\ResourcesManager.h">
+      <Filter>Header Files\Resources</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="assets\link.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

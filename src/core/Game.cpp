@@ -52,7 +52,7 @@ namespace Core
             throw std::runtime_error("No active scene set. Call SetActiveScene() before Run().");
         }
         
-        m_activeScene->Initialize();
+        m_activeScene->Initialize(*m_window->GetRenderer().get());
         m_isRunning = true;
         SDL_Event event;
         Uint32 previousTicks = SDL_GetTicks();
@@ -81,8 +81,7 @@ namespace Core
             
             // Render
             m_window->Clear(30, 30, 30, 255);
-            m_activeScene->SRender(m_window->GetRenderer().get());
-            m_window->Present();
+            m_activeScene->Render(*m_window->GetRenderer().get());
             
             // Frame rate capping
             Uint32 frameTime = SDL_GetTicks() - frameStart;
