@@ -5,6 +5,13 @@ SDL_Texture* ResourcesManager::GetTexture(const std::string& name)
 	return m_textures[name];
 }
 
+ResourcesManager* ResourcesManager::m_instance = nullptr;
+
+ResourcesManager::ResourcesManager()
+{
+	
+}
+
 void ResourcesManager::LoadTexture(const std::string& name, const char* path, SDL_Renderer* renderer)
 {
 	SDL_Surface* surface = NULL;

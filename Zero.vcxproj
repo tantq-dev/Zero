@@ -135,12 +135,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="ResourcesManager.cpp" />
     <ClCompile Include="src\Core\Game.cpp" />
     <ClCompile Include="src\core\Scene.cpp" />
     <ClCompile Include="src\core\ScenePlay.cpp" />
     <ClCompile Include="src\core\Window.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\resources\ResourcesManager.cpp" />
     <ClCompile Include="src\system\PhysicSystem.cpp" />
     <ClCompile Include="src\system\RenderSystem.cpp" />
     <ClCompile Include="src\ultilities\Logger.cpp" />
