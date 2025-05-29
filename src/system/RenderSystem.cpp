@@ -5,17 +5,31 @@ namespace System
 	{
 		auto view = registry.group<>(entt::get<Components::Transform, Components::Sprite>);
 	
+		SDL_FRect* srcRect = NULL;
 		for (auto entity : view)
 		{
 			auto& transform = view.get<Components::Transform>(entity);
 			auto& sprite = view.get<Components::Sprite>(entity);
+
+			if (registry.all_of<Components::Animation>(entity))
+			{
+				auto& animation = registry.get<Components::Animation>(entity);
+				srcRect = new SDL_FRect{
+					animation.currentFrame * animation.frameWidth,
+					0,
+					animation.frameWidth,
+					animation.frameHeight
+
+				};
+			}
+
 
 			m_dstRect.x = static_cast<int>(transform.position.x - transform.scale.x/2);
 			m_dstRect.y = static_cast<int>(transform.position.y - transform.scale.y/2);
 			m_dstRect.w = static_cast<int>(transform.scale.x);
 			m_dstRect.h = static_cast<int>(transform.scale.y);
 
-			SDL_RenderTexture(&renderer, sprite.texture, NULL, &m_dstRect);
+			SDL_RenderTexture(&renderer, sprite.texture, srcRect, &m_dstRect);
 		}
 		SDL_RenderPresent(&renderer);
 	}

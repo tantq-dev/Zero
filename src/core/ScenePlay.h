@@ -3,7 +3,7 @@
 #include "Components.h"
 #include "PhysicSystem.h"
 #include "RenderSystem.h"
-
+#include <AnimationSystem.h>
 namespace Core
 {
 	class Game;
@@ -22,7 +22,7 @@ namespace Core
 	private:
 		std::unique_ptr<System::PhysicSystem> m_physicSystem;
 		std::unique_ptr<System::RenderSystem> m_renderSystem;
-
+		std::unique_ptr<System::AnimationSystem> m_animationSystem;
 	};
 }
 

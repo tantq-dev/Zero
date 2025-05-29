@@ -11,6 +11,7 @@ namespace System
 		void Render(entt::registry& registry, SDL_Renderer& renderer);
 	private:
 		SDL_FRect m_dstRect{ 0, 0, 0, 0 };
+
 	};
 }
 

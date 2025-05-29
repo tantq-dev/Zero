@@ -31,8 +31,10 @@ namespace Core
 	
 		ResourcesManager::GetInstance().LoadTexture("Link", "assets/link.bmp", &renderer);
 
+		ResourcesManager::GetInstance().LoadTexture("Pirate", "assets/pirate.bmp", &renderer);
 		m_physicSystem = std::make_unique<System::PhysicSystem>();
 		m_renderSystem = std::make_unique<System::RenderSystem>();
+		m_animationSystem = std::make_unique<System::AnimationSystem>();
 		// Create 10 entities with CTransform component
 
 		entt::entity e = m_Registry.create();
@@ -55,7 +57,8 @@ namespace Core
 			m_Registry.emplace<Components::Transform>(e, Vec2(randomX, randomY), Vec2(randomScaleX, randomScaleY), 10.0f);
 			m_Registry.emplace<Components::Velocity>(e, Vec2(randomVelocityX, randomVelocityY));
 			m_Registry.emplace<Components::Collider>(e, Components::Collider::MakeBox(Vec2(randomScaleX, randomScaleX)));
-			m_Registry.emplace<Components::Sprite>(e, ResourcesManager::GetInstance().GetTexture("Link"));
+			m_Registry.emplace<Components::Sprite>(e, ResourcesManager::GetInstance().GetTexture("Pirate"));
+			m_Registry.emplace<Components::Animation>(e,64,2);
 		}
 	}
 
@@ -79,6 +82,7 @@ namespace Core
 			transform.position.x += velocity.velocity.x * deltaTime * 10;
 			transform.position.y += velocity.velocity.y * deltaTime * 10;
 		}
+		m_animationSystem->Update(m_Registry,deltaTime);
 
 	}
 	void ScenePlay::SDoAction()

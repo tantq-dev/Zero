@@ -93,6 +93,48 @@ namespace Components
 		{
 		}
 	};
+	struct Animation
+	{
+		std::string texName;
+		size_t frameCount = 0;
+		size_t currentFrame = 0;
+		float frameWidth = 0;
+		float frameHeight = 0;
+		float currentTime;
+		bool loop = true;
+		float speed = 1.0f; // Frames per second
+
+		Animation() = default;
+		Animation(float frameW, float spd) :
+			frameWidth(frameW), speed(spd), currentTime(0.0f), currentFrame(0), frameCount(5), frameHeight(40), loop(true)
+		{
+
+		}
+
+	};
+
+	struct Animator
+	{
+		std::string currentAnimation;
+		std::unordered_map<std::string, Animation> animations;
+		void AddAnimation(const std::string& name, const Animation& anim)
+		{
+			animations[name] = anim;
+		}
+		void SetCurrentAnimation(const std::string& name)
+		{
+			if (animations.find(name) != animations.end())
+			{
+				currentAnimation = name;
+			}
+		}
+		const Animation* GetCurrentAnimation() const
+		{
+			auto it = animations.find(currentAnimation);
+			return it != animations.end() ? &it->second : nullptr;
+		}
+	};;
+
 
 
 
