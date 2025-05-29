@@ -30,9 +30,11 @@ namespace Core
 	{
 	
 		ResourcesManager::GetInstance().LoadTexture("Link", "assets/link.bmp", &renderer);
-
+		ResourcesManager::GetInstance().LoadTexture("Pirate_Run", "assets/pirate_run.bmp", &renderer);
+		ResourcesManager::GetInstance().LoadTexture("Pirate", "assets/pirate.bmp", &renderer);
 		m_physicSystem = std::make_unique<System::PhysicSystem>();
 		m_renderSystem = std::make_unique<System::RenderSystem>();
+		m_animationSystem = std::make_unique<System::AnimationSystem>();
 		// Create 10 entities with CTransform component
 
 		entt::entity e = m_Registry.create();
@@ -49,19 +51,57 @@ namespace Core
 			float randomVelocityX = RandomFloat(-10.0f, 10.0f);
 			float randomVelocityY = RandomFloat(-10.0f, 10.0f);
 
-			float randomScaleX = 40.0f;
-			float randomScaleY = 40.0f;
+			float randomScaleX = 128.0f;
+			float randomScaleY = 80.0f;
 
 			m_Registry.emplace<Components::Transform>(e, Vec2(randomX, randomY), Vec2(randomScaleX, randomScaleY), 10.0f);
 			m_Registry.emplace<Components::Velocity>(e, Vec2(randomVelocityX, randomVelocityY));
 			m_Registry.emplace<Components::Collider>(e, Components::Collider::MakeBox(Vec2(randomScaleX, randomScaleX)));
-			m_Registry.emplace<Components::Sprite>(e, ResourcesManager::GetInstance().GetTexture("Link"));
+			m_Registry.emplace<Components::Sprite>(e, ResourcesManager::GetInstance().GetTexture("Pirate"));
+
+			auto texture = ResourcesManager::GetInstance().GetTexture("Pirate_Run");
+			auto texturePirate = ResourcesManager::GetInstance().GetTexture("Pirate");
+			auto animation = new Components::Animation(texture,texture->w/6,texture->h,0.1f,6);
+			auto animation2 = new Components::Animation(texturePirate, texturePirate->w / 5, texture->h, 0.1f, 5);
+
+			m_Registry.emplace<Components::Animator>(e);
+
+			auto& animator = m_Registry.get<Components::Animator>(e);
+			animator.AddAnimation("Run", *animation);
+			animator.AddAnimation("Idle", *animation2);
 		}
 	}
 
 
 	void ScenePlay::Update(float deltaTime)
 	{
+		m_timeAccumulator += deltaTime;
+
+		auto groupAnimator = m_Registry.group<>(entt::get<Components::Animator>);
+
+		if (m_timeAccumulator > 10)
+		{
+			m_timeAccumulator = 0;
+		}
+		else if (m_timeAccumulator> 5)
+		{
+			for (auto & entity: groupAnimator)
+			{
+				auto& animator = groupAnimator.get<Components::Animator>(entity);
+				animator.SetCurrentAnimation("Run");
+			}
+		}
+		else if (m_timeAccumulator >=0)
+		{
+			for (auto& entity : groupAnimator)
+			{
+				auto& animator = groupAnimator.get<Components::Animator>(entity);
+				animator.SetCurrentAnimation("Idle");
+			}
+		}
+
+
+
 		m_physicSystem->Update(deltaTime, m_Registry);
 
 		auto group = m_Registry.group(entt::get<Components::Transform, Components::Velocity,Components::Collider>);
@@ -79,6 +119,7 @@ namespace Core
 			transform.position.x += velocity.velocity.x * deltaTime * 10;
 			transform.position.y += velocity.velocity.y * deltaTime * 10;
 		}
+		m_animationSystem->Update(m_Registry,deltaTime);
 
 	}
 	void ScenePlay::SDoAction()

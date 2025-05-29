@@ -2,7 +2,8 @@
 #include "Vec2.h"
 #include "SDL3/SDL.h"
 #include <variant>
-
+#include <string>
+#include <unordered_map>
 namespace Components
 {
 
@@ -93,6 +94,48 @@ namespace Components
 		{
 		}
 	};
+	struct Animation
+	{
+		SDL_Texture* texture = nullptr ;
+		size_t frameCount = 0;
+		size_t currentFrame = 0;
+		float frameWidth = 0;
+		float frameHeight = 0;
+		float currentTime;
+		bool loop = true;
+		float speed = 1.0f; // Frames per second
+
+		Animation() = default;
+		Animation(SDL_Texture * tex ,float frameW, float frameH, float spd, int frame ) :
+			frameWidth(frameW), speed(spd), currentTime(0.0f), currentFrame(0), frameCount(frame), frameHeight(frameH), loop(true), texture(tex)
+		{
+
+		}
+
+	};
+
+	struct Animator
+	{
+		std::string currentAnimation;
+		std::unordered_map<std::string, Animation> animations;
+		void AddAnimation(const std::string& name, const Animation& anim)
+		{
+			animations[name] = anim;
+		}
+		void SetCurrentAnimation(const std::string& name)
+		{
+			if (animations.find(name) != animations.end())
+			{
+				currentAnimation = name;
+			}
+		}
+		Animation* GetCurrentAnimation()
+		{
+			auto it = animations.find(currentAnimation);
+			return it != animations.end() ? &it->second : nullptr;
+		}
+	};;
+
 
 
 
