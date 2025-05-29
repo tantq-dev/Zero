@@ -23,6 +23,7 @@ namespace Core
 		std::unique_ptr<System::PhysicSystem> m_physicSystem;
 		std::unique_ptr<System::RenderSystem> m_renderSystem;
 		std::unique_ptr<System::AnimationSystem> m_animationSystem;
+		float m_timeAccumulator = 0.0f;
 	};
 }
 

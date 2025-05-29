@@ -3,19 +3,18 @@ namespace System
 {
 	void AnimationSystem::Update(entt::registry& registry, const float& dt)
 	{
-		auto group = registry.group<>(entt::get<Components::Animation, Components::Sprite>);
+		auto group = registry.group<>(entt::get<Components::Animator>);
 
 		for (auto &entity: group)
 		{
-			auto& animation = group.get<Components::Animation>(entity);
-			auto& sprite = group.get<Components::Sprite>(entity);
-
-			animation.currentTime+=dt;
-			animation.currentTime = fmod(animation.currentTime, animation.frameCount*animation.speed);
-			animation.currentFrame = round(animation.currentTime / animation.speed);
-			if (animation.currentFrame * animation.frameWidth >= sprite.texture->w)
+			auto &animator = group.get<Components::Animator>(entity);
+			Components::Animation* animation = animator.GetCurrentAnimation();
+			animation->currentTime+=dt;
+			animation->currentTime = fmod(animation->currentTime, animation->frameCount*animation->speed);
+			animation->currentFrame = round(animation->currentTime / animation->speed);
+			if (animation->currentFrame * animation->frameWidth >= animation->texture->w)
 			{
-				animation.currentFrame = 0;
+				animation->currentFrame = 0;
 			}
 		}
 	}
