@@ -142,6 +142,7 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\resources\ResourcesManager.cpp" />
     <ClCompile Include="src\system\AnimationSystem.cpp" />
+    <ClCompile Include="src\system\InputSystem.cpp" />
     <ClCompile Include="src\system\PhysicSystem.cpp" />
     <ClCompile Include="src\system\RenderSystem.cpp" />
     <ClCompile Include="src\ultilities\Logger.cpp" />
@@ -164,6 +165,7 @@
     <ClInclude Include="src\core\Window.h" />
     <ClInclude Include="src\resources\ResourcesManager.h" />
     <ClInclude Include="src\system\AnimationSystem.h" />
+    <ClInclude Include="src\system\InputSystem.h" />
     <ClInclude Include="src\system\PhysicSystem.h" />
     <ClInclude Include="src\system\RenderSystem.h" />
     <ClInclude Include="src\ultilities\Logger.h" />

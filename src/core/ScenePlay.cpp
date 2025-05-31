@@ -35,12 +35,8 @@ namespace Core
 		m_physicSystem = std::make_unique<System::PhysicSystem>();
 		m_renderSystem = std::make_unique<System::RenderSystem>();
 		m_animationSystem = std::make_unique<System::AnimationSystem>();
-		// Create 10 entities with CTransform component
 
 		entt::entity e = m_Registry.create();
-
-
-
 		// Create 10 entities with CTransform component at random positions
 		for (size_t i = 0; i < 5; i++)
 		{
@@ -69,39 +65,13 @@ namespace Core
 			auto& animator = m_Registry.get<Components::Animator>(e);
 			animator.AddAnimation("Run", *animation);
 			animator.AddAnimation("Idle", *animation2);
+			animator.SetCurrentAnimation("Run");
 		}
 	}
 
 
 	void ScenePlay::Update(float deltaTime)
 	{
-		m_timeAccumulator += deltaTime;
-
-		auto groupAnimator = m_Registry.group<>(entt::get<Components::Animator>);
-
-		if (m_timeAccumulator > 10)
-		{
-			m_timeAccumulator = 0;
-		}
-		else if (m_timeAccumulator> 5)
-		{
-			for (auto & entity: groupAnimator)
-			{
-				auto& animator = groupAnimator.get<Components::Animator>(entity);
-				animator.SetCurrentAnimation("Run");
-			}
-		}
-		else if (m_timeAccumulator >=0)
-		{
-			for (auto& entity : groupAnimator)
-			{
-				auto& animator = groupAnimator.get<Components::Animator>(entity);
-				animator.SetCurrentAnimation("Idle");
-			}
-		}
-
-
-
 		m_physicSystem->Update(deltaTime, m_Registry);
 
 		auto group = m_Registry.group(entt::get<Components::Transform, Components::Velocity,Components::Collider>);

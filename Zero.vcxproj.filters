@@ -99,6 +99,9 @@
     <ClCompile Include="src\system\AnimationSystem.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
+    <ClCompile Include="src\system\InputSystem.cpp">
+      <Filter>Source Files\System</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="vendor\imgui\imconfig.h">
@@ -168,6 +171,9 @@
       <Filter>Header Files\System</Filter>
     </ClInclude>
     <ClInclude Include="src\system\AnimationSystem.h">
+      <Filter>Header Files\System</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\InputSystem.h">
       <Filter>Header Files\System</Filter>
     </ClInclude>
   </ItemGroup>
