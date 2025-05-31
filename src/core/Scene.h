@@ -19,7 +19,7 @@ namespace Core
         virtual void Initialize(SDL_Renderer& renderer) = 0;
         virtual void Update(float deltaTime) = 0;
         virtual void Render(SDL_Renderer& renderer) = 0;
-        virtual void SDoAction() = 0;
+        virtual void HandleInput(SDL_Event& event) = 0;
         
         void SetGame(std::shared_ptr<Game> game) { m_Game = game; }
         std::shared_ptr<Game> GetGame() const { return m_Game; }

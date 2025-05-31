@@ -23,5 +23,6 @@ namespace Core
         
         void Clear(Uint8 r = 30, Uint8 g = 30, Uint8 b = 30, Uint8 a = 255);
         void Present();
+		void Close();
     };
 }

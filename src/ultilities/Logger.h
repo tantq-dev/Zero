@@ -13,7 +13,6 @@ public:
 	static void Log(Level level, const std::string& message, const char* file, int line);
 	static void LogInfo(const std::string& message, const char* file, int line);
 	static void LogError(const std::string& message, const char* file, int line);
-
 private:
 
 	static const char* GetFileName(const char* filePath);
