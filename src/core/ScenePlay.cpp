@@ -2,6 +2,7 @@
 #include <ApplicationConfig.h>
 #include <random>
 
+
 // Helper function to generate a random float in a given range
 float RandomFloat(float min, float max) {
 	std::random_device rd;
@@ -35,6 +36,11 @@ namespace Core
 		m_physicSystem = std::make_unique<System::PhysicSystem>();
 		m_renderSystem = std::make_unique<System::RenderSystem>();
 		m_animationSystem = std::make_unique<System::AnimationSystem>();
+		m_inputSystem = std::make_unique<System::InputSystem>();
+
+		m_inputSystem->RegisterAction("Test");
+		Components::InputBinding binding(SDL_SCANCODE_W);
+		m_inputSystem->BindingToAction("Test", binding);
 
 		entt::entity e = m_Registry.create();
 		// Create 10 entities with CTransform component at random positions
@@ -73,8 +79,12 @@ namespace Core
 	void ScenePlay::Update(float deltaTime)
 	{
 		m_physicSystem->Update(deltaTime, m_Registry);
-
 		auto group = m_Registry.group(entt::get<Components::Transform, Components::Velocity,Components::Collider>);
+
+		if (m_inputSystem->IsActionPressed("Test"))
+		{
+			LOG_INFO("Test button pressed");
+		}
 
 		for (auto& entity : group)
 		{
@@ -92,9 +102,9 @@ namespace Core
 		m_animationSystem->Update(m_Registry,deltaTime);
 
 	}
-	void ScenePlay::SDoAction()
+	void ScenePlay::HandleInput(SDL_Event &event)
 	{
-
+		m_inputSystem->HandleInput(event);
 	}
 	void ScenePlay::Render(SDL_Renderer& renderer)
 	{

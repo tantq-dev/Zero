@@ -134,12 +134,31 @@ namespace Components
 			auto it = animations.find(currentAnimation);
 			return it != animations.end() ? &it->second : nullptr;
 		}
-	};;
+	};
 
+	struct InputBinding
+	{
+		InputBinding(SDL_Scancode scancode) : scancode(scancode)
+		{
 
+		}
+		SDL_Scancode scancode;
+	};
 
+	struct InputAction
+	{
+		std::string name;
+		std::vector<InputBinding> bindings;
+		bool isPressed = false;
+		bool isHeld = false;
+		InputAction() = default;
+		InputAction(const std::string& actionName) : name(actionName) {}
+		void AddBinding(SDL_Scancode scancode)
+		{
+			bindings.emplace_back(scancode);
+		}
 
-
+	};
 
 
 

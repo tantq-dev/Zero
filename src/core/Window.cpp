@@ -37,4 +37,10 @@ namespace Core
     {
         SDL_RenderPresent(m_renderer.get());
     }
+
+	void Window::Close()
+	{
+		SDL_DestroyWindow(m_window.get());
+	}
+
 }

@@ -62,6 +62,7 @@ namespace Core
 
         while (m_isRunning)
         {
+
             Uint32 frameStart = SDL_GetTicks();
             
             Uint32 currentTicks = SDL_GetTicks();
@@ -70,10 +71,12 @@ namespace Core
 
             while (SDL_PollEvent(&event))
             {
+                m_activeScene->HandleInput(event);
                 if (event.type == SDL_EVENT_QUIT)
                 {
                     m_isRunning = false;
-                }
+                    m_window->Close();
+				}
             }
             
             // Update active scene
