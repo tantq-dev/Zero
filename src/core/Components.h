@@ -1,6 +1,7 @@
 #pragma once
 #include "Vec2.h"
 #include "SDL3/SDL.h"
+#include <utility>
 #include <variant>
 #include <string>
 #include <unordered_map>
@@ -33,7 +34,7 @@ namespace Components
 	{
 		Vec2 velocity = { 0.0f, 0.0f };
 		Velocity() = default;
-		Velocity(const Vec2& vel)
+		explicit Velocity(const Vec2& vel)
 			: velocity(vel)
 		{
 		}
@@ -52,10 +53,6 @@ namespace Components
 	struct CircleCollider
 	{
 		float radius;
-		Vec2 center(const Vec2& position) const
-		{
-			return position;
-		}
 	};
 
 	struct Collider
@@ -73,12 +70,12 @@ namespace Components
 			return { ColliderType::Circle, CircleCollider{radius} };
 		}
 
-		const BoxCollider* AsBox() const
+		[[nodiscard]] const BoxCollider* AsBox() const
 		{
 			return type == ColliderType::Box ? &std::get<BoxCollider>(data) : nullptr;
 		}
 
-		const CircleCollider* AsCircle() const
+		[[nodiscard]] const CircleCollider* AsCircle() const
 		{
 			return type == ColliderType::Circle ? &std::get<CircleCollider>(data) : nullptr;
 		}
@@ -90,7 +87,7 @@ namespace Components
 		bool flipHorizontal = false;
 		float rotation = 0.0f; // Rotation in radians
 		Sprite() = default;
-		Sprite(SDL_Texture* tex, float rot = 0.0f)
+		explicit Sprite(SDL_Texture* tex, float rot = 0.0f)
 			: texture(tex)
 		{
 		}
@@ -98,17 +95,17 @@ namespace Components
 	struct Animation
 	{
 		SDL_Texture* texture = nullptr ;
-		size_t frameCount = 0;
-		size_t currentFrame = 0;
+		int frameCount = 0;
+		int currentFrame = 0;
 		float frameWidth = 0;
 		float frameHeight = 0;
-		float currentTime;
+		float currentTime = 0.0f;
 		bool loop = true;
 		float speed = 1.0f; // Frames per second
 
 		Animation() = default;
-		Animation(SDL_Texture * tex ,float frameW, float frameH, float spd, int frame ) :
-			frameWidth(frameW), speed(spd), currentTime(0.0f), currentFrame(0), frameCount(frame), frameHeight(frameH), loop(true), texture(tex)
+		Animation(SDL_Texture * tex ,const float frameW, const float frameH, const float spd, const int frame ) :
+			texture(tex), frameCount(frame), currentFrame(0), frameWidth(frameW), frameHeight(frameH), currentTime(0.0f), loop(true), speed(spd)
 		{
 
 		}
@@ -125,21 +122,21 @@ namespace Components
 		}
 		void SetCurrentAnimation(const std::string& name)
 		{
-			if (animations.find(name) != animations.end())
+			if (animations.contains(name))
 			{
 				currentAnimation = name;
 			}
 		}
 		Animation* GetCurrentAnimation()
 		{
-			auto it = animations.find(currentAnimation);
+			const auto it = animations.find(currentAnimation);
 			return it != animations.end() ? &it->second : nullptr;
 		}
 	};
 
 	struct InputBinding
 	{
-		InputBinding(SDL_Scancode scancode) : scancode(scancode)
+		explicit InputBinding(const SDL_Scancode scancode) : scancode(scancode)
 		{
 
 		}
@@ -153,7 +150,7 @@ namespace Components
 		bool isPressed = false;
 		bool isHeld = false;
 		InputAction() = default;
-		InputAction(const std::string& actionName) : name(actionName) {}
+		explicit InputAction(std::string  actionName) : name(std::move(actionName)) {}
 		void AddBinding(SDL_Scancode scancode)
 		{
 			bindings.emplace_back(scancode);

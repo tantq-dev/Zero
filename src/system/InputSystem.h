@@ -14,7 +14,7 @@ namespace System
 		void RegisterAction(const std::string& actionName);
 		void BindingToAction(const std::string& actionName, Components::InputBinding binding);
 		bool IsActionPressed(const std::string& actionName) const;
-		const bool IsWindowCloseRequested() const
+		bool IsWindowCloseRequested() const
 		{
 			return m_isWindowCloseRequested;
 		}

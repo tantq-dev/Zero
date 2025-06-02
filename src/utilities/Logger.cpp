@@ -1,10 +1,10 @@
 #include "Logger.h"
 #include <iostream>
 
-void Logger::Log(Level level, const std::string& message, const char* file, int line)
+void Logger::Log(const Level level, const std::string& message, const char* file, int line)
 {
 	const char* fileName = GetFileName(file);
-	std::string logMessage = "[" + GetLevelString(level) + "] "
+	const std::string logMessage = "[" + GetLevelString(level) + "] "
 		+ fileName + ":" + std::to_string(line) + " - " + message;
 	std::cout << logMessage << std::endl;
 

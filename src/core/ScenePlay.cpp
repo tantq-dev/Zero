@@ -78,7 +78,7 @@ namespace Core
 	}
 
 
-	void ScenePlay::Update(float deltaTime)
+	void ScenePlay::Update(const float deltaTime)
 	{
 		m_physicSystem->Update(deltaTime, m_Registry);
 		auto group = m_Registry.group(entt::get<Components::Transform, Components::Velocity,Components::Collider>);
@@ -92,7 +92,7 @@ namespace Core
 		{
 			auto& transform = group.get<Components::Transform>(entity);
 			auto& velocity = group.get<Components::Velocity>(entity);
-			auto& collider = group.get<Components::Collider>(entity);
+			const auto& collider = group.get<Components::Collider>(entity);
 			if (collider.isColliding)
 			{
 				velocity.velocity.x = -velocity.velocity.x;

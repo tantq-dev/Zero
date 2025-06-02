@@ -6,7 +6,7 @@ namespace System
 	{
 	
 	public:
-			AnimationSystem() = default;
+		AnimationSystem() = default;
 		~AnimationSystem() = default;
 
 		void Update(entt::registry& registry, const float& dt);
