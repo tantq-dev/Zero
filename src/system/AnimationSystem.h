@@ -1,6 +1,7 @@
 #pragma once
 #include "entt.hpp"
-#include "Components.h"
+
+#include "../core/Components.h"
 namespace System
 {
 	class AnimationSystem

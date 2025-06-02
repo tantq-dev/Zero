@@ -1,60 +1,149 @@
 # Build directories
-/build/
+build/
 bin/
-obj/
+lib/
+out/
+cmake-build-*/
+Debug/
+Release/
+x64/
+x86/
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+Testing/
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps/
+*.cmake
+!CMakeLists.txt
+
+# Visual Studio / VSCode specific files
+.vs/
+.vscode/
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.suo
+*.user
+*.userosscache
+*.sdf
+*.opensdf
+*.VC.db
+*.VC.opendb
+ipch/
+.settings/
+*.code-workspace
+.localhistory/
+.history/
+
+# CLion specific files
+.idea/
+*.iml
+*.iws
+*.ipr
+*.kdev4
+.kdev4/
+
+# Qt Creator specific files
+CMakeLists.txt.user
+*.pro.user
+*.pro.user.*
+*.qbs.user
+*.qbs.user.*
+*.qmake.stash
+moc_*.cpp
+qrc_*.cpp
+ui_*.h
+*.autosave
+
+# Compiled Object files
+*.slo
+*.lo
 *.o
 *.obj
-*.exe
-*.out
-*.dll
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
 *.so
 *.dylib
+*.dll
 
-# CMake
-CMakeFiles/
-CMakeCache.txt
-cmake_install.cmake
-Makefile
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
 
-# Visual Studio
-*.sln
-*.vcxproj*
-*.user
-*.opensdf
-*.sdf
-*.VC.db
+# Executables
+*.exe
+*.out
+*.app
+
+# Dependency directories
+vendor/*
+!vendor/imgui/
+!vendor/entt/
+
+# SDL specific
 *.log
-*.ipch
-*.tlog
-*.pdb
-*.idb
-.vs/
-x64/
 
-# macOS
+# Debug logs and databases
+*.log
+*.sqlite
+*.sqlite3
+*.db
+
+# OS generated files
 .DS_Store
-
-# Linux
-*~
-
-# Windows
-Thumbs.db
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
 ehthumbs.db
+Thumbs.db
 desktop.ini
 
-# Compiled ImGui files
-vendor/imgui/*.obj
-vendor/imgui/*.o
-
-# IDE-specific
-.vscode/
-.idea/
-
-# Generated files
-*.log
-*.tmp
+# Game specific
+*.save
+*.sav
 *.bak
+saves/
 
-# SDL cache / generated config (if any custom tools used)
-*.data
-*.res
+# Project specific temporary files
+temp/
+tmp/
+cache/
+
+# Generated documentation
+docs/html/
+docs/latex/
+docs/xml/
+docs/man/
+
+# User-specific configuration files
+config.user.json
+*.user.ini
+
+# Package management
+vcpkg_installed/
+conan_imports/
+conan_output/
+conanbuildinfo.*
+conaninfo.*
+graph_info.json
+
+# Testing
+Testing/
+*.gcda
+*.gcno
+coverage/

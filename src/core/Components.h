@@ -1,5 +1,5 @@
 #pragma once
-#include "Vec2.h"
+#include "../utilities/Vec2.h"
 #include "SDL3/SDL.h"
 #include <variant>
 #include <string>

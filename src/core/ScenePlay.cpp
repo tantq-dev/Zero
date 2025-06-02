@@ -1,6 +1,8 @@
 #include "ScenePlay.h"
 #include <ApplicationConfig.h>
 #include <random>
+#include "ResourcesManager.h"
+#include "../utilities/Logger.h"
 
 
 // Helper function to generate a random float in a given range
@@ -33,6 +35,9 @@ namespace Core
 		ResourcesManager::GetInstance().LoadTexture("Link", "assets/link.bmp", &renderer);
 		ResourcesManager::GetInstance().LoadTexture("Pirate_Run", "assets/pirate_run.bmp", &renderer);
 		ResourcesManager::GetInstance().LoadTexture("Pirate", "assets/pirate.bmp", &renderer);
+
+
+
 		m_physicSystem = std::make_unique<System::PhysicSystem>();
 		m_renderSystem = std::make_unique<System::RenderSystem>();
 		m_animationSystem = std::make_unique<System::AnimationSystem>();
@@ -41,8 +46,6 @@ namespace Core
 		m_inputSystem->RegisterAction("Test");
 		Components::InputBinding binding(SDL_SCANCODE_W);
 		m_inputSystem->BindingToAction("Test", binding);
-
-		entt::entity e = m_Registry.create();
 		// Create 10 entities with CTransform component at random positions
 		for (size_t i = 0; i < 5; i++)
 		{
@@ -64,8 +67,7 @@ namespace Core
 			auto texture = ResourcesManager::GetInstance().GetTexture("Pirate_Run");
 			auto texturePirate = ResourcesManager::GetInstance().GetTexture("Pirate");
 			auto animation = new Components::Animation(texture,texture->w/6,texture->h,0.1f,6);
-			auto animation2 = new Components::Animation(texturePirate, texturePirate->w / 5, texture->h, 0.1f, 5);
-
+			auto animation2 = new Components::Animation(texturePirate, texturePirate->w / 5, texturePirate->h, 0.1f, 5);
 			m_Registry.emplace<Components::Animator>(e);
 
 			auto& animator = m_Registry.get<Components::Animator>(e);

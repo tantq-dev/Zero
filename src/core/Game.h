@@ -1,7 +1,7 @@
 #pragma once
 #include <SDL3/SDL.h>
-#include "Logger.h"
-#include "ApplicationConfig.h"
+#include "../utilities/Logger.h"
+#include "../config/ApplicationConfig.h"
 #include <algorithm>
 #include <memory>
 #include <string>
