@@ -1,7 +1,6 @@
 #pragma once
 #include <string>
 #include <SDL3/SDL.h>
-#include <vector>
 #include <unordered_map> // Use unordered_map for better performance on lookups
 class ResourcesManager
 {

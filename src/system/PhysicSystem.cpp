@@ -3,10 +3,10 @@
 namespace System {
 	void PhysicSystem::Update(float deltaTime, entt::registry& registry)
 	{
-		ColisionDetect(registry);
+		CollisionDetect(registry);
 	}
 
-	void PhysicSystem::ColisionDetect(entt::registry& registry)
+	void PhysicSystem::CollisionDetect(entt::registry& registry)
 	{
 		auto group = registry.group(entt::get<Components::Transform, Components::Collider, Components::Velocity>);
 		

@@ -2,7 +2,6 @@
 #include "SDL3/SDL.h"
 #include <unordered_map>
 #include <string>
-#include <vector>
 #include "Components.h"
 namespace System
 {

@@ -1,9 +1,10 @@
 #pragma once
-#include "../utilities/Vec2.h"
+#include "Vec2.h"
 #include "SDL3/SDL.h"
 #include <variant>
 #include <string>
 #include <unordered_map>
+#include <vector>
 namespace Components
 {
 

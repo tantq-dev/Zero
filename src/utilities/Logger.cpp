@@ -1,4 +1,5 @@
 #include "Logger.h"
+#include <iostream>
 
 void Logger::Log(Level level, const std::string& message, const char* file, int line)
 {

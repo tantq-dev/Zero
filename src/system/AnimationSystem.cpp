@@ -1,4 +1,6 @@
+#include "Components.h"
 #include "AnimationSystem.h"
+
 namespace System
 {
 	void AnimationSystem::Update(entt::registry& registry, const float& dt)

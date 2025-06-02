@@ -2,7 +2,7 @@
 #include <ApplicationConfig.h>
 #include <random>
 #include "ResourcesManager.h"
-#include "../utilities/Logger.h"
+#include "Logger.h"
 
 
 // Helper function to generate a random float in a given range
@@ -32,9 +32,9 @@ namespace Core
 	void ScenePlay::Initialize(SDL_Renderer& renderer)
 	{
 	
-		ResourcesManager::GetInstance().LoadTexture("Link", "assets/link.bmp", &renderer);
-		ResourcesManager::GetInstance().LoadTexture("Pirate_Run", "assets/pirate_run.bmp", &renderer);
-		ResourcesManager::GetInstance().LoadTexture("Pirate", "assets/pirate.bmp", &renderer);
+		ResourcesManager::GetInstance().LoadTexture("Link", "assets/textures/link.bmp", &renderer);
+		ResourcesManager::GetInstance().LoadTexture("Pirate_Run", "assets/textures/pirate_run.bmp", &renderer);
+		ResourcesManager::GetInstance().LoadTexture("Pirate", "assets/textures/pirate.bmp", &renderer);
 
 
 

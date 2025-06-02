@@ -1,6 +1,9 @@
 #include "Game.h"
 #include "ScenePlay.h"
 #include <stdexcept>
+#include <SDL3/SDL.h>
+#include "../utilities/Logger.h"
+#include "../config/ApplicationConfig.h"
 
 namespace Core
 {

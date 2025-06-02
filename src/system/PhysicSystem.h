@@ -11,7 +11,7 @@ namespace System
 		~PhysicSystem() = default;
 		void Update(float deltaTime, entt::registry& registry);
 	private:
-		void ColisionDetect(entt::registry& registry);
+		void CollisionDetect(entt::registry& registry);
 		bool CheckAABBCollision(
 			const Components::Transform& t1, const Components::BoxCollider& b1,
 			const Components::Transform& t2, const Components::BoxCollider& b2);
