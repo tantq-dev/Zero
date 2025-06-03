@@ -133,14 +133,46 @@ namespace Components
 			return it != animations.end() ? &it->second : nullptr;
 		}
 	};
+	enum class InputEventType
+	{
+		KeyDown,
+		KeyUp,
+		MouseButtonDown,
+		MouseButtonUp,
+		MouseMotion,
+		MouseWheel
+	};
 
 	struct InputBinding
 	{
-		explicit InputBinding(const SDL_Scancode scancode) : scancode(scancode)
-		{
-
-		}
-		SDL_Scancode scancode;
+		enum class Type
+    {
+        Keyboard,
+        MouseButton,
+        MouseMotion
+    };
+    
+    Type type;
+    union
+    {
+        SDL_Scancode scancode;      // For keyboard
+        Uint8 mouseButton;          // For mouse buttons (SDL_BUTTON_LEFT, etc.)
+    };
+    
+    // Constructors
+    explicit InputBinding(SDL_Scancode key) 
+        : type(Type::Keyboard), scancode(key) {}
+    
+    explicit InputBinding(Uint8 button, bool /*mouse_tag*/) 
+        : type(Type::MouseButton), mouseButton(button) {}
+    
+    static InputBinding MouseMotion() 
+    { 
+        InputBinding binding(SDL_SCANCODE_UNKNOWN);
+        binding.type = Type::MouseMotion;
+        return binding;
+    }
+	
 	};
 
 	struct InputAction
@@ -149,9 +181,19 @@ namespace Components
 		std::vector<InputBinding> bindings;
 		bool isPressed = false;
 		bool isHeld = false;
+
+		Vec2 mousePosition = { 0.0f, 0.0f };
+		Vec2 mouseDelta = { 0.0f, 0.0f };
+
+		bool hasMouseMotion = false;
+
 		InputAction() = default;
 		explicit InputAction(std::string  actionName) : name(std::move(actionName)) {}
 		void AddBinding(SDL_Scancode scancode)
+		{
+			bindings.emplace_back(scancode);
+		}
+		void AddMouseButtonBinding(SDL_Scancode scancode)
 		{
 			bindings.emplace_back(scancode);
 		}

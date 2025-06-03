@@ -46,6 +46,7 @@ namespace Core
 		m_inputSystem->RegisterAction("Test");
 		Components::InputBinding binding(SDL_SCANCODE_W);
 		m_inputSystem->BindingToAction("Test", binding);
+
 		// Create 10 entities with CTransform component at random positions
 		for (size_t i = 0; i < 5; i++)
 		{
