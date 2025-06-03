@@ -43,10 +43,20 @@ namespace Core
 		m_animationSystem = std::make_unique<System::AnimationSystem>();
 		m_inputSystem = std::make_unique<System::InputSystem>();
 
-		m_inputSystem->RegisterAction("Test");
-		Components::InputBinding binding(SDL_SCANCODE_W);
-		m_inputSystem->BindingToAction("Test", binding);
 
+		Components::InputAction actionSpace("Test");
+		Components::InputAction actionMouse("Test_Mouse");
+		Components::InputAction actionMouseMotion("Test_Mouse_Motion");
+		actionSpace.AddBinding(SDL_SCANCODE_SPACE);
+		actionMouse.AddMouseButtonBinding(SDL_BUTTON_LEFT);
+		actionMouseMotion.AddMouseMotionBinding();
+
+		m_inputSystem->RegisterAction(actionSpace);
+		m_inputSystem->RegisterAction(actionMouse);
+		m_inputSystem->RegisterAction(actionMouseMotion);
+		Components::InputBinding inputActionSpace = Components::InputBinding::Keyboard(SDL_SCANCODE_SPACE);
+		Components::InputBinding inputActionMouseLeft = Components::InputBinding::MouseButton(SDL_BUTTON_LEFT);
+		Components::InputBinding inputActionMouseMotion = Components::InputBinding::MouseMotion();
 		// Create 10 entities with CTransform component at random positions
 		for (size_t i = 0; i < 5; i++)
 		{
@@ -89,18 +99,17 @@ namespace Core
 			LOG_INFO("Test button pressed");
 		}
 
+		Vec2 mousePosition = m_inputSystem->GetMousePosition("Test_Mouse_Motion");
+
 		for (auto& entity : group)
 		{
 			auto& transform = group.get<Components::Transform>(entity);
 			auto& velocity = group.get<Components::Velocity>(entity);
+			auto direction = mousePosition - transform.position;
 			const auto& collider = group.get<Components::Collider>(entity);
-			if (collider.isColliding)
-			{
-				velocity.velocity.x = -velocity.velocity.x;
-				velocity.velocity.y = -velocity.velocity.y;
-			}
-			transform.position.x += velocity.velocity.x * deltaTime * 10;
-			transform.position.y += velocity.velocity.y * deltaTime * 10;
+			
+			transform.position.x += direction.x * deltaTime;
+			transform.position.y += direction.y * deltaTime;
 		}
 		m_animationSystem->Update(m_Registry,deltaTime);
 

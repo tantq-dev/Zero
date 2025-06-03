@@ -133,46 +133,61 @@ namespace Components
 			return it != animations.end() ? &it->second : nullptr;
 		}
 	};
-	enum class InputEventType
-	{
-		KeyDown,
-		KeyUp,
-		MouseButtonDown,
-		MouseButtonUp,
-		MouseMotion,
-		MouseWheel
-	};
 
 	struct InputBinding
 	{
 		enum class Type
-    {
-        Keyboard,
-        MouseButton,
-        MouseMotion
-    };
-    
-    Type type;
-    union
-    {
-        SDL_Scancode scancode;      // For keyboard
-        Uint8 mouseButton;          // For mouse buttons (SDL_BUTTON_LEFT, etc.)
-    };
-    
-    // Constructors
-    explicit InputBinding(SDL_Scancode key) 
-        : type(Type::Keyboard), scancode(key) {}
-    
-    explicit InputBinding(Uint8 button, bool /*mouse_tag*/) 
-        : type(Type::MouseButton), mouseButton(button) {}
-    
-    static InputBinding MouseMotion() 
-    { 
-        InputBinding binding(SDL_SCANCODE_UNKNOWN);
-        binding.type = Type::MouseMotion;
-        return binding;
-    }
-	
+		{
+			Keyboard,
+			MouseButton,
+			MouseMotion
+		};
+
+		Type type;
+		union
+		{
+			SDL_Scancode scancode; // For keyboard
+			Uint8 mouseButton;	   // For mouse buttons (SDL_BUTTON_LEFT, etc.)
+		};
+
+		// 	Without union (separate variables):
+		// ┌─────────────┬──────────────┐
+		// │ SDL_Scancode│ Uint8        │
+		// │ (4 bytes)   │ (1 byte)     │
+		// └─────────────┴──────────────┘
+		// Total: 5 bytes
+
+		// With union:
+		// ┌─────────────┐
+		// │ Same memory │ ← Can hold either SDL_Scancode OR Uint8
+		// │ (4 bytes)   │
+		// └─────────────┘
+		// Total: 4 bytes
+
+		// Private constructor
+	private:
+		InputBinding(Type t) : type(t) {} // named constructor to enforce type
+
+	public:
+		// Named static factory methods
+		static InputBinding Keyboard(SDL_Scancode key)
+		{
+			InputBinding binding(Type::Keyboard);
+			binding.scancode = key;
+			return binding;
+		}
+
+		static InputBinding MouseButton(Uint8 button)
+		{
+			InputBinding binding(Type::MouseButton);
+			binding.mouseButton = button;
+			return binding;
+		}
+
+		static InputBinding MouseMotion()
+		{
+			return InputBinding(Type::MouseMotion);
+		}
 	};
 
 	struct InputAction
@@ -191,13 +206,23 @@ namespace Components
 		explicit InputAction(std::string  actionName) : name(std::move(actionName)) {}
 		void AddBinding(SDL_Scancode scancode)
 		{
-			bindings.emplace_back(scancode);
-		}
-		void AddMouseButtonBinding(SDL_Scancode scancode)
-		{
-			bindings.emplace_back(scancode);
+			bindings.push_back(InputBinding::Keyboard(scancode));
 		}
 
+		void AddMouseButtonBinding(Uint8 mouseButton) 
+		{
+			bindings.push_back(InputBinding::MouseButton(mouseButton)); 
+		}
+
+		void AddMouseMotionBinding()
+		{
+			hasMouseMotion = true;
+			bindings.push_back(InputBinding::MouseMotion()); 
+		}
+		std::string GetName() const
+		{
+			return name;
+		}
 	};
 
 
