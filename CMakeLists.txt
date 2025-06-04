@@ -81,6 +81,10 @@ target_include_directories(Zero PRIVATE
         ${PROJECT_SOURCE_DIR}/src/system
 )
 
+if(WIN32)
+    set(CMAKE_PREFIX_PATH "D:/Code/CppProjects/Zero/vendor/SDL" ${CMAKE_PREFIX_PATH})  # Adjust the path if necessary
+endif()
+
 # Find required packages
 find_package(OpenGL REQUIRED)
 find_package(SDL3 REQUIRED CONFIG)
