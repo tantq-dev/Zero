@@ -1,10 +1,10 @@
 #pragma once
 #include "Scene.h"
 #include "Components.h"
-#include "PhysicSystem.h"
-#include "RenderSystem.h"
-#include "AnimationSystem.h"
-#include "InputSystem.h"
+#include "system/PhysicSystem.h"
+#include "system/RenderSystem.h"
+#include "system/AnimationSystem.h"
+#include "system/InputSystem.h"
 
 namespace Core
 {

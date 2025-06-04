@@ -17,38 +17,52 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
-# Group source files by modules
+# Group source files by modules (co-located approach)
 set(CORE_FILES
-        src/core/Game.cpp
-        src/core/Scene.cpp
-        src/core/ScenePlay.cpp
-        src/core/Window.cpp
+    src/core/Game.h
+    src/core/Game.cpp
+    src/core/Scene.h
+    src/core/Scene.cpp
+    src/core/ScenePlay.h
+    src/core/ScenePlay.cpp
+    src/core/Window.h
+    src/core/Window.cpp
+    src/core/Components.h
 )
 
 set(RESOURCES_FILES
-        src/resources/ResourcesManager.cpp
+    src/resources/ResourcesManager.h
+    src/resources/ResourcesManager.cpp
 )
 
 set(SYSTEM_FILES
-        src/system/AnimationSystem.cpp
-        src/system/InputSystem.cpp
-        src/system/PhysicSystem.cpp
-        src/system/RenderSystem.cpp
+    src/system/AnimationSystem.h
+    src/system/AnimationSystem.cpp
+    src/system/InputSystem.h
+    src/system/InputSystem.cpp
+    src/system/PhysicSystem.h
+    src/system/PhysicSystem.cpp
+    src/system/RenderSystem.h
+    src/system/RenderSystem.cpp
 )
 
 set(UTILITIES_FILES
-        src/utilities/Logger.cpp
-        src/utilities/Vec2.cpp
+    src/utilities/Logger.h
+    src/utilities/Logger.cpp
+    src/utilities/Vec2.h
+    src/utilities/Vec2.cpp
 )
 
-set(VENDOR_FILES
-        vendor/imgui/backends/imgui_impl_opengl3.cpp
-        vendor/imgui/backends/imgui_impl_sdl3.cpp
-        vendor/imgui/imgui.cpp
-        vendor/imgui/imgui_demo.cpp
-        vendor/imgui/imgui_draw.cpp
-        vendor/imgui/imgui_tables.cpp
-        vendor/imgui/imgui_widgets.cpp
+
+
+set(VENDORED_FILES
+        vendored/imgui/backends/imgui_impl_opengl3.cpp
+        vendored/imgui/backends/imgui_impl_sdl3.cpp
+        vendored/imgui/imgui.cpp
+        vendored/imgui/imgui_demo.cpp
+        vendored/imgui/imgui_draw.cpp
+        vendored/imgui/imgui_tables.cpp
+        vendored/imgui/imgui_widgets.cpp
 )
 
 # Main executable
@@ -58,7 +72,7 @@ add_executable(Zero
         ${RESOURCES_FILES}
         ${SYSTEM_FILES}
         ${UTILITIES_FILES}
-        ${VENDOR_FILES}
+        ${VENDORED_FILES}
 )
 
 # Source groups for better IDE organization
@@ -66,28 +80,21 @@ source_group("Core" FILES ${CORE_FILES})
 source_group("Resources" FILES ${RESOURCES_FILES})
 source_group("Systems" FILES ${SYSTEM_FILES})
 source_group("Utilities" FILES ${UTILITIES_FILES})
-source_group("Vendor" FILES ${VENDOR_FILES})
+source_group("Vendored" FILES ${VENDORED_FILES})
 
 # Target-specific include directories
 target_include_directories(Zero PRIVATE
         ${PROJECT_SOURCE_DIR}/include
-        ${PROJECT_SOURCE_DIR}/vendor
-        ${PROJECT_SOURCE_DIR}/vendor/imgui
-        ${PROJECT_SOURCE_DIR}/vendor/imgui/backends
-        ${PROJECT_SOURCE_DIR}/src/config
-        ${PROJECT_SOURCE_DIR}/src/utilities
-        ${PROJECT_SOURCE_DIR}/src/core
-        ${PROJECT_SOURCE_DIR}/src/resources
-        ${PROJECT_SOURCE_DIR}/src/system
+        ${PROJECT_SOURCE_DIR}/vendored
+        ${PROJECT_SOURCE_DIR}/vendored/imgui
+        ${PROJECT_SOURCE_DIR}/vendored/imgui/backends
+        ${PROJECT_SOURCE_DIR}/src
 )
 
-if(WIN32)
-    set(CMAKE_PREFIX_PATH "D:/Code/CppProjects/Zero/vendor/SDL" ${CMAKE_PREFIX_PATH})  # Adjust the path if necessary
-endif()
+add_subdirectory(vendored/SDL EXCLUDE_FROM_ALL)
 
 # Find required packages
 find_package(OpenGL REQUIRED)
-find_package(SDL3 REQUIRED CONFIG)
 
 # Link libraries
 target_link_libraries(Zero PRIVATE

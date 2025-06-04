@@ -1,5 +1,5 @@
-#include "InputSystem.h"
-#include "Logger.h"
+#include "system/InputSystem.h"
+#include "utilities/Logger.h"
 #include <string>
 namespace System
 {
@@ -28,7 +28,7 @@ namespace System
 		default:
 			break;
 		}
-	
+
 	}
 
 	void InputSystem::RegisterAction(Components::InputAction action)
@@ -43,9 +43,9 @@ namespace System
 
 	void InputSystem::HandleKeyDown(SDL_Event& event)
 	{
-		for (auto &action: m_registeredActions)
+		for (auto& action : m_registeredActions)
 		{
-			for (auto &binding: action.second.bindings)
+			for (auto& binding : action.second.bindings)
 			{
 				if (event.key.scancode == binding.scancode)
 				{

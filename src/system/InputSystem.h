@@ -2,7 +2,7 @@
 #include "SDL3/SDL.h"
 #include <unordered_map>
 #include <string>
-#include "Components.h"
+#include "core/Components.h"
 namespace System
 {
 	class InputSystem

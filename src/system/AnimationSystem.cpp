@@ -1,4 +1,4 @@
-#include "Components.h"
+#include "core/Components.h"
 #include "AnimationSystem.h"
 
 namespace System
@@ -7,12 +7,12 @@ namespace System
 	{
 		auto group = registry.group<>(entt::get<Components::Animator>);
 
-		for (auto &entity: group)
+		for (auto& entity : group)
 		{
-			auto &animator = group.get<Components::Animator>(entity);
+			auto& animator = group.get<Components::Animator>(entity);
 			Components::Animation* animation = animator.GetCurrentAnimation();
-			animation->currentTime+=dt;
-			animation->currentTime = fmod(animation->currentTime, animation->frameCount*animation->speed);
+			animation->currentTime += dt;
+			animation->currentTime = fmod(animation->currentTime, animation->frameCount * animation->speed);
 			animation->currentFrame = round(animation->currentTime / animation->speed);
 			if (animation->currentFrame * animation->frameWidth >= animation->texture->w)
 			{

@@ -1,8 +1,8 @@
 #include "ScenePlay.h"
-#include <ApplicationConfig.h>
+#include "config/ApplicationConfig.h"
 #include <random>
-#include "ResourcesManager.h"
-#include "Logger.h"
+#include "resources/ResourcesManager.h"
+#include "utilities/Logger.h"
 
 
 // Helper function to generate a random float in a given range
@@ -31,7 +31,7 @@ namespace Core
 {
 	void ScenePlay::Initialize(SDL_Renderer& renderer)
 	{
-	
+
 		ResourcesManager::GetInstance().LoadTexture("Link", "assets/textures/link.bmp", &renderer);
 		ResourcesManager::GetInstance().LoadTexture("Pirate_Run", "assets/textures/pirate_run.bmp", &renderer);
 		ResourcesManager::GetInstance().LoadTexture("Pirate", "assets/textures/pirate.bmp", &renderer);
@@ -77,7 +77,7 @@ namespace Core
 
 			auto texture = ResourcesManager::GetInstance().GetTexture("Pirate_Run");
 			auto texturePirate = ResourcesManager::GetInstance().GetTexture("Pirate");
-			auto animation = new Components::Animation(texture,texture->w/6,texture->h,0.1f,6);
+			auto animation = new Components::Animation(texture, texture->w / 6, texture->h, 0.1f, 6);
 			auto animation2 = new Components::Animation(texturePirate, texturePirate->w / 5, texturePirate->h, 0.1f, 5);
 			m_Registry.emplace<Components::Animator>(e);
 
@@ -92,7 +92,7 @@ namespace Core
 	void ScenePlay::Update(const float deltaTime)
 	{
 		m_physicSystem->Update(deltaTime, m_Registry);
-		auto group = m_Registry.group(entt::get<Components::Transform, Components::Velocity,Components::Collider>);
+		auto group = m_Registry.group(entt::get<Components::Transform, Components::Velocity, Components::Collider>);
 
 		if (m_inputSystem->IsActionPressed("Test"))
 		{
@@ -107,19 +107,19 @@ namespace Core
 			auto& velocity = group.get<Components::Velocity>(entity);
 			auto direction = mousePosition - transform.position;
 			const auto& collider = group.get<Components::Collider>(entity);
-			
+
 			transform.position.x += direction.x * deltaTime;
 			transform.position.y += direction.y * deltaTime;
 		}
-		m_animationSystem->Update(m_Registry,deltaTime);
+		m_animationSystem->Update(m_Registry, deltaTime);
 
 	}
-	void ScenePlay::HandleInput(SDL_Event &event)
+	void ScenePlay::HandleInput(SDL_Event& event)
 	{
 		m_inputSystem->HandleInput(event);
 	}
 	void ScenePlay::Render(SDL_Renderer& renderer)
 	{
-		m_renderSystem->Render( m_Registry, renderer);
+		m_renderSystem->Render(m_Registry, renderer);
 	}
 }

@@ -1,5 +1,5 @@
 #pragma once
-#include "Vec2.h"
+#include "utilities/Vec2.h"
 #include "SDL3/SDL.h"
 #include <utility>
 #include <variant>
@@ -94,7 +94,7 @@ namespace Components
 	};
 	struct Animation
 	{
-		SDL_Texture* texture = nullptr ;
+		SDL_Texture* texture = nullptr;
 		int frameCount = 0;
 		int currentFrame = 0;
 		float frameWidth = 0;
@@ -104,7 +104,7 @@ namespace Components
 		float speed = 1.0f; // Frames per second
 
 		Animation() = default;
-		Animation(SDL_Texture * tex ,const float frameW, const float frameH, const float spd, const int frame ) :
+		Animation(SDL_Texture* tex, const float frameW, const float frameH, const float spd, const int frame) :
 			texture(tex), frameCount(frame), currentFrame(0), frameWidth(frameW), frameHeight(frameH), currentTime(0.0f), loop(true), speed(spd)
 		{
 
@@ -209,15 +209,15 @@ namespace Components
 			bindings.push_back(InputBinding::Keyboard(scancode));
 		}
 
-		void AddMouseButtonBinding(Uint8 mouseButton) 
+		void AddMouseButtonBinding(Uint8 mouseButton)
 		{
-			bindings.push_back(InputBinding::MouseButton(mouseButton)); 
+			bindings.push_back(InputBinding::MouseButton(mouseButton));
 		}
 
 		void AddMouseMotionBinding()
 		{
 			hasMouseMotion = true;
-			bindings.push_back(InputBinding::MouseMotion()); 
+			bindings.push_back(InputBinding::MouseMotion());
 		}
 		std::string GetName() const
 		{
