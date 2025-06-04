@@ -11,13 +11,22 @@ namespace System
 		InputSystem() = default;
 		~InputSystem() = default;
 		void HandleInput(SDL_Event& event);
-		void RegisterAction(const std::string& actionName);
-		void BindingToAction(const std::string& actionName, Components::InputBinding binding);
+		void RegisterAction(Components::InputAction action);
 		bool IsActionPressed(const std::string& actionName) const;
 		bool IsWindowCloseRequested() const
 		{
 			return m_isWindowCloseRequested;
 		}
+		const Vec2& GetMousePosition(const std::string& actionName) const
+		{
+			return m_registeredActions.at(actionName).mousePosition;
+		}
+		const Vec2& GetMouseDelta(const std::string& actionName) const
+		{
+			return m_registeredActions.at(actionName).mouseDelta;
+		}
+
+
 	private:
 		void HandleKeyDown(SDL_Event& event);
 		void HandleKeyUp(SDL_Event& event);

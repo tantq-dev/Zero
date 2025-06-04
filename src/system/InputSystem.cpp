@@ -1,4 +1,6 @@
 #include "InputSystem.h"
+#include "Logger.h"
+#include <string>
 namespace System
 {
 	void InputSystem::HandleInput(SDL_Event& event)
@@ -29,14 +31,9 @@ namespace System
 	
 	}
 
-	void InputSystem::RegisterAction(const std::string& actionName)
+	void InputSystem::RegisterAction(Components::InputAction action)
 	{
-		m_registeredActions.insert_or_assign(actionName, Components::InputAction(actionName));
-	}
-
-	void InputSystem::BindingToAction(const std::string& actionName, Components::InputBinding binding)
-	{
-		m_registeredActions[actionName].bindings.push_back(binding);
+		m_registeredActions.insert_or_assign(action.GetName(), std::move(action));
 	}
 
 	bool InputSystem::IsActionPressed(const std::string& actionName) const
@@ -84,7 +81,15 @@ namespace System
 
 	void InputSystem::HandleMouseMotion(SDL_Event& event)
 	{
-
+		for (auto& action : m_registeredActions)
+		{
+			if (action.second.hasMouseMotion)
+			{
+				LOG_INFO("Mouse Motion Detected for action: " + std::to_string(event.motion.x) + ", " + std::to_string(event.motion.y));
+				action.second.mousePosition = { static_cast<float>(event.motion.x), static_cast<float>(event.motion.y) };
+				action.second.mouseDelta = { static_cast<float>(event.motion.xrel), static_cast<float>(event.motion.yrel) };
+			}
+		}
 	}
 
 	void InputSystem::HandleWindowCloseRequest(SDL_Event& event)

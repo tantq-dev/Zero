@@ -136,11 +136,58 @@ namespace Components
 
 	struct InputBinding
 	{
-		explicit InputBinding(const SDL_Scancode scancode) : scancode(scancode)
+		enum class Type
 		{
+			Keyboard,
+			MouseButton,
+			MouseMotion
+		};
 
+		Type type;
+		union
+		{
+			SDL_Scancode scancode; // For keyboard
+			Uint8 mouseButton;	   // For mouse buttons (SDL_BUTTON_LEFT, etc.)
+		};
+
+		// 	Without union (separate variables):
+		// ┌─────────────┬──────────────┐
+		// │ SDL_Scancode│ Uint8        │
+		// │ (4 bytes)   │ (1 byte)     │
+		// └─────────────┴──────────────┘
+		// Total: 5 bytes
+
+		// With union:
+		// ┌─────────────┐
+		// │ Same memory │ ← Can hold either SDL_Scancode OR Uint8
+		// │ (4 bytes)   │
+		// └─────────────┘
+		// Total: 4 bytes
+
+		// Private constructor
+	private:
+		InputBinding(Type t) : type(t) {} // named constructor to enforce type
+
+	public:
+		// Named static factory methods
+		static InputBinding Keyboard(SDL_Scancode key)
+		{
+			InputBinding binding(Type::Keyboard);
+			binding.scancode = key;
+			return binding;
 		}
-		SDL_Scancode scancode;
+
+		static InputBinding MouseButton(Uint8 button)
+		{
+			InputBinding binding(Type::MouseButton);
+			binding.mouseButton = button;
+			return binding;
+		}
+
+		static InputBinding MouseMotion()
+		{
+			return InputBinding(Type::MouseMotion);
+		}
 	};
 
 	struct InputAction
@@ -149,13 +196,33 @@ namespace Components
 		std::vector<InputBinding> bindings;
 		bool isPressed = false;
 		bool isHeld = false;
+
+		Vec2 mousePosition = { 0.0f, 0.0f };
+		Vec2 mouseDelta = { 0.0f, 0.0f };
+
+		bool hasMouseMotion = false;
+
 		InputAction() = default;
 		explicit InputAction(std::string  actionName) : name(std::move(actionName)) {}
 		void AddBinding(SDL_Scancode scancode)
 		{
-			bindings.emplace_back(scancode);
+			bindings.push_back(InputBinding::Keyboard(scancode));
 		}
 
+		void AddMouseButtonBinding(Uint8 mouseButton) 
+		{
+			bindings.push_back(InputBinding::MouseButton(mouseButton)); 
+		}
+
+		void AddMouseMotionBinding()
+		{
+			hasMouseMotion = true;
+			bindings.push_back(InputBinding::MouseMotion()); 
+		}
+		std::string GetName() const
+		{
+			return name;
+		}
 	};
 
 
