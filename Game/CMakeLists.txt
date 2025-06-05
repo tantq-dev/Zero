@@ -1,3 +1,4 @@
+#Game CmakeLists
 project(ZeroGame LANGUAGES CXX)
 
 file(GLOB_RECURSE GAME_SRC CONFIGURE_DEPENDS
