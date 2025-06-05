@@ -214,7 +214,7 @@ namespace entt {}
 
 // NOLINTBEGIN(cppcoreguidelines-macro-*,modernize-macro-*)
 
-#define ENTT_VERSION_MAJOR 3
+#define ENTT_VERSION_MAJOR 
 #define ENTT_VERSION_MINOR 15
 #define ENTT_VERSION_PATCH 0
 

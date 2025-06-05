@@ -264,6 +264,13 @@ struct SDL_LogicalAudioDevice
     // true if device was opened with SDL_OpenAudioDeviceStream (so it forbids binding changes, etc).
     bool simplified;
 
+    // If non-NULL, callback into the app that alerts it to start/end of device iteration.
+    SDL_AudioIterationCallback iteration_start;
+    SDL_AudioIterationCallback iteration_end;
+
+    // App-supplied pointer for iteration callbacks.
+    void *iteration_userdata;
+
     // If non-NULL, callback into the app that lets them access the final postmix buffer.
     SDL_AudioPostmixCallback postmix;
 
@@ -386,6 +393,7 @@ extern AudioBootStrap PS2AUDIO_bootstrap;
 extern AudioBootStrap PSPAUDIO_bootstrap;
 extern AudioBootStrap VITAAUD_bootstrap;
 extern AudioBootStrap N3DSAUDIO_bootstrap;
+extern AudioBootStrap NGAGEAUDIO_bootstrap;
 extern AudioBootStrap EMSCRIPTENAUDIO_bootstrap;
 extern AudioBootStrap QSAAUDIO_bootstrap;
 

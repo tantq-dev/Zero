@@ -16,4 +16,4 @@ add_subdirectory(Engine)
 add_subdirectory(Game)
 
 # Optionally add third-party libs
-add_subdirectory(extern/SDL EXCLUDE_FROM_ALL)
+add_subdirectory(Extern/SDL EXCLUDE_FROM_ALL)
