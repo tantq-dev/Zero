@@ -5,6 +5,7 @@
 #include "system/RenderSystem.h"
 #include "system/AnimationSystem.h"
 #include "system/InputSystem.h"
+#include "system/CameraSystem.h"
 
 namespace Core
 {
@@ -22,11 +23,14 @@ namespace Core
 		void Render(SDL_Renderer& renderer) override;
 
 	private:
-		std::unique_ptr<System::PhysicSystem> m_physicSystem;
-		std::unique_ptr<System::RenderSystem> m_renderSystem;
-		std::unique_ptr<System::AnimationSystem> m_animationSystem;
-		std::unique_ptr<System::InputSystem> m_inputSystem;
-		float m_timeAccumulator = 0.0f;
+		std::unique_ptr<System::PhysicSystem>		m_physicSystem;
+		std::unique_ptr<System::RenderSystem>		m_renderSystem;
+		std::unique_ptr<System::AnimationSystem>	m_animationSystem;
+		std::unique_ptr<System::InputSystem>		m_inputSystem;
+		std::unique_ptr<System::CameraSystem>		m_cameraSystem;
+
+
+		Components::Tilemap m_tilemap = Components::Tilemap(50, 50, 100, 100);;
 	};
 }
 

@@ -71,12 +71,30 @@ namespace System
 
 	void InputSystem::HandleMouseButtonDown(SDL_Event& event)
 	{
-
+		for (auto& action : m_registeredActions)
+		{
+			for (auto& binding : action.second.bindings)
+			{
+				if (binding.type == Components::InputBinding::Type::MouseButton)
+				{
+					action.second.isPressed = true;
+				}
+			}
+		}
 	}
 
 	void InputSystem::HandleMouseButtonUp(SDL_Event& event)
 	{
-
+		for (auto& action : m_registeredActions)
+		{
+			for (auto& binding : action.second.bindings)
+			{
+				if (binding.type == Components::InputBinding::Type::MouseButton)
+				{
+					action.second.isPressed = false;
+				}
+			}
+		}
 	}
 
 	void InputSystem::HandleMouseMotion(SDL_Event& event)

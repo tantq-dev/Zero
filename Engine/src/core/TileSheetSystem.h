@@ -1,18 +1,16 @@
 #pragma once
-class TileSheetSystem
+#include "Components.h"
+namespace Core
 {
-public:
-	TileSheetSystem();
-	~TileSheetSystem();
+	class TileSheetSystem
+	{
+	public:
+		TileSheetSystem();
+		~TileSheetSystem();
 
-private:
-
-};
-
-TileSheetSystem::TileSheetSystem()
-{
+	private:
+		void RenderTileSheet(Components::Tilemap& tileMap);
+	};
 }
 
-TileSheetSystem::~TileSheetSystem()
-{
-}
+

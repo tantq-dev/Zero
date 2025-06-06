@@ -26,13 +26,54 @@ namespace System
 				m_dstRect.w = transform.scale.x;
 				m_dstRect.h = transform.scale.y;
 
-				SDL_RenderTexture(&renderer, animation->texture , srcRect, &m_dstRect);
+				SDL_RenderTexture(&renderer, animation->texture, srcRect, &m_dstRect);
+				delete srcRect; // Clean up the dynamically allocated srcRect
 			}
 
 
-			
+
 		}
 		SDL_RenderPresent(&renderer);
+	}
+
+	void RenderSystem::RenderTileMap(Components::Tilemap& tileMap, SDL_Renderer& renderer, System::CameraSystem& cam)
+	{
+		// Get tilemap properties
+		const int tileWidth = tileMap.GetTileWidth();
+		const int tileHeight = tileMap.GetTileHeight();
+		const int mapWidth = tileMap.GetMapWidth();
+		const int mapHeight = tileMap.GetMapHeight();
+		const int mapRows = mapHeight / tileHeight;
+		const int mapCols = mapWidth / tileWidth;
+
+		// Set color for grid lines
+		SDL_SetRenderDrawColor(&renderer, 255, 255, 255, 128);
+
+		// Prepare vertex arrays for horizontal and vertical lines
+		std::vector<SDL_FPoint> vertices;
+		vertices.reserve((mapRows + 1 + mapCols + 1) * 2); // 2 points per line
+
+		// Create horizontal grid lines
+		for (int r = 0; r <= mapRows; r++) {
+			const float y = r * tileHeight;
+			vertices.push_back({ 0.0f + cam.GetCameraPosition().x , y + cam.GetCameraPosition().y });                // Start point
+			vertices.push_back({ static_cast<float>(mapWidth) + cam.GetCameraPosition().x, y + cam.GetCameraPosition().y }); // End point
+		}
+
+		// Create vertical grid lines
+		for (int c = 0; c <= mapCols; c++) {
+			const float x = c * tileWidth;
+			vertices.push_back({ x - cam.GetCameraPosition().x, 0.0f + cam.GetCameraPosition().y });                // Start point
+			vertices.push_back({ x - cam.GetCameraPosition().x, static_cast<float>(mapHeight + cam.GetCameraPosition().y) }); // End point
+		}
+
+		// Batch render all lines in one call
+		for (size_t i = 0; i < vertices.size(); i += 2) {
+			SDL_RenderLine(&renderer,
+				vertices[i].x, vertices[i].y,
+				vertices[i + 1].x, vertices[i + 1].y);
+		}
+
 	}
 
 }

@@ -6,17 +6,23 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#define MATRIX_2D_INT std::vector<std::vector<int>>
 namespace Components
 {
 
-	/**
-	* @brief Transform component that defines an entity's position, scale, and rotation in 2D space.
-	*
-	* This component is used to represent the spatial properties of an entity:
-	* - Position: The entity's location in 2D space
-	* - Scale: The entity's size multiplier in both X and Y directions
-	* - Rotation: The entity's orientation in radians
-	*/
+	//TODO: add detail file structure to Components.h
+	// [Transform]
+	// [Velocity]
+	// [Collider]
+	// [Sprite]
+	// [Animation]
+	// [Animator]
+	// [InputBinding]
+	// [InputAction]
+	// [Tile]
+	// [Tilemap]
+	// [Camera]
+
 	struct Transform
 	{
 		Vec2 position = { 0.0f, 0.0f };
@@ -225,6 +231,113 @@ namespace Components
 		}
 	};
 
+
+	//TileMap
+	struct Tile
+	{
+		Vec2 position;
+		Vec2 size;
+	};
+
+	struct Tilemap
+	{
+		MATRIX_2D_INT tiles; // 2D grid of tile indices
+		int tileWidth = 0;
+		int tileHeight = 0;
+		int mapWidth = 0;
+		int mapHeight = 0;
+		Tilemap(int tw, int th, int mw, int mh)
+			: tileWidth(tw), tileHeight(th), mapWidth(mw), mapHeight(mh)
+		{
+			tiles.resize(mapHeight, std::vector<int>(mapWidth, -1)); // Initialize with -1 (no tile)
+		}
+		void SetTile(int x, int y, int tileIndex)
+		{
+			if (x >= 0 && x < mapWidth && y >= 0 && y < mapHeight)
+			{
+				tiles[y][x] = tileIndex;
+			}
+		}
+		int GetTile(int x, int y) const
+		{
+			if (x >= 0 && x < mapWidth && y >= 0 && y < mapHeight)
+			{
+				return tiles[y][x];
+			}
+			return -1; // Invalid tile index
+		}
+
+		void Clear()
+		{
+			for (auto& row : tiles)
+			{
+				std::fill(row.begin(), row.end(), -1); // Reset all tiles to -1
+			}
+		}
+
+		[[nodiscard]] Vec2 GetTilePosition(int x, int y) const
+		{
+			return { static_cast<float>(x * tileWidth), static_cast<float>(y * tileHeight) };
+		}
+		[[nodiscard]] MATRIX_2D_INT GetTiles() const
+		{
+			return tiles;
+		}
+		[[nodiscard]] int GetTileWidth() const
+		{
+			return tileWidth;
+		}
+		[[nodiscard]] int GetTileHeight() const
+		{
+			return tileHeight;
+		}
+		[[nodiscard]] int GetMapWidth() const
+		{
+			return mapWidth;
+		}
+		[[nodiscard]] int GetMapHeight() const
+		{
+			return mapHeight;
+		}
+
+	};
+
+	// Camera 
+	struct Camera
+	{
+		Vec2 position = { 0,0 };
+		float zoom = 1.0f;
+
+		[[nodiscard]] Vec2 GetPosition() const {
+			return position;
+		}
+
+		void SetPosition(const Vec2 p) {
+			position = p;
+		}
+
+		void Adjust(const Vec2 offset) {
+			position += offset;
+		}
+
+		[[nodiscard]] float GetZoom() const {
+			return zoom;
+		}
+
+		void SetZoom(const float z) {
+			zoom = z;
+		}
+
+		void ZoomIn(const float z) {
+			zoom += z;
+		}
+
+		void ZoomOut(const float z) {
+			zoom -= z;
+		}
+
+
+	};
 
 
 }

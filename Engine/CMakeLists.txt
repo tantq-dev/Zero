@@ -1,5 +1,5 @@
 #Engine CMakeList
-project(Zero LANGUAGES CXX)
+project(ToolEngine LANGUAGES CXX)
 
 # Add ImGui subdirectory
 add_subdirectory(vendored/imgui)
@@ -9,19 +9,19 @@ file(GLOB_RECURSE ENGINE_SRC CONFIGURE_DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/src/*.h
 )
 
-add_library(Zero STATIC ${ENGINE_SRC})
+add_library(ToolEngine STATIC ${ENGINE_SRC} "src/system/CameraSystem.h" "src/system/CameraSystem.cpp")
 
-target_include_directories(Zero PUBLIC
+target_include_directories(ToolEngine PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}/vendored
 )
 
-target_link_libraries(Zero PUBLIC
+target_link_libraries(ToolEngine PUBLIC
     SDL3::SDL3
     imgui  # Add ImGui library
 )
 
-target_compile_definitions(Zero PRIVATE
-    $<$<CONFIG:Debug>:ZERO_DEBUG>
-    $<$<CONFIG:Release>:ZERO_RELEASE>
+target_compile_definitions(ToolEngine PRIVATE
+    $<$<CONFIG:Debug>:TOOL_ENGINE_DEBUG>
+    $<$<CONFIG:Release>:TOOL_ENGINE_RELEASE>
 )
