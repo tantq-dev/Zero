@@ -11,10 +11,19 @@ namespace System {
 		void SetCameraPosition(const Vec2 pos);
 		[[nodiscard]] Vec2 GetCameraPosition() const
 		{
-			return cameraMap.at(m_currentCamera).GetPosition(); // todo: return current camera position
+			return cameraMap.at(m_currentCamera).GetPosition(); 
 		};
+		[[nodiscard]] int GetCameraZoom() const
+		{
+			return cameraMap.at(m_currentCamera).GetZoom(); 
+		};	
 		void SetCurrentCamera(const std::string c) {
 			m_currentCamera = c;
+		}
+
+		void AdjustCameraZoom(const float zoom) {
+			
+			cameraMap.at(m_currentCamera).AdjustZoom(zoom);
 		}
 
 		void AddCamera(const std::string name, const Components::Camera cam) {

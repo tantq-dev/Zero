@@ -4,7 +4,6 @@
 #include "resources/ResourcesManager.h"
 #include "utilities/Logger.h"
 
-
 // Helper function to generate a random float in a given range
 float RandomFloat(float min, float max) {
 	std::random_device rd;
@@ -42,16 +41,17 @@ namespace Core
 		Components::InputAction actionSpace("Test");
 		Components::InputAction actionMouse("Test_Mouse");
 		Components::InputAction actionMouseMotion("Test_Mouse_Motion");
+		Components::InputAction actionMouseWheel("Test_Mouse_Wheel");
 		actionSpace.AddBinding(SDL_SCANCODE_SPACE);
 		actionMouse.AddMouseButtonBinding(SDL_BUTTON_LEFT);
 		actionMouseMotion.AddMouseMotionBinding();
+		actionMouseWheel.AddMouseWheelBinding();
 
 		m_inputSystem->RegisterAction(actionSpace);
 		m_inputSystem->RegisterAction(actionMouse);
 		m_inputSystem->RegisterAction(actionMouseMotion);
-		Components::InputBinding inputActionSpace = Components::InputBinding::Keyboard(SDL_SCANCODE_SPACE);
-		Components::InputBinding inputActionMouseLeft = Components::InputBinding::MouseButton(SDL_BUTTON_LEFT);
-		Components::InputBinding inputActionMouseMotion = Components::InputBinding::MouseMotion();
+		m_inputSystem->RegisterAction(actionMouseWheel);
+
 
 		Components::Camera camera;
 		m_cameraSystem->AddCamera("Main", camera);
@@ -63,11 +63,20 @@ namespace Core
 	void ScenePlay::Update(const float deltaTime)
 	{
 		if (m_inputSystem->IsActionPressed("Test_Mouse")) {
-			Vec2 mouseDelta = m_inputSystem->GetMouseDelta("Test_Mouse_Motion");
+			Vec2 mouseDelta = m_inputSystem->GetMousePosition("Test_Mouse_Motion") - m_lastMousePosition;
+			m_lastMousePosition = m_inputSystem->GetMousePosition("Test_Mouse_Motion");
+
+			if (mouseDelta == m_inputSystem->GetMousePosition("Test_Mouse_Motion")) {
+				return; // Skip the first frame to avoid a large jump
+			}
 			m_cameraSystem->AdjustCameraPosition(mouseDelta);
 		}
+		else {
+			m_lastMousePosition = Vec2::zero();
+		}
 
-
+		m_cameraSystem->AdjustCameraZoom(m_inputSystem->GetMouseWheelDelta("Test_Mouse_Wheel"));
+		m_inputSystem->ResetMouseWheelDelta("Test_Mouse_Wheel");
 	}
 	void ScenePlay::HandleInput(SDL_Event& event)
 	{

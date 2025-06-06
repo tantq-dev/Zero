@@ -6,6 +6,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include "utilities/Logger.h"
 #define MATRIX_2D_INT std::vector<std::vector<int>>
 namespace Components
 {
@@ -146,7 +147,8 @@ namespace Components
 		{
 			Keyboard,
 			MouseButton,
-			MouseMotion
+			MouseMotion,
+			MouseWheel 
 		};
 
 		Type type;
@@ -194,6 +196,11 @@ namespace Components
 		{
 			return InputBinding(Type::MouseMotion);
 		}
+
+		static InputBinding MouseWheel()
+		{
+			return InputBinding(Type::MouseWheel);
+		}
 	};
 
 	struct InputAction
@@ -204,8 +211,7 @@ namespace Components
 		bool isHeld = false;
 
 		Vec2 mousePosition = { 0.0f, 0.0f };
-		Vec2 mouseDelta = { 0.0f, 0.0f };
-
+		float mouseWheelDelta = 0.0f; // For mouse wheel input
 		bool hasMouseMotion = false;
 
 		InputAction() = default;
@@ -224,6 +230,11 @@ namespace Components
 		{
 			hasMouseMotion = true;
 			bindings.push_back(InputBinding::MouseMotion());
+		}
+
+		void AddMouseWheelBinding()
+		{
+			bindings.push_back(InputBinding::MouseWheel());
 		}
 		std::string GetName() const
 		{
@@ -324,16 +335,18 @@ namespace Components
 			return zoom;
 		}
 
-		void SetZoom(const float z) {
+		void SetZoom(const int z) {
 			zoom = z;
 		}
 
-		void ZoomIn(const float z) {
-			zoom += z;
-		}
+		void AdjustZoom(const float z) {
+			if (zoom + z <= 0)
+			{
+				return;
+			}
 
-		void ZoomOut(const float z) {
-			zoom -= z;
+			zoom += z;
+			LOG_INFO("Zoom" + std::to_string(zoom));
 		}
 
 

@@ -23,5 +23,9 @@ public:
 	float dist(const Vec2& rhs) const;
 	float length () const;
 	Vec2& normalize();
+	
+	static Vec2 zero() {
+		return Vec2(0, 0);
+	}
 
 };

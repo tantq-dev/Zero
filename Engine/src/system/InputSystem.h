@@ -13,6 +13,7 @@ namespace System
 		void HandleInput(SDL_Event& event);
 		void RegisterAction(Components::InputAction action);
 		bool IsActionPressed(const std::string& actionName) const;
+		int GetMouseWheelDelta(const std::string& actionName) const;
 		bool IsWindowCloseRequested() const
 		{
 			return m_isWindowCloseRequested;
@@ -21,11 +22,8 @@ namespace System
 		{
 			return m_registeredActions.at(actionName).mousePosition;
 		}
-		const Vec2& GetMouseDelta(const std::string& actionName) const
-		{
-			return m_registeredActions.at(actionName).mouseDelta;
-		}
 
+		void ResetMouseWheelDelta(const std::string& actionName);
 
 	private:
 		void HandleKeyDown(SDL_Event& event);
@@ -33,6 +31,7 @@ namespace System
 		void HandleMouseButtonDown(SDL_Event& event);
 		void HandleMouseButtonUp(SDL_Event& event);
 		void HandleMouseMotion(SDL_Event& event);
+		void HandleMouseWheel(SDL_Event& event);
 		void HandleWindowCloseRequest(SDL_Event& event);
 		std::unordered_map<std::string, Components::InputAction> m_registeredActions;
 		bool m_isWindowCloseRequested = false;

@@ -1,4 +1,5 @@
 #include "RenderSystem.h"
+#include "config/ApplicationConfig.h"
 namespace System
 {
 	void RenderSystem::Render(entt::registry& registry, SDL_Renderer& renderer)
@@ -39,12 +40,14 @@ namespace System
 	void RenderSystem::RenderTileMap(Components::Tilemap& tileMap, SDL_Renderer& renderer, System::CameraSystem& cam)
 	{
 		// Get tilemap properties
-		const int tileWidth = tileMap.GetTileWidth();
-		const int tileHeight = tileMap.GetTileHeight();
-		const int mapWidth = tileMap.GetMapWidth();
-		const int mapHeight = tileMap.GetMapHeight();
-		const int mapRows = mapHeight / tileHeight;
-		const int mapCols = mapWidth / tileWidth;
+		const float scrollSensitivity = 0.1f;
+		const float cameraZoom = cam.GetCameraZoom()* scrollSensitivity;
+		const float tileWidth = tileMap.GetTileWidth()* cameraZoom;
+		const float tileHeight = tileMap.GetTileHeight() * cameraZoom;
+		const float mapWidth = tileMap.GetMapWidth()* cameraZoom;
+		const float mapHeight = tileMap.GetMapHeight()* cameraZoom;
+		const float mapRows = mapHeight / tileHeight;
+		const float mapCols = mapWidth / tileWidth;
 
 		// Set color for grid lines
 		SDL_SetRenderDrawColor(&renderer, 255, 255, 255, 128);
@@ -56,15 +59,23 @@ namespace System
 		// Create horizontal grid lines
 		for (int r = 0; r <= mapRows; r++) {
 			const float y = r * tileHeight;
-			vertices.push_back({ 0.0f + cam.GetCameraPosition().x , y + cam.GetCameraPosition().y });                // Start point
-			vertices.push_back({ static_cast<float>(mapWidth) + cam.GetCameraPosition().x, y + cam.GetCameraPosition().y }); // End point
+			vertices.push_back(
+				{ 0.0f + cam.GetCameraPosition().x - mapWidth/2 + ApplicationConfig::DEFAULT_WINDOW_WIDTH/2
+				, y + cam.GetCameraPosition().y- mapHeight / 2 + ApplicationConfig::DEFAULT_WINDOW_HEIGHT /2});                // Start point
+			vertices.push_back(
+				{ static_cast<float>(mapWidth) + cam.GetCameraPosition().x - mapWidth / 2  + ApplicationConfig::DEFAULT_WINDOW_WIDTH/2,
+				y + cam.GetCameraPosition().y - mapHeight / 2 + ApplicationConfig::DEFAULT_WINDOW_HEIGHT/2 }); // End point
 		}
 
 		// Create vertical grid lines
 		for (int c = 0; c <= mapCols; c++) {
 			const float x = c * tileWidth;
-			vertices.push_back({ x - cam.GetCameraPosition().x, 0.0f + cam.GetCameraPosition().y });                // Start point
-			vertices.push_back({ x - cam.GetCameraPosition().x, static_cast<float>(mapHeight + cam.GetCameraPosition().y) }); // End point
+			vertices.push_back(
+				{ x + cam.GetCameraPosition().x - mapWidth / 2 + ApplicationConfig::DEFAULT_WINDOW_WIDTH /2,
+				0.0f + cam.GetCameraPosition().y - mapHeight / 2 + ApplicationConfig::DEFAULT_WINDOW_HEIGHT /2 });                // Start point
+			vertices.push_back(
+				{ x + cam.GetCameraPosition().x - mapWidth / 2 + ApplicationConfig::DEFAULT_WINDOW_WIDTH /2,
+				static_cast<float>(mapHeight + cam.GetCameraPosition().y - mapHeight / 2 + ApplicationConfig::DEFAULT_WINDOW_HEIGHT/2) }); // End point
 		}
 
 		// Batch render all lines in one call

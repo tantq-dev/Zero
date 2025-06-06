@@ -22,9 +22,14 @@ namespace System
 		case SDL_EVENT_MOUSE_MOTION:
 			HandleMouseMotion(event);
 			break;
+		case SDL_EVENT_MOUSE_WHEEL:
+			HandleMouseWheel(event);
+			break;
+
 		case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
 			HandleWindowCloseRequest(event);
 			break;
+
 		default:
 			break;
 		}
@@ -39,6 +44,16 @@ namespace System
 	bool InputSystem::IsActionPressed(const std::string& actionName) const
 	{
 		return m_registeredActions.at(actionName).isPressed;
+	}
+
+	int InputSystem::GetMouseWheelDelta(const std::string& actionName) const
+	{
+		auto it = m_registeredActions.find(actionName);
+		if (it != m_registeredActions.end())
+		{
+			return it->second.mouseWheelDelta;
+		}
+		return 0;
 	}
 
 	void InputSystem::HandleKeyDown(SDL_Event& event)
@@ -103,10 +118,30 @@ namespace System
 		{
 			if (action.second.hasMouseMotion)
 			{
-				LOG_INFO("Mouse Motion Detected for action: " + std::to_string(event.motion.x) + ", " + std::to_string(event.motion.y));
 				action.second.mousePosition = { static_cast<float>(event.motion.x), static_cast<float>(event.motion.y) };
-				action.second.mouseDelta = { static_cast<float>(event.motion.xrel), static_cast<float>(event.motion.yrel) };
 			}
+		}
+	}
+
+	void InputSystem::HandleMouseWheel(SDL_Event& event)
+	{
+		for (auto& action : m_registeredActions)
+		{
+			for (auto& binding : action.second.bindings )
+			{
+				if (binding.type == Components::InputBinding::Type::MouseWheel) {
+					action.second.mouseWheelDelta = event.wheel.integer_y;
+				}
+			}
+		}
+	}
+
+	void InputSystem::ResetMouseWheelDelta(const std::string& actionName)
+	{
+		auto it = m_registeredActions.find(actionName);
+		if (it != m_registeredActions.end())
+		{
+			it->second.mouseWheelDelta = 0;
 		}
 	}
 

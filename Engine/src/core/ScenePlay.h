@@ -6,7 +6,7 @@
 #include "system/AnimationSystem.h"
 #include "system/InputSystem.h"
 #include "system/CameraSystem.h"
-
+// <summary> This is the example scene for the game. </summary>
 namespace Core
 {
 	class Game;
@@ -30,7 +30,8 @@ namespace Core
 		std::unique_ptr<System::CameraSystem>		m_cameraSystem;
 
 
-		Components::Tilemap m_tilemap = Components::Tilemap(50, 50, 100, 100);;
+		Components::Tilemap m_tilemap = Components::Tilemap(50, 50, 1000, 1000);
+		Vec2 m_lastMousePosition = { 0.0f, 0.0f };
 	};
 }
 
