@@ -42,12 +42,11 @@ namespace System
 		// Get tilemap properties
 		const float scrollSensitivity = 0.1f;
 		const float cameraZoom = cam.GetCameraZoom()* scrollSensitivity;
-		const float tileWidth = tileMap.GetTileWidth()* cameraZoom;
-		const float tileHeight = tileMap.GetTileHeight() * cameraZoom;
+		const float tileSize = tileMap.GetTileSize()* cameraZoom;
 		const float mapWidth = tileMap.GetMapWidth()* cameraZoom;
 		const float mapHeight = tileMap.GetMapHeight()* cameraZoom;
-		const float mapRows = mapHeight / tileHeight;
-		const float mapCols = mapWidth / tileWidth;
+		const float mapRows = mapHeight / tileSize;
+		const float mapCols = mapWidth / tileSize;
 
 		// Set color for grid lines
 		SDL_SetRenderDrawColor(&renderer, 255, 255, 255, 128);
@@ -58,7 +57,7 @@ namespace System
 
 		// Create horizontal grid lines
 		for (int r = 0; r <= mapRows; r++) {
-			const float y = r * tileHeight;
+			const float y = r * tileSize;
 			vertices.push_back(
 				{ 0.0f + cam.GetCameraPosition().x - mapWidth/2 + ApplicationConfig::DEFAULT_WINDOW_WIDTH/2
 				, y + cam.GetCameraPosition().y- mapHeight / 2 + ApplicationConfig::DEFAULT_WINDOW_HEIGHT /2});                // Start point
@@ -69,7 +68,7 @@ namespace System
 
 		// Create vertical grid lines
 		for (int c = 0; c <= mapCols; c++) {
-			const float x = c * tileWidth;
+			const float x = c * tileSize;
 			vertices.push_back(
 				{ x + cam.GetCameraPosition().x - mapWidth / 2 + ApplicationConfig::DEFAULT_WINDOW_WIDTH /2,
 				0.0f + cam.GetCameraPosition().y - mapHeight / 2 + ApplicationConfig::DEFAULT_WINDOW_HEIGHT /2 });                // Start point

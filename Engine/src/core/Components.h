@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <vector>
 #include "utilities/Logger.h"
+#include <stdexcept>
 #define MATRIX_2D_INT std::vector<std::vector<int>>
 namespace Components
 {
@@ -248,65 +249,54 @@ namespace Components
 	{
 		Vec2 position;
 		Vec2 size;
+		Tile() = default;
+		Tile(const Vec2& pos, const Vec2& sz)
+			: position(pos), size(sz) {}
+		[[nodiscard]] Vec2 GetPosition() const { return position; }
+		[[nodiscard]] Vec2 GetSize() const { return size; }
+		[[nodiscard]] Vec2 GetCenter() const { return position + size * 0.5f; } // Center of the tile
 	};
 
 	struct Tilemap
 	{
-		MATRIX_2D_INT tiles; // 2D grid of tile indices
-		int tileWidth = 0;
-		int tileHeight = 0;
+		std::vector<Tile> tiles; // 2D grid of tile indices
+		int tileSize = 0;
 		int mapWidth = 0;
 		int mapHeight = 0;
-		Tilemap(int tw, int th, int mw, int mh)
-			: tileWidth(tw), tileHeight(th), mapWidth(mw), mapHeight(mh)
+		Tilemap(int ts, int th, int mw, int mh)
+			: tileSize(ts), mapWidth(mw), mapHeight(mh)
 		{
-			tiles.resize(mapHeight, std::vector<int>(mapWidth, -1)); // Initialize with -1 (no tile)
-		}
-		void SetTile(int x, int y, int tileIndex)
-		{
-			if (x >= 0 && x < mapWidth && y >= 0 && y < mapHeight)
+			for (int i = 0; i < mapWidth * mapHeight; i++)
 			{
-				tiles[y][x] = tileIndex;
+				tiles.push_back(
+					{
+					Vec2{(i % mapWidth) * tileSize, (i / mapWidth) * tileSize}, // Calculate position based on index
+					Vec2{static_cast<float>(tileSize), static_cast<float>(tileSize)} // Set size
+					}
+				);
 			}
 		}
-		int GetTile(int x, int y) const
+	
+		[[nodiscard]] const Tile& GetTiles(int index)
 		{
-			if (x >= 0 && x < mapWidth && y >= 0 && y < mapHeight)
+			if (index < 0 || index >= tiles.size())
 			{
-				return tiles[y][x];
+				throw std::out_of_range("Tile index out of range: " + std::to_string(index));
 			}
-			return -1; // Invalid tile index
+			return tiles[index];
+		}
+		
+		[[nodiscard]] int GetTileSize() const
+		{
+			return tileSize;
 		}
 
-		void Clear()
-		{
-			for (auto& row : tiles)
-			{
-				std::fill(row.begin(), row.end(), -1); // Reset all tiles to -1
-			}
-		}
-
-		[[nodiscard]] Vec2 GetTilePosition(int x, int y) const
-		{
-			return { static_cast<float>(x * tileWidth), static_cast<float>(y * tileHeight) };
-		}
-		[[nodiscard]] MATRIX_2D_INT GetTiles() const
-		{
-			return tiles;
-		}
-		[[nodiscard]] int GetTileWidth() const
-		{
-			return tileWidth;
-		}
-		[[nodiscard]] int GetTileHeight() const
-		{
-			return tileHeight;
-		}
 		[[nodiscard]] int GetMapWidth() const
 		{
 			return mapWidth;
 		}
 		[[nodiscard]] int GetMapHeight() const
+
 		{
 			return mapHeight;
 		}
