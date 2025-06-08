@@ -92,7 +92,10 @@ namespace System
 			{
 				if (binding.type == Components::InputBinding::Type::MouseButton)
 				{
-					action.second.isPressed = true;
+					if (event.button.button == binding.mouseButton)
+					{
+						action.second.isPressed = true;
+					}
 				}
 			}
 		}
@@ -106,7 +109,10 @@ namespace System
 			{
 				if (binding.type == Components::InputBinding::Type::MouseButton)
 				{
-					action.second.isPressed = false;
+					if (event.button.button == binding.mouseButton)
+					{
+						action.second.isPressed = false;
+					}
 				}
 			}
 		}

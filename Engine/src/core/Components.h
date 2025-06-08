@@ -249,6 +249,7 @@ namespace Components
 	{
 		Vec2 position;
 		Vec2 size;
+		bool isColor = false; // If true, the tile is colored
 		Tile() = default;
 		Tile(const Vec2& pos, const Vec2& sz)
 			: position(pos), size(sz) {}
@@ -257,27 +258,27 @@ namespace Components
 		[[nodiscard]] Vec2 GetCenter() const { return position + size * 0.5f; } // Center of the tile
 	};
 
-	struct Tilemap
+	struct TileSheet
 	{
 		std::vector<Tile> tiles; // 2D grid of tile indices
 		int tileSize = 0;
-		int mapWidth = 0;
-		int mapHeight = 0;
-		Tilemap(int ts, int th, int mw, int mh)
-			: tileSize(ts), mapWidth(mw), mapHeight(mh)
+		int width = 0;
+		int height = 0;
+		TileSheet(int ts, int th, int mw, int mh)
+			: tileSize(ts), width(mw), height(mh)
 		{
-			for (int i = 0; i < mapWidth * mapHeight; i++)
+			for (int i = 0; i < width * height; i++)
 			{
 				tiles.push_back(
 					{
-					Vec2{(i % mapWidth) * tileSize, (i / mapWidth) * tileSize}, // Calculate position based on index
+					Vec2{(i % width) * tileSize, (i / width) * tileSize}, // Calculate position based on index
 					Vec2{static_cast<float>(tileSize), static_cast<float>(tileSize)} // Set size
 					}
 				);
 			}
 		}
 	
-		[[nodiscard]] const Tile& GetTiles(int index)
+		Tile& GetTiles(int index)
 		{
 			if (index < 0 || index >= tiles.size())
 			{
@@ -291,14 +292,14 @@ namespace Components
 			return tileSize;
 		}
 
-		[[nodiscard]] int GetMapWidth() const
+		[[nodiscard]] int GetWidth() const
 		{
-			return mapWidth;
+			return width;
 		}
-		[[nodiscard]] int GetMapHeight() const
+		[[nodiscard]] int GetHeight() const
 
 		{
-			return mapHeight;
+			return height;
 		}
 
 	};
@@ -336,7 +337,6 @@ namespace Components
 			}
 
 			zoom += z;
-			LOG_INFO("Zoom" + std::to_string(zoom));
 		}
 
 

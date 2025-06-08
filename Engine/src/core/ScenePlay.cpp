@@ -36,21 +36,27 @@ namespace Core
 		m_animationSystem = std::make_unique<System::AnimationSystem>();
 		m_inputSystem = std::make_unique<System::InputSystem>();
 		m_cameraSystem = std::make_unique<System::CameraSystem>();
+		m_tileSheetSystem = std::make_unique<System::TileSheetSystem>(Components::TileSheet(50, 50, 1000, 1000));
 
 
 		Components::InputAction actionSpace("Test");
 		Components::InputAction actionMouse("Test_Mouse");
 		Components::InputAction actionMouseMotion("Test_Mouse_Motion");
 		Components::InputAction actionMouseWheel("Test_Mouse_Wheel");
+
+		Components::InputAction actionMiddleMouse("Test_Mouse_Middle");
+
 		actionSpace.AddBinding(SDL_SCANCODE_SPACE);
 		actionMouse.AddMouseButtonBinding(SDL_BUTTON_LEFT);
 		actionMouseMotion.AddMouseMotionBinding();
 		actionMouseWheel.AddMouseWheelBinding();
+		actionMiddleMouse.AddMouseButtonBinding(SDL_BUTTON_MIDDLE);
 
 		m_inputSystem->RegisterAction(actionSpace);
 		m_inputSystem->RegisterAction(actionMouse);
 		m_inputSystem->RegisterAction(actionMouseMotion);
 		m_inputSystem->RegisterAction(actionMouseWheel);
+		m_inputSystem->RegisterAction(actionMiddleMouse);
 
 
 		Components::Camera camera;
@@ -62,7 +68,7 @@ namespace Core
 
 	void ScenePlay::Update(const float deltaTime)
 	{
-		if (m_inputSystem->IsActionPressed("Test_Mouse")) {
+		if (m_inputSystem->IsActionPressed("Test_Mouse_Middle")) {
 			Vec2 mouseDelta = m_inputSystem->GetMousePosition("Test_Mouse_Motion") - m_lastMousePosition;
 			m_lastMousePosition = m_inputSystem->GetMousePosition("Test_Mouse_Motion");
 
@@ -75,6 +81,16 @@ namespace Core
 			m_lastMousePosition = Vec2::zero();
 		}
 
+		if (m_inputSystem->IsActionPressed("Test_Mouse"))
+		{
+			Vec2 mousePos = m_inputSystem->GetMousePosition("Test_Mouse_Motion");
+
+			auto& tile = m_tileSheetSystem->GetTile(mousePos, m_cameraSystem->GetCameraZoom(), m_cameraSystem->GetCameraPosition());
+			tile.isColor = !tile.isColor;
+			LOG_INFO("Tile at position" +  std::to_string(tile.position.x) + " " + std::to_string(tile.position.y));
+		}
+
+
 		m_cameraSystem->AdjustCameraZoom(m_inputSystem->GetMouseWheelDelta("Test_Mouse_Wheel"));
 		m_inputSystem->ResetMouseWheelDelta("Test_Mouse_Wheel");
 	}
@@ -84,7 +100,7 @@ namespace Core
 	}
 	void ScenePlay::Render(SDL_Renderer& renderer)
 	{
-		m_renderSystem->RenderTileMap(m_tilemap, renderer, *m_cameraSystem);
+		m_renderSystem->RenderTileMap(m_tileSheetSystem->GetTileSheets(), renderer, *m_cameraSystem);
 		m_renderSystem->Render(m_Registry, renderer);
 	}
 }

@@ -10,7 +10,7 @@ namespace System
 		RenderSystem() = default;
 		~RenderSystem() = default;
 		void Render(entt::registry& registry, SDL_Renderer& renderer);
-		void RenderTileMap(Components::Tilemap& tileMap, SDL_Renderer& renderer, System::CameraSystem& cam);
+		void RenderTileMap( const Components::TileSheet& tileMap, SDL_Renderer& renderer, System::CameraSystem& cam);
 	private:
 		SDL_FRect m_dstRect{ 0, 0, 0, 0 };
 

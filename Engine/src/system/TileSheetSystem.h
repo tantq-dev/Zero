@@ -8,10 +8,10 @@ namespace System
 	public:
 		TileSheetSystem() = default;
 		~TileSheetSystem() = default;
-		void Init(Components::Tilemap tileSheets);
-		[[nodiscard]]const Components::Tilemap& GetTileSheets() const { return m_tileSheets; }
-		[[nodiscard]]const Components::Tile& GetTile(const Vec2 mousePosition);
+		TileSheetSystem(Components::TileSheet tilesheet);
+		const Components::TileSheet& GetTileSheets() const { return m_tileSheets; }
+		Components::Tile& GetTile(const Vec2 mousePosition, float camZoom, Vec2 camPosition);
 	private:
-		Components::Tilemap m_tileSheets;
+		Components::TileSheet m_tileSheets = Components::TileSheet(0, 0, 0, 0);;
 	};
 } // namespace System

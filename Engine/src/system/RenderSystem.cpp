@@ -37,54 +37,87 @@ namespace System
 		SDL_RenderPresent(&renderer);
 	}
 
-	void RenderSystem::RenderTileMap(Components::Tilemap& tileMap, SDL_Renderer& renderer, System::CameraSystem& cam)
-	{
-		// Get tilemap properties
-		const float scrollSensitivity = 0.1f;
-		const float cameraZoom = cam.GetCameraZoom()* scrollSensitivity;
-		const float tileSize = tileMap.GetTileSize()* cameraZoom;
-		const float mapWidth = tileMap.GetMapWidth()* cameraZoom;
-		const float mapHeight = tileMap.GetMapHeight()* cameraZoom;
-		const float mapRows = mapHeight / tileSize;
-		const float mapCols = mapWidth / tileSize;
+    void RenderSystem::RenderTileMap(const Components::TileSheet& tileMap, SDL_Renderer& renderer, System::CameraSystem& cam)
+    {
+        // Get tilemap properties
+        const float scrollSensitivity = 0.1f;
+        const float cameraZoom = cam.GetCameraZoom() * scrollSensitivity;
+        const float tileSize = tileMap.GetTileSize() * cameraZoom;
+        const float mapWidth = tileMap.GetWidth() * cameraZoom;
+        const float mapHeight = tileMap.GetHeight() * cameraZoom;
+        const float mapRows = mapHeight / tileSize;
+        const float mapCols = mapWidth / tileSize;
 
-		// Set color for grid lines
-		SDL_SetRenderDrawColor(&renderer, 255, 255, 255, 128);
+        // Calculate base position for the tilemap
+        const float baseX = cam.GetCameraPosition().x - mapWidth / 2 + ApplicationConfig::DEFAULT_WINDOW_WIDTH / 2;
+        const float baseY = cam.GetCameraPosition().y - mapHeight / 2 + ApplicationConfig::DEFAULT_WINDOW_HEIGHT / 2;
 
-		// Prepare vertex arrays for horizontal and vertical lines
-		std::vector<SDL_FPoint> vertices;
-		vertices.reserve((mapRows + 1 + mapCols + 1) * 2); // 2 points per line
+        // First, render all tiles with appropriate colors
+        for (int r = 0; r < mapRows; r++) {
+            for (int c = 0; c < mapCols; c++) {
+                int tileIndex = r * static_cast<int>(mapCols) + c;
 
-		// Create horizontal grid lines
-		for (int r = 0; r <= mapRows; r++) {
-			const float y = r * tileSize;
-			vertices.push_back(
-				{ 0.0f + cam.GetCameraPosition().x - mapWidth/2 + ApplicationConfig::DEFAULT_WINDOW_WIDTH/2
-				, y + cam.GetCameraPosition().y- mapHeight / 2 + ApplicationConfig::DEFAULT_WINDOW_HEIGHT /2});                // Start point
-			vertices.push_back(
-				{ static_cast<float>(mapWidth) + cam.GetCameraPosition().x - mapWidth / 2  + ApplicationConfig::DEFAULT_WINDOW_WIDTH/2,
-				y + cam.GetCameraPosition().y - mapHeight / 2 + ApplicationConfig::DEFAULT_WINDOW_HEIGHT/2 }); // End point
-		}
+                // Check if the tile exists and should be colored
+                bool isColored = false;  // Default to false
+                if (tileIndex < tileMap.tiles.size()) {
+                    // Determine if this tile should be colored (assuming tiles have a colored property)
+                    // You'll need to adapt this based on your actual tile data structure
+                    isColored = true;  // For example purposes; replace with actual logic
+                }
 
-		// Create vertical grid lines
-		for (int c = 0; c <= mapCols; c++) {
-			const float x = c * tileSize;
-			vertices.push_back(
-				{ x + cam.GetCameraPosition().x - mapWidth / 2 + ApplicationConfig::DEFAULT_WINDOW_WIDTH /2,
-				0.0f + cam.GetCameraPosition().y - mapHeight / 2 + ApplicationConfig::DEFAULT_WINDOW_HEIGHT /2 });                // Start point
-			vertices.push_back(
-				{ x + cam.GetCameraPosition().x - mapWidth / 2 + ApplicationConfig::DEFAULT_WINDOW_WIDTH /2,
-				static_cast<float>(mapHeight + cam.GetCameraPosition().y - mapHeight / 2 + ApplicationConfig::DEFAULT_WINDOW_HEIGHT/2) }); // End point
-		}
+                // Create tile rectangle
+                SDL_FRect tileRect = {
+                    baseX + (c * tileSize),
+                    baseY + (r * tileSize),
+                    tileSize,
+                    tileSize
+                };
 
-		// Batch render all lines in one call
-		for (size_t i = 0; i < vertices.size(); i += 2) {
-			SDL_RenderLine(&renderer,
-				vertices[i].x, vertices[i].y,
-				vertices[i + 1].x, vertices[i + 1].y);
-		}
+                // Set color based on isColored flag
+                if (isColored) {
+                    SDL_SetRenderDrawColor(&renderer, 255, 0, 0, 255);  // Red
+                }
+                else {
+                    SDL_SetRenderDrawColor(&renderer, 0, 0, 0, 255);    // Black
+                }
 
-	}
+                // Fill the tile
+                SDL_RenderFillRect(&renderer, &tileRect);
+            }
+        }
+
+        // Set color for grid lines
+        SDL_SetRenderDrawColor(&renderer, 255, 255, 255, 128);
+
+        // Prepare vertex arrays for horizontal and vertical lines
+        std::vector<SDL_FPoint> vertices;
+        vertices.reserve((mapRows + 1 + mapCols + 1) * 2); // 2 points per line
+
+        // Create horizontal grid lines
+        for (int r = 0; r <= mapRows; r++) {
+            const float y = r * tileSize;
+            vertices.push_back(
+                { baseX, y + baseY });                // Start point
+            vertices.push_back(
+                { baseX + static_cast<float>(mapWidth), y + baseY }); // End point
+        }
+
+        // Create vertical grid lines
+        for (int c = 0; c <= mapCols; c++) {
+            const float x = c * tileSize;
+            vertices.push_back(
+                { x + baseX, baseY });                // Start point
+            vertices.push_back(
+                { x + baseX, baseY + static_cast<float>(mapHeight) }); // End point
+        }
+
+        // Batch render all lines in one call
+        for (size_t i = 0; i < vertices.size(); i += 2) {
+            SDL_RenderLine(&renderer,
+                vertices[i].x, vertices[i].y,
+                vertices[i + 1].x, vertices[i + 1].y);
+        }
+    }
 
 }
 
