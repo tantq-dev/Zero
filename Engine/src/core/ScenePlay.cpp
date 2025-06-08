@@ -36,7 +36,7 @@ namespace Core
 		m_animationSystem = std::make_unique<System::AnimationSystem>();
 		m_inputSystem = std::make_unique<System::InputSystem>();
 		m_cameraSystem = std::make_unique<System::CameraSystem>();
-		m_tileSheetSystem = std::make_unique<System::TileSheetSystem>(Components::TileSheet(50, 50, 1000, 1000));
+		m_tileSheetSystem = std::make_unique<System::TileSheetSystem>(Components::TileSheet(20, 20, 40, 30));
 
 
 		Components::InputAction actionSpace("Test");
@@ -91,7 +91,7 @@ namespace Core
 		}
 
 
-		m_cameraSystem->AdjustCameraZoom(m_inputSystem->GetMouseWheelDelta("Test_Mouse_Wheel"));
+		//m_cameraSystem->AdjustCameraZoom(m_inputSystem->GetMouseWheelDelta("Test_Mouse_Wheel"));
 		m_inputSystem->ResetMouseWheelDelta("Test_Mouse_Wheel");
 	}
 	void ScenePlay::HandleInput(SDL_Event& event)

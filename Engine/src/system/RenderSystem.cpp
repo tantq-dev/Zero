@@ -39,32 +39,19 @@ namespace System
 
     void RenderSystem::RenderTileMap(const Components::TileSheet& tileMap, SDL_Renderer& renderer, System::CameraSystem& cam)
     {
-        // Get tilemap properties
-        const float scrollSensitivity = 0.1f;
-        const float cameraZoom = cam.GetCameraZoom() * scrollSensitivity;
-        const float tileSize = tileMap.GetTileSize() * cameraZoom;
-        const float mapWidth = tileMap.GetWidth() * cameraZoom;
-        const float mapHeight = tileMap.GetHeight() * cameraZoom;
-        const float mapRows = mapHeight / tileSize;
-        const float mapCols = mapWidth / tileSize;
+        const float tileSize = tileMap.GetTileSize();
+        const float mapRows = tileMap.GetHeight();
+        const float mapCols =  tileMap.GetWidth();
 
         // Calculate base position for the tilemap
-        const float baseX = cam.GetCameraPosition().x - mapWidth / 2 + ApplicationConfig::DEFAULT_WINDOW_WIDTH / 2;
-        const float baseY = cam.GetCameraPosition().y - mapHeight / 2 + ApplicationConfig::DEFAULT_WINDOW_HEIGHT / 2;
+        const float baseX = 0; // mapRows * tileSize / 2 + ApplicationConfig::DEFAULT_WINDOW_WIDTH / 2;
+        const float baseY = 0;// mapCols* tileSize / 2 + ApplicationConfig::DEFAULT_WINDOW_HEIGHT / 2;
 
         // First, render all tiles with appropriate colors
         for (int r = 0; r < mapRows; r++) {
             for (int c = 0; c < mapCols; c++) {
+
                 int tileIndex = r * static_cast<int>(mapCols) + c;
-
-                // Check if the tile exists and should be colored
-                bool isColored = false;  // Default to false
-                if (tileIndex < tileMap.tiles.size()) {
-                    // Determine if this tile should be colored (assuming tiles have a colored property)
-                    // You'll need to adapt this based on your actual tile data structure
-                    isColored = true;  // For example purposes; replace with actual logic
-                }
-
                 // Create tile rectangle
                 SDL_FRect tileRect = {
                     baseX + (c * tileSize),
@@ -74,7 +61,7 @@ namespace System
                 };
 
                 // Set color based on isColored flag
-                if (isColored) {
+                if (tileMap.tiles[tileIndex].isColor) {
                     SDL_SetRenderDrawColor(&renderer, 255, 0, 0, 255);  // Red
                 }
                 else {
@@ -96,19 +83,15 @@ namespace System
         // Create horizontal grid lines
         for (int r = 0; r <= mapRows; r++) {
             const float y = r * tileSize;
-            vertices.push_back(
-                { baseX, y + baseY });                // Start point
-            vertices.push_back(
-                { baseX + static_cast<float>(mapWidth), y + baseY }); // End point
+            vertices.push_back({ baseX, y + baseY });                // Start point
+            vertices.push_back({ baseX + static_cast<float>(mapCols *tileSize), y + baseY }); // End point
         }
 
         // Create vertical grid lines
         for (int c = 0; c <= mapCols; c++) {
             const float x = c * tileSize;
-            vertices.push_back(
-                { x + baseX, baseY });                // Start point
-            vertices.push_back(
-                { x + baseX, baseY + static_cast<float>(mapHeight) }); // End point
+            vertices.push_back({ x + baseX, baseY });                // Start point
+            vertices.push_back({ x + baseX, baseY + static_cast<float>(mapRows *tileSize) }); // End point
         }
 
         // Batch render all lines in one call
