@@ -9,35 +9,15 @@ namespace System {
 		CameraSystem() = default;
 		~CameraSystem() = default;
 		void SetCameraPosition(const Vec2 pos);
-		[[nodiscard]] Vec2 GetCameraPosition() const
-		{
-			return cameraMap.at(m_currentCamera).GetPosition(); 
-		};
-		[[nodiscard]] int GetCameraZoom() const
-		{
-			return cameraMap.at(m_currentCamera).GetZoom(); 
-		};	
-		void SetCurrentCamera(const std::string c) {
-			m_currentCamera = c;
-		}
-
-		void AdjustCameraZoom(const float zoom) {
-			
-			cameraMap.at(m_currentCamera).AdjustZoom(zoom);
-		}
-
-		void AddCamera(const std::string name, const Components::Camera cam) {
-			cameraMap.insert_or_assign(name, cam);
-		}
-
-		const Components::Camera& GetCurrentCamera() {
-			return cameraMap.at(m_currentCamera);
-		}
-
-		void AdjustCameraPosition(const Vec2 offset) {
-			cameraMap.at(m_currentCamera).Adjust(offset);
-		}
-
+		Vec2 GetCameraPosition() const;
+		int GetCameraZoom() const;
+		void SetCurrentCamera(const std::string c) { m_currentCamera = c; }
+		void AdjustCameraZoom(const float zoom);
+		void AddCamera(const std::string name, const Components::Camera cam);
+		const Components::Camera& GetCurrentCamera();
+		void AdjustCameraPosition(const Vec2 offset);
+		void CameraViewToWorld(const Vec2& viewPos, Vec2& worldPos);
+		void WorldToCameraView(const Vec2& worldPos, Vec2& viewPos);
 	private:
 		std::unordered_map < std::string, Components::Camera> cameraMap;
 		std::string m_currentCamera = std::string();

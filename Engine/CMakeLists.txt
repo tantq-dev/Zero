@@ -9,7 +9,7 @@ file(GLOB_RECURSE ENGINE_SRC CONFIGURE_DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/src/*.h
 )
 
-add_library(Zero STATIC ${ENGINE_SRC} "src/system/CameraSystem.h" "src/system/CameraSystem.cpp")
+add_library(Zero STATIC ${ENGINE_SRC})
 
 target_include_directories(Zero PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src

@@ -10,7 +10,7 @@ namespace System
 		~GridSystem() = default;
 		GridSystem(Components::Grid tilesheet);
 		const Components::Grid& GetTileSheets() const { return m_tileSheets; }
-		Components::Cell& GetCell(const Vec2 mousePosition, float camZoom, Vec2 camPosition);
+		Components::Cell& GetCell(const Vec2 mousePosition);
 	private:
 		Components::Grid m_tileSheets = Components::Grid(0, 0, 0, 0);;
 	};

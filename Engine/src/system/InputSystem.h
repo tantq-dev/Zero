@@ -13,6 +13,7 @@ namespace System
 		void HandleInput(SDL_Event& event);
 		void RegisterAction(Components::InputAction action);
 		bool IsActionPressed(const std::string& actionName) const;
+		bool IsActionHeld(const std::string& actionName) const;
 		int GetMouseWheelDelta(const std::string& actionName) const;
 		bool IsWindowCloseRequested() const
 		{
@@ -24,6 +25,7 @@ namespace System
 		}
 
 		void ResetMouseWheelDelta(const std::string& actionName);
+		void ResetMousePress(const std::string& actionName);
 
 	private:
 		void HandleKeyDown(SDL_Event& event);

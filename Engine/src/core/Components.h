@@ -310,6 +310,8 @@ namespace Components
 	{
 		Vec2 position = { 0,0 };
 		float zoom = 1.0f;
+		int width = 800; // Default width
+		int height = 600; // Default height
 
 		[[nodiscard]] Vec2 GetPosition() const {
 			return position;
@@ -336,11 +338,8 @@ namespace Components
 			{
 				return;
 			}
-
 			zoom += z;
 		}
-
-
 	};
 
 

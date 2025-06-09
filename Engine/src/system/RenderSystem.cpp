@@ -37,25 +37,30 @@ namespace System
 		SDL_RenderPresent(&renderer);
 	}
 
-	void RenderSystem::RenderTileMap(const Components::Grid& tileMap, SDL_Renderer& renderer, System::CameraSystem& cam)
+	void RenderSystem::RenderGrid(const Components::Grid& tileMap, SDL_Renderer& renderer, System::CameraSystem& cam)
 	{
-		const float tileSize = tileMap.GetCellSize();
+		float tileSize = tileMap.GetCellSize() * cam.GetCameraZoom();
 		const float mapRows = tileMap.GetHeight();
 		const float mapCols = tileMap.GetWidth();
 
-		// Calculate base position for the tilemap
-		const float baseX = ApplicationConfig::DEFAULT_WINDOW_WIDTH / 2 - mapCols * tileSize / 2;
-		const float baseY = ApplicationConfig::DEFAULT_WINDOW_HEIGHT / 2 - mapRows * tileSize / 2;
 
-		// First, render all tiles with appropriate colors
+		// Calculate base position for the tilemap
+		const float baseX = 0;
+		const float baseY = 0;
+
+		Vec2 gridWorldPos = { baseX, baseY };
+		Vec2 cameraPos = {0,0};
+		cam.WorldToCameraView(gridWorldPos, cameraPos);
+
+		//// First, render all tiles with appropriate colors
 		for (int r = 0; r < mapRows; r++) {
 			for (int c = 0; c < mapCols; c++) {
 
 				int tileIndex = r * static_cast<int>(mapCols) + c;
 				// Create tile rectangle
 				SDL_FRect tileRect = {
-					baseX + (c * tileSize),
-					baseY + (r * tileSize),
+					cameraPos.x + (c * tileSize),
+					cameraPos.y + (r * tileSize),
 					tileSize,
 					tileSize
 				};
@@ -83,15 +88,15 @@ namespace System
 		// Create horizontal grid lines
 		for (int r = 0; r <= mapRows; r++) {
 			const float y = r * tileSize;
-			vertices.push_back({ baseX, y + baseY });                // Start point
-			vertices.push_back({ baseX + static_cast<float>(mapCols * tileSize), y + baseY }); // End point
+			vertices.push_back({ cameraPos.x, y + cameraPos.y });                // Start point
+			vertices.push_back({ cameraPos.x + static_cast<float>(mapCols * tileSize), y + cameraPos.y }); // End point
 		}
 
 		// Create vertical grid lines
 		for (int c = 0; c <= mapCols; c++) {
 			const float x = c * tileSize;
-			vertices.push_back({ x + baseX, baseY });                // Start point
-			vertices.push_back({ x + baseX, baseY + static_cast<float>(mapRows * tileSize) }); // End point
+			vertices.push_back({ x + cameraPos.x, cameraPos.y });                // Start point
+			vertices.push_back({ x + cameraPos.x, cameraPos.y + static_cast<float>(mapRows * tileSize) }); // End point
 		}
 
 		// Batch render all lines in one call

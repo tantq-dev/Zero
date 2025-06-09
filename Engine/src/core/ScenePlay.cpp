@@ -68,7 +68,7 @@ namespace Core
 
 	void ScenePlay::Update(const float deltaTime)
 	{
-		if (m_inputSystem->IsActionPressed("Test_Mouse_Middle")) {
+		if (m_inputSystem->IsActionHeld("Test_Mouse_Middle")) {
 			Vec2 mouseDelta = m_inputSystem->GetMousePosition("Test_Mouse_Motion") - m_lastMousePosition;
 			m_lastMousePosition = m_inputSystem->GetMousePosition("Test_Mouse_Motion");
 
@@ -84,15 +84,20 @@ namespace Core
 		if (m_inputSystem->IsActionPressed("Test_Mouse"))
 		{
 			Vec2 mousePos = m_inputSystem->GetMousePosition("Test_Mouse_Motion");
-
-			auto& tile = m_gridSystem->GetCell(mousePos, m_cameraSystem->GetCameraZoom(), m_cameraSystem->GetCameraPosition());
+			Vec2 mouseWorld = { 0,0 };
+			m_cameraSystem->CameraViewToWorld(mousePos, mouseWorld);
+			auto& tile = m_gridSystem->GetCell(mouseWorld);
 			tile.isColor = !tile.isColor;
 			LOG_INFO("Tile at position" + std::to_string(tile.position.x) + " " + std::to_string(tile.position.y));
 		}
 
 
-		//m_cameraSystem->AdjustCameraZoom(m_inputSystem->GetMouseWheelDelta("Test_Mouse_Wheel"));
+		m_cameraSystem->AdjustCameraZoom(m_inputSystem->GetMouseWheelDelta("Test_Mouse_Wheel"));
+
 		m_inputSystem->ResetMouseWheelDelta("Test_Mouse_Wheel");
+		m_inputSystem->ResetMousePress("Test_Mouse");
+		m_inputSystem->ResetMousePress("Test_Mouse_Middle");
+
 	}
 	void ScenePlay::HandleInput(SDL_Event& event)
 	{
@@ -100,7 +105,7 @@ namespace Core
 	}
 	void ScenePlay::Render(SDL_Renderer& renderer)
 	{
-		m_renderSystem->RenderTileMap(m_gridSystem->GetTileSheets(), renderer, *m_cameraSystem);
+		m_renderSystem->RenderGrid(m_gridSystem->GetTileSheets(), renderer, *m_cameraSystem);
 		m_renderSystem->Render(m_Registry, renderer);
 	}
 }

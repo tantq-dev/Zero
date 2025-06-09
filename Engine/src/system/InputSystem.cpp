@@ -46,6 +46,11 @@ namespace System
 		return m_registeredActions.at(actionName).isPressed;
 	}
 
+	bool InputSystem::IsActionHeld(const std::string& actionName) const
+	{
+		return m_registeredActions.at(actionName).isHeld;
+	}
+
 	int InputSystem::GetMouseWheelDelta(const std::string& actionName) const
 	{
 		auto it = m_registeredActions.find(actionName);
@@ -78,7 +83,7 @@ namespace System
 			{
 				if (event.key.scancode == binding.scancode)
 				{
-					action.second.isPressed = false;
+					action.second.isHeld = false; // Reset held state on key release
 				}
 			}
 		}
@@ -95,6 +100,7 @@ namespace System
 					if (event.button.button == binding.mouseButton)
 					{
 						action.second.isPressed = true;
+						action.second.isHeld = true; 
 					}
 				}
 			}
@@ -111,7 +117,7 @@ namespace System
 				{
 					if (event.button.button == binding.mouseButton)
 					{
-						action.second.isPressed = false;
+						action.second.isHeld = false;
 					}
 				}
 			}
@@ -148,6 +154,19 @@ namespace System
 		if (it != m_registeredActions.end())
 		{
 			it->second.mouseWheelDelta = 0;
+		}
+	}
+
+	void InputSystem::ResetMousePress(const std::string& actionName)
+	{
+		auto it = m_registeredActions.find(actionName);
+		if (it != m_registeredActions.end())
+		{
+			it->second.isPressed = false;
+		}
+		else
+		{
+			//Logger::LogError("Action not found: " + actionName);
 		}
 	}
 
