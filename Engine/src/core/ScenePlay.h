@@ -6,7 +6,7 @@
 #include "system/AnimationSystem.h"
 #include "system/InputSystem.h"
 #include "system/CameraSystem.h"
-#include "system/TileSheetSystem.h"
+#include "system/GridSystem.h"
 // <summary> This is the example scene for the game. </summary>
 namespace Core
 {
@@ -29,7 +29,7 @@ namespace Core
 		std::unique_ptr<System::AnimationSystem>	m_animationSystem;
 		std::unique_ptr<System::InputSystem>		m_inputSystem;
 		std::unique_ptr<System::CameraSystem>		m_cameraSystem;
-		std::unique_ptr<System::TileSheetSystem>	m_tileSheetSystem;
+		std::unique_ptr<System::GridSystem>			m_gridSystem;
 
 		Vec2 m_lastMousePosition = { 0.0f, 0.0f };
 	};

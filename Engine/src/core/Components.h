@@ -22,7 +22,7 @@ namespace Components
 	// [InputBinding]
 	// [InputAction]
 	// [Tile]
-	// [Tilemap]
+	// [Grid]
 	// [Camera]
 
 	struct Transform
@@ -149,7 +149,7 @@ namespace Components
 			Keyboard,
 			MouseButton,
 			MouseMotion,
-			MouseWheel 
+			MouseWheel
 		};
 
 		Type type;
@@ -244,62 +244,63 @@ namespace Components
 	};
 
 
-	//TileMap
-	struct Tile
+	//Grid
+	struct Cell
 	{
 		Vec2 position;
 		Vec2 size;
 		bool isColor = false; // If true, the tile is colored
-		Tile() = default;
-		Tile(const Vec2& pos, const Vec2& sz)
-			: position(pos), size(sz) {}
+		Cell() = default;
+		Cell(const Vec2& pos, const Vec2& sz)
+			: position(pos), size(sz) {
+		}
 		[[nodiscard]] Vec2 GetPosition() const { return position; }
 		[[nodiscard]] Vec2 GetSize() const { return size; }
 		[[nodiscard]] Vec2 GetCenter() const { return position + size * 0.5f; } // Center of the tile
 	};
 
-	struct TileSheet
+	struct Grid
 	{
-		std::vector<Tile> tiles; // 2D grid of tile indices
-		int tileSize = 0;
-		int width = 0;
-		int height = 0;
-		TileSheet(int ts, int th, int mw, int mh)
-			: tileSize(ts), width(mw), height(mh)
+		std::vector<Cell> cells; // 2D grid of tile indices
+		int cellSize = 0;
+		int numberCellCol = 0;
+		int numberCellRow = 0;
+		Grid(int ts, int th, int nc, int nr)
+			: cellSize(ts), numberCellCol(nc), numberCellRow(nr)
 		{
-			for (int i = 0; i < width * height; i++)
+			for (int i = 0; i < numberCellCol * numberCellRow; i++)
 			{
-				tiles.push_back(
+				cells.push_back(
 					{
-					Vec2{(i % width) * tileSize, (i / width) * tileSize}, // Calculate position based on index
-					Vec2{static_cast<float>(tileSize), static_cast<float>(tileSize)} // Set size
+					Vec2{(i % numberCellCol) * cellSize, (i / numberCellCol) * cellSize}, // Calculate position based on index
+					Vec2{static_cast<float>(cellSize), static_cast<float>(cellSize)} // Set size
 					}
 				);
 			}
 		}
-	
-		Tile& GetTiles(int index)
+
+		Cell& GetCell(int index)
 		{
-			if (index < 0 || index >= tiles.size())
+			if (index < 0 || index >= cells.size())
 			{
 				throw std::out_of_range("Tile index out of range: " + std::to_string(index));
 			}
-			return tiles[index];
+			return cells[index];
 		}
-		
-		[[nodiscard]] int GetTileSize() const
+
+		[[nodiscard]] int GetCellSize() const
 		{
-			return tileSize;
+			return cellSize;
 		}
 
 		[[nodiscard]] int GetWidth() const
 		{
-			return width;
+			return numberCellCol;
 		}
 		[[nodiscard]] int GetHeight() const
 
 		{
-			return height;
+			return numberCellRow;
 		}
 
 	};

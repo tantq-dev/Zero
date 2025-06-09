@@ -36,7 +36,7 @@ namespace Core
 		m_animationSystem = std::make_unique<System::AnimationSystem>();
 		m_inputSystem = std::make_unique<System::InputSystem>();
 		m_cameraSystem = std::make_unique<System::CameraSystem>();
-		m_tileSheetSystem = std::make_unique<System::TileSheetSystem>(Components::TileSheet(20, 20, 40, 30));
+		m_gridSystem = std::make_unique<System::GridSystem>(Components::Grid(30, 30, 24, 12));
 
 
 		Components::InputAction actionSpace("Test");
@@ -85,9 +85,9 @@ namespace Core
 		{
 			Vec2 mousePos = m_inputSystem->GetMousePosition("Test_Mouse_Motion");
 
-			auto& tile = m_tileSheetSystem->GetTile(mousePos, m_cameraSystem->GetCameraZoom(), m_cameraSystem->GetCameraPosition());
+			auto& tile = m_gridSystem->GetCell(mousePos, m_cameraSystem->GetCameraZoom(), m_cameraSystem->GetCameraPosition());
 			tile.isColor = !tile.isColor;
-			LOG_INFO("Tile at position" +  std::to_string(tile.position.x) + " " + std::to_string(tile.position.y));
+			LOG_INFO("Tile at position" + std::to_string(tile.position.x) + " " + std::to_string(tile.position.y));
 		}
 
 
@@ -100,7 +100,7 @@ namespace Core
 	}
 	void ScenePlay::Render(SDL_Renderer& renderer)
 	{
-		m_renderSystem->RenderTileMap(m_tileSheetSystem->GetTileSheets(), renderer, *m_cameraSystem);
+		m_renderSystem->RenderTileMap(m_gridSystem->GetTileSheets(), renderer, *m_cameraSystem);
 		m_renderSystem->Render(m_Registry, renderer);
 	}
 }
