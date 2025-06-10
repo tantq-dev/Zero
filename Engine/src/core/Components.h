@@ -279,13 +279,13 @@ namespace Components
 			}
 		}
 
-		Cell& GetCell(int index)
+		Cell* GetCell(int index)
 		{
 			if (index < 0 || index >= cells.size())
 			{
-				throw std::out_of_range("Tile index out of range: " + std::to_string(index));
+				return nullptr;
 			}
-			return cells[index];
+			return &cells[index];
 		}
 
 		[[nodiscard]] int GetCellSize() const

@@ -15,7 +15,7 @@ namespace Core
 	class ScenePlay : public Scene
 	{
 	public:
-		ScenePlay() = default;
+		/*ScenePlay() = default;
 		~ScenePlay() = default;
 
 		void Initialize(SDL_Renderer& renderer) override;
@@ -31,7 +31,7 @@ namespace Core
 		std::unique_ptr<System::CameraSystem>		m_cameraSystem;
 		std::unique_ptr<System::GridSystem>			m_gridSystem;
 
-		Vec2 m_lastMousePosition = { 0.0f, 0.0f };
+		Vec2 m_lastMousePosition = { 0.0f, 0.0f };*/
 	};
 }
 

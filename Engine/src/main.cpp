@@ -1,224 +1,224 @@
-#include <stdio.h>
-#include "core/Game.h"
-#include "../vendored/imgui/imgui.h"
-#include "../vendored/imgui/backends/imgui_impl_opengl3.h"
-#include "../vendored/imgui/backends/imgui_impl_sdl3.h"
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_opengl.h>
-
-int main(int, char**) {
-
-	Core::Game game;
-	game.Initialize();
-	game.Run();
-	return 0;
-}
-
-#pragma region DragAndDrop Example
+////#include <stdio.h>
+////#include "core/Game.h"
+////#include "../vendored/imgui/imgui.h"
+////#include "../vendored/imgui/backends/imgui_impl_opengl3.h"
+////#include "../vendored/imgui/backends/imgui_impl_sdl3.h"
+////#include <SDL3/SDL.h>
+////#include <SDL3/SDL_opengl.h>
+////#include <core/ScenePlay.h>
+////
+//////this main for testing purposes only, the main function is in the Game class
+//////Should be removed in the future after build engine as lib
+////int main(int, char**) {
+////
+////	return 0;
+////}
 //
-//#include <SDL3/SDL.h>
-//#include <vector>
-//#include <string>
-//#include <fstream>
-//#include <sstream>
-//#include <iostream>
+//#pragma region DragAndDrop Example
+////
+////#include <SDL3/SDL.h>
+////#include <vector>
+////#include <string>
+////#include <fstream>
+////#include <sstream>
+////#include <iostream>
+////
+////const int SCREEN_WIDTH = 800;
+////const int SCREEN_HEIGHT = 600;
+////const int GRID_SIZE = 10; // 10x10 grid (each cell is 80x60 pixels)
+////const int CELL_WIDTH = SCREEN_WIDTH / GRID_SIZE;
+////const int CELL_HEIGHT = SCREEN_HEIGHT / GRID_SIZE;
+////
+////// Monster structure to hold name and position
+////struct Monster {
+////    std::string name;
+////    float x, y;
+////    bool isDragging;
+////    Monster(std::string n, float posX, float posY) : name(n), x(posX), y(posY), isDragging(false) {}
+////};
+////
+////// Wave structure to hold monsters for each wave
+////struct Wave {
+////    std::vector<Monster> monsters;
+////};
+////
+////// Function to snap position to grid
+////void snapToGrid(float& x, float& y) {
+////    x = (x / CELL_WIDTH) * CELL_WIDTH + CELL_WIDTH / 2;
+////    y = (y / CELL_HEIGHT) * CELL_HEIGHT + CELL_HEIGHT / 2;
+////    if (x < 0) x = CELL_WIDTH / 2;
+////    if (x > SCREEN_WIDTH) x = SCREEN_WIDTH - CELL_WIDTH / 2;
+////    if (y < 0) y = CELL_HEIGHT / 2;
+////    if (y > SCREEN_HEIGHT) y = SCREEN_HEIGHT - CELL_HEIGHT / 2;
+////}
+////
+////// Function to draw 10x10 grid
+////void drawGrid(SDL_Renderer* renderer) {
+////    SDL_SetRenderDrawColor(renderer, 100, 100, 100, 255); // Gray grid lines
+////    for (int i = 0; i <= GRID_SIZE; ++i) {
+////        // Vertical lines
+////        SDL_RenderLine(renderer, i * CELL_WIDTH, 0, i * CELL_WIDTH, SCREEN_HEIGHT);
+////        // Horizontal lines
+////        SDL_RenderLine(renderer, 0, i * CELL_HEIGHT, SCREEN_WIDTH, i * CELL_HEIGHT);
+////    }
+////}
+////
+////
+////
+////// Function to export wave data to JSON
+////void exportWaveToJson(const Wave& wave, int waveNumber) {
+////    std::ofstream file("wave_" + std::to_string(waveNumber) + ".json");
+////    if (!file.is_open()) {
+////        std::cerr << "Failed to open file for wave " << waveNumber << std::endl;
+////        return;
+////    }
+////
+////    file << "[\n";
+////    for (size_t i = 0; i < wave.monsters.size(); ++i) {
+////        const Monster& m = wave.monsters[i];
+////        file << "  {\"name\": \"" << m.name << "\", \"x\": " << m.x << ", \"y\": " << m.y << "}";
+////        if (i < wave.monsters.size() - 1) file << ",";
+////        file << "\n";
+////    }
+////    file << "]\n";
+////    file.close();
+////    std::cout << "Exported wave " << waveNumber << " to JSON\n";
+////}
+////
+////int main(int argc, char* argv[]) {
+////    // Initialize SDL
+////    if (SDL_Init(SDL_INIT_VIDEO) == 0) {
+////        std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
+////        return 1;
+////    }
+////
+////    // Create window
+////    SDL_Window* window = SDL_CreateWindow("Monster Map Editor", SCREEN_WIDTH, SCREEN_HEIGHT, NULL);
+////    if (!window) {
+////        std::cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
+////        SDL_Quit();
+////        return 1;
+////    }
+////
+////    // Create renderer
+////    SDL_Renderer* renderer = SDL_CreateRenderer(window,nullptr);
+////    if (!renderer) {
+////        std::cerr << "Renderer could not be created! SDL_Error: " << SDL_GetError() << std::endl;
+////        SDL_DestroyWindow(window);
+////        SDL_Quit();
+////        return 1;
+////    }
+////
+////    // Game variables
+////    std::vector<Wave> waves;
+////    int currentWave = 0;
+////    waves.push_back(Wave()); // Start with wave 0
+////    bool quit = false;
+////    SDL_Event e;
+////    Monster* draggedMonster = nullptr;
+////
+////    // Main loop
+////    while (!quit) {
+////        while (SDL_PollEvent(&e) != 0) {
+////            if (e.type == SDL_EVENT_QUIT) {
+////                quit = true;
+////            }
+////            else if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+////                float x, y;
+////                SDL_GetMouseState(&x, &y);
+////                // Check if clicking a monster to drag
+////                for (Monster& m : waves[currentWave].monsters) {
+////                    if (x >= m.x - 20 && x <= m.x + 20 && y >= m.y - 20 && y <= m.y + 20) {
+////                        m.isDragging = true;
+////                        draggedMonster = &m;
+////                        break;
+////                    }
+////                }
+////            }
+////            else if (e.type == SDL_EVENT_MOUSE_BUTTON_UP) {
+////                if (draggedMonster) {
+////                    float x, y;
+////                    SDL_GetMouseState(&x, &y);
+////                    snapToGrid(x, y);
+////                    draggedMonster->x = x;
+////                    draggedMonster->y = y;
+////                    draggedMonster->isDragging = false;
+////                    draggedMonster = nullptr;
+////                }
+////            }
+////            else if (e.type == SDL_EVENT_MOUSE_MOTION && draggedMonster) {
+////                SDL_GetMouseState(&draggedMonster->x, &draggedMonster->y);
+////            }
+////            else if (e.type == SDL_EVENT_KEY_DOWN) {
+////                if (e.key.scancode == SDL_SCANCODE_N) { // 'n' to add new monster
+////                    std::string name = "Monster" + std::to_string(waves[currentWave].monsters.size() + 1);
+////                    float x = SCREEN_WIDTH / 2;
+////                    float y = SCREEN_HEIGHT / 2;
+////                    snapToGrid(x, y);
+////                    waves[currentWave].monsters.push_back(Monster(name, x, y));
+////                }
+////                else if (e.key.scancode == SDL_SCANCODE_W) { // 'w' to switch wave
+////                    exportWaveToJson(waves[currentWave], currentWave);
+////                    currentWave++;
+////                    if (currentWave >= static_cast<int>(waves.size())) {
+////                        waves.push_back(Wave());
+////                    }
+////                    std::cout << "Switched to wave " << currentWave << std::endl;
+////                }
+////                else if (e.key.scancode == SDL_SCANCODE_S) { // 's' to save current wave
+////                    exportWaveToJson(waves[currentWave], currentWave);
+////                }
+////            }
+////        }
+////
+////        // Clear screen
+////        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+////        SDL_RenderClear(renderer);
+////
+////        // Draw grid
+////        drawGrid(renderer);
+////
+////        // Draw monsters as red circles
+////        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+////        for (const Monster& m : waves[currentWave].monsters) {
+////            for (int i = 0; i < 360; i++) {
+////                float rad = i * 3.14159f / 180.0f;
+////                int x = m.x + 20 * cos(rad);
+////                int y = m.y + 20 * sin(rad);
+////                SDL_RenderPoint(renderer, x, y);
+////            }
+////        }
+////
+////        // Present renderer
+////        SDL_RenderPresent(renderer);
+////    }
+////
+////    // Export all waves on exit
+////    for (int i = 0; i < static_cast<int>(waves.size()); ++i) {
+////        exportWaveToJson(waves[i], i);
+////    }
+////
+////    // Cleanup
+////    SDL_DestroyRenderer(renderer);
+////    SDL_DestroyWindow(window);
+////    SDL_Quit();
+////    return 0;
+////}
 //
-//const int SCREEN_WIDTH = 800;
-//const int SCREEN_HEIGHT = 600;
-//const int GRID_SIZE = 10; // 10x10 grid (each cell is 80x60 pixels)
-//const int CELL_WIDTH = SCREEN_WIDTH / GRID_SIZE;
-//const int CELL_HEIGHT = SCREEN_HEIGHT / GRID_SIZE;
-//
-//// Monster structure to hold name and position
-//struct Monster {
-//    std::string name;
-//    float x, y;
-//    bool isDragging;
-//    Monster(std::string n, float posX, float posY) : name(n), x(posX), y(posY), isDragging(false) {}
-//};
-//
-//// Wave structure to hold monsters for each wave
-//struct Wave {
-//    std::vector<Monster> monsters;
-//};
-//
-//// Function to snap position to grid
-//void snapToGrid(float& x, float& y) {
-//    x = (x / CELL_WIDTH) * CELL_WIDTH + CELL_WIDTH / 2;
-//    y = (y / CELL_HEIGHT) * CELL_HEIGHT + CELL_HEIGHT / 2;
-//    if (x < 0) x = CELL_WIDTH / 2;
-//    if (x > SCREEN_WIDTH) x = SCREEN_WIDTH - CELL_WIDTH / 2;
-//    if (y < 0) y = CELL_HEIGHT / 2;
-//    if (y > SCREEN_HEIGHT) y = SCREEN_HEIGHT - CELL_HEIGHT / 2;
-//}
-//
-//// Function to draw 10x10 grid
-//void drawGrid(SDL_Renderer* renderer) {
-//    SDL_SetRenderDrawColor(renderer, 100, 100, 100, 255); // Gray grid lines
-//    for (int i = 0; i <= GRID_SIZE; ++i) {
-//        // Vertical lines
-//        SDL_RenderLine(renderer, i * CELL_WIDTH, 0, i * CELL_WIDTH, SCREEN_HEIGHT);
-//        // Horizontal lines
-//        SDL_RenderLine(renderer, 0, i * CELL_HEIGHT, SCREEN_WIDTH, i * CELL_HEIGHT);
-//    }
-//}
-//
-//
-//
-//// Function to export wave data to JSON
-//void exportWaveToJson(const Wave& wave, int waveNumber) {
-//    std::ofstream file("wave_" + std::to_string(waveNumber) + ".json");
-//    if (!file.is_open()) {
-//        std::cerr << "Failed to open file for wave " << waveNumber << std::endl;
-//        return;
-//    }
-//
-//    file << "[\n";
-//    for (size_t i = 0; i < wave.monsters.size(); ++i) {
-//        const Monster& m = wave.monsters[i];
-//        file << "  {\"name\": \"" << m.name << "\", \"x\": " << m.x << ", \"y\": " << m.y << "}";
-//        if (i < wave.monsters.size() - 1) file << ",";
-//        file << "\n";
-//    }
-//    file << "]\n";
-//    file.close();
-//    std::cout << "Exported wave " << waveNumber << " to JSON\n";
-//}
-//
-//int main(int argc, char* argv[]) {
-//    // Initialize SDL
-//    if (SDL_Init(SDL_INIT_VIDEO) == 0) {
-//        std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
-//        return 1;
-//    }
-//
-//    // Create window
-//    SDL_Window* window = SDL_CreateWindow("Monster Map Editor", SCREEN_WIDTH, SCREEN_HEIGHT, NULL);
-//    if (!window) {
-//        std::cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
-//        SDL_Quit();
-//        return 1;
-//    }
-//
-//    // Create renderer
-//    SDL_Renderer* renderer = SDL_CreateRenderer(window,nullptr);
-//    if (!renderer) {
-//        std::cerr << "Renderer could not be created! SDL_Error: " << SDL_GetError() << std::endl;
-//        SDL_DestroyWindow(window);
-//        SDL_Quit();
-//        return 1;
-//    }
-//
-//    // Game variables
-//    std::vector<Wave> waves;
-//    int currentWave = 0;
-//    waves.push_back(Wave()); // Start with wave 0
-//    bool quit = false;
-//    SDL_Event e;
-//    Monster* draggedMonster = nullptr;
-//
-//    // Main loop
-//    while (!quit) {
-//        while (SDL_PollEvent(&e) != 0) {
-//            if (e.type == SDL_EVENT_QUIT) {
-//                quit = true;
-//            }
-//            else if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
-//                float x, y;
-//                SDL_GetMouseState(&x, &y);
-//                // Check if clicking a monster to drag
-//                for (Monster& m : waves[currentWave].monsters) {
-//                    if (x >= m.x - 20 && x <= m.x + 20 && y >= m.y - 20 && y <= m.y + 20) {
-//                        m.isDragging = true;
-//                        draggedMonster = &m;
-//                        break;
-//                    }
-//                }
-//            }
-//            else if (e.type == SDL_EVENT_MOUSE_BUTTON_UP) {
-//                if (draggedMonster) {
-//                    float x, y;
-//                    SDL_GetMouseState(&x, &y);
-//                    snapToGrid(x, y);
-//                    draggedMonster->x = x;
-//                    draggedMonster->y = y;
-//                    draggedMonster->isDragging = false;
-//                    draggedMonster = nullptr;
-//                }
-//            }
-//            else if (e.type == SDL_EVENT_MOUSE_MOTION && draggedMonster) {
-//                SDL_GetMouseState(&draggedMonster->x, &draggedMonster->y);
-//            }
-//            else if (e.type == SDL_EVENT_KEY_DOWN) {
-//                if (e.key.scancode == SDL_SCANCODE_N) { // 'n' to add new monster
-//                    std::string name = "Monster" + std::to_string(waves[currentWave].monsters.size() + 1);
-//                    float x = SCREEN_WIDTH / 2;
-//                    float y = SCREEN_HEIGHT / 2;
-//                    snapToGrid(x, y);
-//                    waves[currentWave].monsters.push_back(Monster(name, x, y));
-//                }
-//                else if (e.key.scancode == SDL_SCANCODE_W) { // 'w' to switch wave
-//                    exportWaveToJson(waves[currentWave], currentWave);
-//                    currentWave++;
-//                    if (currentWave >= static_cast<int>(waves.size())) {
-//                        waves.push_back(Wave());
-//                    }
-//                    std::cout << "Switched to wave " << currentWave << std::endl;
-//                }
-//                else if (e.key.scancode == SDL_SCANCODE_S) { // 's' to save current wave
-//                    exportWaveToJson(waves[currentWave], currentWave);
-//                }
-//            }
-//        }
-//
-//        // Clear screen
-//        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-//        SDL_RenderClear(renderer);
-//
-//        // Draw grid
-//        drawGrid(renderer);
-//
-//        // Draw monsters as red circles
-//        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-//        for (const Monster& m : waves[currentWave].monsters) {
-//            for (int i = 0; i < 360; i++) {
-//                float rad = i * 3.14159f / 180.0f;
-//                int x = m.x + 20 * cos(rad);
-//                int y = m.y + 20 * sin(rad);
-//                SDL_RenderPoint(renderer, x, y);
-//            }
-//        }
-//
-//        // Present renderer
-//        SDL_RenderPresent(renderer);
-//    }
-//
-//    // Export all waves on exit
-//    for (int i = 0; i < static_cast<int>(waves.size()); ++i) {
-//        exportWaveToJson(waves[i], i);
-//    }
-//
-//    // Cleanup
-//    SDL_DestroyRenderer(renderer);
-//    SDL_DestroyWindow(window);
-//    SDL_Quit();
-//    return 0;
-//}
-
-#pragma endregion
-//
-#pragma region DearImgui_Example
-//
-//
-//// Dear ImGui: standalone example application for SDL3 + OpenGL
-//// (SDL is a cross-platform general purpose library for handling windows, inputs, OpenGL/Vulkan/Metal graphics context creation, etc.)
-//
-//// Learn about Dear ImGui:
-//// - FAQ                  https://dearimgui.com/faq
-//// - Getting Started      https://dearimgui.com/getting-started
-//// - Documentation        https://dearimgui.com/docs (same as your local docs/ folder).
-//// - Introduction, links and more at the top of imgui.cpp
-//
+//#pragma endregion
+////
+//#pragma region DearImgui_Example
+////
+////
+////// Dear ImGui: standalone example application for SDL3 + OpenGL
+////// (SDL is a cross-platform general purpose library for handling windows, inputs, OpenGL/Vulkan/Metal graphics context creation, etc.)
+////
+////// Learn about Dear ImGui:
+////// - FAQ                  https://dearimgui.com/faq
+////// - Getting Started      https://dearimgui.com/getting-started
+////// - Documentation        https://dearimgui.com/docs (same as your local docs/ folder).
+////// - Introduction, links and more at the top of imgui.cpp
+////
 //#include "imgui.h"
 //#include "imgui_impl_sdl3.h"
 //#include "imgui_impl_opengl3.h"
@@ -232,18 +232,11 @@ int main(int, char**) {
 //
 //#ifdef __EMSCRIPTEN__
 //#include "../libs/emscripten/emscripten_mainloop_stub.h"
-//#endif
+////#endif
 //
 //// Main code
 //int main(int, char**)
 //{
-//	// Setup SDL
-//	// [If using SDL_MAIN_USE_CALLBACKS: all code below until the main loop starts would likely be your SDL_AppInit() function]
-//	if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD))
-//	{
-//		printf("Error: SDL_Init(): %s\n", SDL_GetError());
-//		return -1;
-//	}
 //
 //	// Decide GL+GLSL versions
 //#if defined(IMGUI_IMPL_OPENGL_ES2)
@@ -280,13 +273,7 @@ int main(int, char**) {
 //	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 //	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 //	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-//	SDL_WindowFlags window_flags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN | SDL_WINDOW_HIGH_PIXEL_DENSITY;
-//	SDL_Window* window = SDL_CreateWindow("Dear ImGui SDL3+OpenGL3 example", 1280, 720, window_flags);
-//	if (window == nullptr)
-//	{
-//		printf("Error: SDL_CreateWindow(): %s\n", SDL_GetError());
-//		return -1;
-//	}
+//
 //	SDL_GLContext gl_context = SDL_GL_CreateContext(window);
 //	if (gl_context == nullptr)
 //	{
@@ -314,115 +301,6 @@ int main(int, char**) {
 //	ImGui_ImplSDL3_InitForOpenGL(window, gl_context);
 //	ImGui_ImplOpenGL3_Init(glsl_version);
 //
-//	// Load Fonts
-//	// - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
-//	// - AddFontFromFileTTF() will return the ImFont* so you can store it if you need to select the font among multiple.
-//	// - If the file cannot be loaded, the function will return a nullptr. Please handle those errors in your application (e.g. use an assertion, or display an error and quit).
-//	// - The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
-//	// - Use '#define IMGUI_ENABLE_FREETYPE' in your imconfig file to use Freetype for higher quality font rendering.
-//	// - Read 'docs/FONTS.md' for more instructions and details.
-//	// - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
-//	// - Our Emscripten build process allows embedding fonts to be accessible at runtime from the "fonts/" folder. See Makefile.emscripten for details.
-//	//io.Fonts->AddFontDefault();
-//	//io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\segoeui.ttf", 18.0f);
-//	//io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
-//	//io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
-//	//io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
-//	//ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, nullptr, io.Fonts->GetGlyphRangesJapanese());
-//	//IM_ASSERT(font != nullptr);
-//
-//	// Our state
-//	bool show_demo_window = true;
-//	bool show_another_window = false;
-//	ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-//
-//	// Main loop
-//	bool done = false;
-//#ifdef __EMSCRIPTEN__
-//	// For an Emscripten build we are disabling file-system access, so let's not attempt to do a fopen() of the imgui.ini file.
-//	// You may manually call LoadIniSettingsFromMemory() to load settings from your own storage.
-//	io.IniFilename = nullptr;
-//	EMSCRIPTEN_MAINLOOP_BEGIN
-//#else
-//	while (!done)
-//#endif
-//	{
-//		// Poll and handle events (inputs, window resize, etc.)
-//		// You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
-//		// - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application, or clear/overwrite your copy of the mouse data.
-//		// - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application, or clear/overwrite your copy of the keyboard data.
-//		// Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
-//		// [If using SDL_MAIN_USE_CALLBACKS: call ImGui_ImplSDL3_ProcessEvent() from your SDL_AppEvent() function]
-//		SDL_Event event;
-//		while (SDL_PollEvent(&event))
-//		{
-//			ImGui_ImplSDL3_ProcessEvent(&event);
-//			if (event.type == SDL_EVENT_QUIT)
-//				done = true;
-//			if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED && event.window.windowID == SDL_GetWindowID(window))
-//				done = true;
-//		}
-//
-//		// [If using SDL_MAIN_USE_CALLBACKS: all code below would likely be your SDL_AppIterate() function]
-//		if (SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED)
-//		{
-//			SDL_Delay(10);
-//			continue;
-//		}
-//
-//		// Start the Dear ImGui frame
-//		ImGui_ImplOpenGL3_NewFrame();
-//		ImGui_ImplSDL3_NewFrame();
-//		ImGui::NewFrame();
-//
-//		// 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-//		if (show_demo_window)
-//			ImGui::ShowDemoWindow(&show_demo_window);
-//
-//		// 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
-//		{
-//			static float f = 0.0f;
-//			static int counter = 0;
-//
-//			ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
-//
-//			ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-//			ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-//			ImGui::Checkbox("Another Window", &show_another_window);
-//
-//			ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-//			ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-//
-//			if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-//				counter++;
-//			ImGui::SameLine();
-//			ImGui::Text("counter = %d", counter);
-//
-//			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-//			ImGui::End();
-//		}
-//
-//		// 3. Show another simple window.
-//		if (show_another_window)
-//		{
-//			ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-//			ImGui::Text("Hello from another window!");
-//			if (ImGui::Button("Close Me"))
-//				show_another_window = false;
-//			ImGui::End();
-//		}
-//
-//		// Rendering
-//		ImGui::Render();
-//		glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
-//		glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
-//		glClear(GL_COLOR_BUFFER_BIT);
-//		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-//		SDL_GL_SwapWindow(window);
-//	}
-//#ifdef __EMSCRIPTEN__
-//	EMSCRIPTEN_MAINLOOP_END;
-//#endif
 //
 //	// Cleanup
 //	// [If using SDL_MAIN_USE_CALLBACKS: all code below would likely be your SDL_AppQuit() function]
@@ -436,4 +314,4 @@ int main(int, char**) {
 //
 //	return 0;
 //}
-#pragma endregion
+//#pragma endregion

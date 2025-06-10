@@ -30,11 +30,8 @@ namespace System
 				SDL_RenderTexture(&renderer, animation->texture, srcRect, &m_dstRect);
 				delete srcRect; // Clean up the dynamically allocated srcRect
 			}
-
-
-
 		}
-		SDL_RenderPresent(&renderer);
+
 	}
 
 	void RenderSystem::RenderGrid(const Components::Grid& tileMap, SDL_Renderer& renderer, System::CameraSystem& cam)
@@ -49,37 +46,14 @@ namespace System
 		const float baseY = 0;
 
 		Vec2 gridWorldPos = { baseX, baseY };
-		Vec2 cameraPos = {0,0};
+		Vec2 cameraPos = { 0,0 };
 		cam.WorldToCameraView(gridWorldPos, cameraPos);
 
-		//// First, render all tiles with appropriate colors
-		for (int r = 0; r < mapRows; r++) {
-			for (int c = 0; c < mapCols; c++) {
 
-				int tileIndex = r * static_cast<int>(mapCols) + c;
-				// Create tile rectangle
-				SDL_FRect tileRect = {
-					cameraPos.x + (c * tileSize),
-					cameraPos.y + (r * tileSize),
-					tileSize,
-					tileSize
-				};
 
-				// Set color based on isColored flag
-				if (tileMap.cells[tileIndex].isColor) {
-					SDL_SetRenderDrawColor(&renderer, 255, 0, 0, 255);  // Red
-				}
-				else {
-					SDL_SetRenderDrawColor(&renderer, 222, 222, 222, 255);    // Black
-				}
-
-				// Fill the tile
-				SDL_RenderFillRect(&renderer, &tileRect);
-			}
-		}
 
 		// Set color for grid lines
-		SDL_SetRenderDrawColor(&renderer, 255, 255, 255, 128);
+		SDL_SetRenderDrawColor(&renderer, 100, 100, 100, 128);
 
 		// Prepare vertex arrays for horizontal and vertical lines
 		std::vector<SDL_FPoint> vertices;
@@ -104,6 +78,31 @@ namespace System
 			SDL_RenderLine(&renderer,
 				vertices[i].x, vertices[i].y,
 				vertices[i + 1].x, vertices[i + 1].y);
+		}
+
+		//// First, render all tiles with appropriate colors
+		for (int r = 0; r < mapRows; r++) {
+			for (int c = 0; c < mapCols; c++) {
+
+				int tileIndex = r * static_cast<int>(mapCols) + c;
+				// Create tile rectangle
+				SDL_FRect tileRect = {
+					cameraPos.x + (c * tileSize + tileSize * 0.01),
+					cameraPos.y + (r * tileSize + tileSize * 0.01),
+					tileSize ,
+					tileSize
+				};
+
+				//// Fill all tiles with the base gray color
+				SDL_SetRenderDrawColor(&renderer, 50, 50, 50, 255);
+				SDL_RenderRect(&renderer, &tileRect);
+
+				// Draw colored border for highlighted tiles
+				if (tileMap.cells[tileIndex].isColor) {
+					SDL_SetRenderDrawColor(&renderer, 255, 255, 255, 255);
+					SDL_RenderRect(&renderer, &tileRect);  // Draw just the outline
+				}
+			}
 		}
 	}
 

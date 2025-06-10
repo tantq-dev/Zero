@@ -9,9 +9,10 @@ namespace System
 		GridSystem() = default;
 		~GridSystem() = default;
 		GridSystem(Components::Grid tilesheet);
-		const Components::Grid& GetTileSheets() const { return m_tileSheets; }
-		Components::Cell& GetCell(const Vec2 mousePosition);
+		const Components::Grid& GetGrid() const { return grid; }
+		Components::Cell* GetCell(const Vec2 mousePosition);
+		void ResetGridHightlight();
 	private:
-		Components::Grid m_tileSheets = Components::Grid(0, 0, 0, 0);;
+		Components::Grid grid = Components::Grid(0, 0, 0, 0);;
 	};
 } // namespace System
