@@ -161,6 +161,43 @@ struct MonsterProperties {
 		return *this;
 	}
 
+	// Utility methods
+	void ResetToDefaults() {
+		name = "";
+		monsterType = MonsterType::Normal;
+		hp = 10000;
+		speed = 10000;
+		knockbackResistance = 10000;
+		collisionDamage = 10000;
+		rootBehavior = std::make_unique<BehaviorMultiConfig>();
+	}
+
+	bool HasBehavior(const std::string& behaviorType) const {
+		return FindBehavior(behaviorType) != nullptr;
+	}
+
+	BehaviorConfig* FindBehavior(const std::string& behaviorType) const {
+		return FindBehaviorRecursive(rootBehavior.get(), behaviorType);
+	}
+
+private:
+	BehaviorConfig* FindBehaviorRecursive(BehaviorConfig* config, const std::string& behaviorType) const {
+		if (!config) return nullptr;
+
+		if (config->behaviorType == behaviorType) {
+			return config;
+		}
+
+		if (auto* multi = dynamic_cast<BehaviorMultiConfig*>(config)) {
+			for (auto& child : multi->childBehaviors) {
+				auto* found = FindBehaviorRecursive(child.get(), behaviorType);
+				if (found) return found;
+			}
+		}
+
+		return nullptr;
+	}
+
 	// Move constructor and assignment
 	MonsterProperties(MonsterProperties&&) = default;
 	MonsterProperties& operator=(MonsterProperties&&) = default;

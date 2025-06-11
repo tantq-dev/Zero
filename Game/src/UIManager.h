@@ -12,9 +12,6 @@ namespace Tool {
 			std::unique_ptr<UIMonsterProperties> M_UIMonsterProperties;
 			std::unique_ptr<UIMonsterPalate> M_UIMonsterPalate;
 		private:
-
-
-
 			bool m_isShowMonsterPalate = true;
 			bool m_isShowMonsterProperty = false;
 
