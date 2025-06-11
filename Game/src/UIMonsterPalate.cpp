@@ -1,6 +1,20 @@
 #include "UIMonsterPalate.h"
 #include "core/EventSystem.h"
 #include "EventKey.h"
+#include "MonsterModel.h"
+#include "resources/ResourcesManager.h"
+
+
+Tool::UI::UIMonsterPalate::UIMonsterPalate()
+{
+	std::vector<std::string> keys;
+
+	for (const auto& pair : MonsterConfig) {
+		keys.push_back(pair.first); // collect keys
+	}
+
+	AddItems(keys);
+}
 
 void Tool::UI::UIMonsterPalate::ShowMonsterPalate(bool* p_open)
 {
@@ -98,13 +112,46 @@ void Tool::UI::UIMonsterPalate::ShowMonsterPalate(bool* p_open)
 						if (item_is_visible)
 						{
 							ImVec2 box_min(pos.x - 1, pos.y - 1);
-							ImVec2 box_max(box_min.x + LayoutItemSize.x + 2, box_min.y + LayoutItemSize.y + 2); // Dubious
-							draw_list->AddRectFilled(box_min, box_max, icon_bg_color); // Background color
+							ImVec2 box_max(box_min.x + LayoutItemSize.x + 2, box_min.y + LayoutItemSize.y + 2);
+
+							// Draw background color
+							draw_list->AddRectFilled(box_min, box_max, icon_bg_color);
+
+							// Get texture for the monster from ResourcesManager
+							ImTextureID texture_id = (ImTextureID)(intptr_t)ResourcesManager::GetInstance().GetTexture(item_data->name);
+
+							// Calculate image area (slightly smaller than box to create padding)
+							const float padding = 2.0f;
+							ImVec2 image_min(box_min.x + padding, box_min.y + padding);
+							ImVec2 image_max(box_max.x - padding,
+								display_label ? box_max.y - ImGui::GetFontSize() - padding : box_max.y - padding);
+
+							// Draw the monster texture if available
+							if (texture_id)
+							{
+								draw_list->AddImage(texture_id, image_min, image_max);
+							}
+							else
+							{
+								// If no texture, draw a placeholder with the monster name
+								ImU32 placeholder_col = IM_COL32(100, 100, 100, 255);
+								draw_list->AddRectFilled(image_min, image_max, placeholder_col);
+
+								// Center the first letter of monster name as a placeholder
+								if (item_data->name.length() > 0) {
+									char letter[2] = { item_data->name[0], '\0' };
+									ImVec2 text_size = ImGui::CalcTextSize(letter);
+									ImVec2 text_pos(
+										(image_min.x + image_max.x - text_size.x) * 0.5f,
+										(image_min.y + image_max.y - text_size.y) * 0.5f
+									);
+									draw_list->AddText(text_pos, IM_COL32(255, 255, 255, 255), letter);
+								}
+							}
 
 							if (display_label)
 							{
 								ImU32 label_col = ImGui::GetColorU32(item_is_selected ? ImGuiCol_Text : ImGuiCol_TextDisabled);
-								char label[32];
 								draw_list->AddText(ImVec2(box_min.x, box_max.y - ImGui::GetFontSize()), label_col, item_data->name.c_str());
 							}
 						}

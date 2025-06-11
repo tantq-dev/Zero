@@ -49,4 +49,11 @@ void ResourcesManager::LoadTexture(const std::string& name, const char* path, SD
 	m_textures[name] = texture;
 }
 
+void ResourcesManager::LoadTextures(const std::unordered_map<std::string, const char*>& textures, SDL_Renderer* renderer) {
+
+	for (const auto& texture : textures) {
+		LoadTexture(texture.first, texture.second, renderer);
+	}
+}
+
 

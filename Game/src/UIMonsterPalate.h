@@ -11,10 +11,7 @@ namespace Tool {
 
 		class UIMonsterPalate {
 		public:
-			UIMonsterPalate() {
-				std::vector<std::string> names = { "Slime","Slime1","Slime2","Boss","Boss1","Boss2" };
-				AddItems(names);
-			};
+			UIMonsterPalate();
 			~UIMonsterPalate() = default;
 			void ShowMonsterPalate(bool* p_open);
 		private:

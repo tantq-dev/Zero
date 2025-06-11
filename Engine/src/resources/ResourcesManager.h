@@ -4,11 +4,12 @@
 #include <unordered_map> // Use unordered_map for better performance on lookups
 class ResourcesManager
 {
-	public:
+public:
 	~ResourcesManager() = default;
 	// Get resource by name
 	SDL_Texture* GetTexture(const std::string& name);
-	void LoadTexture(const std::string& name, const char* path, SDL_Renderer * renderer);
+	void LoadTexture(const std::string& name, const char* path, SDL_Renderer* renderer);
+	void LoadTextures(const std::unordered_map<std::string, const char*>& textures, SDL_Renderer* renderer);
 	static ResourcesManager& GetInstance();
 private:
 	ResourcesManager();
