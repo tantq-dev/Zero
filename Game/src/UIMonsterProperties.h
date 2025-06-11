@@ -29,23 +29,16 @@ namespace Tool {
 			int currentSelection = 0;
 
 			// Add reference to MapEditor and current properties
-			MapEditor* m_mapEditor = nullptr;
-			MonsterProperties m_currentProperties;
-			bool m_hasValidSelection = false;
+			MonsterProperties* m_pCurrentProperties;
+			bool m_hasValidSelection = true;
 
 		public:
 			UIMonsterProperties();
 			~UIMonsterProperties();
 
-			void SetMapEditor(MapEditor* mapEditor) { m_mapEditor = mapEditor; }
 			void ShowUIMonsterProperties(bool* p_open);
-
-			// Convert between BehaviorNode and MonsterProperties
-			void ConvertFromMonsterProperties(const MonsterProperties& properties);
-			void ConvertToMonsterProperties(MonsterProperties& properties);
-
+			void SetCurrentProperties(MonsterProperties& m_currentProperties);
 		private:
-			// Existing methods...
 			void RenderBehaviorTree(BehaviorNode& node);
 			void RenderSelectableTree(BehaviorNode& node, BehaviorNode*& selectedNode);
 			void BehaviorMultipleConfig();
@@ -53,7 +46,6 @@ namespace Tool {
 			void AddBehaviorToNode(BehaviorNode& parent, const std::string& behaviorName);
 			void ShowBehaviorConfiguration(BehaviorNode& node);
 
-			// Behavior config methods (update these to work with properties)
 			void BehaviorChaseConfigUI(BehaviorChaseConfig* config = nullptr);
 			void BehaviorDistanceConditionHelperConfigUI(BehaviorDistanceConditionHelperConfig* config = nullptr);
 			void BehaviorMovementBounceConfigUI(BehaviorMovementBounceConfig* config = nullptr);
@@ -61,10 +53,6 @@ namespace Tool {
 			void BehaviorShootProjectileConfigUI(BehaviorShootProjectileConfig* config = nullptr);
 			void BehaviorShootStrategyBaseConfigUI(BehaviorShootStrategyBaseConfig* config = nullptr);
 			void BehaviorSpreadShotConfigUI(BehaviorSpreadShotConfig* config = nullptr);
-
-			// Helper methods
-			void LoadCurrentMonsterProperties();
-			void SaveCurrentMonsterProperties();
 		};
 	}
 }

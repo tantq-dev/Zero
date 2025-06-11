@@ -22,39 +22,36 @@ void Tool::UI::UIMonsterProperties::ShowUIMonsterProperties(bool* p_open)
 			return;
 		}
 
-		// Load current monster properties at the start
-		LoadCurrentMonsterProperties();
-
 		if (m_hasValidSelection) {
 			if (ImGui::TreeNode("Stat")) {
 				// Bind UI controls to m_currentProperties
 
 				// Name
 				char nameBuf[128];
-				strncpy(nameBuf, m_currentProperties.name.c_str(), sizeof(nameBuf));
+				strncpy(nameBuf, m_pCurrentProperties->name.c_str(), sizeof(nameBuf));
 				nameBuf[sizeof(nameBuf) - 1] = '\0';
 				if (ImGui::InputText("Name: ", nameBuf, IM_ARRAYSIZE(nameBuf))) {
-					m_currentProperties.name = nameBuf;
+					m_pCurrentProperties->name = nameBuf;
 				}
 
 				// Monster type
 				const char* monsterType[] = { "Boss", "Normal" };
-				int itemType = static_cast<int>(m_currentProperties.monsterType);
+				int itemType = static_cast<int>(m_pCurrentProperties->monsterType);
 				if (ImGui::Combo("Monster Type", &itemType, monsterType, IM_ARRAYSIZE(monsterType))) {
-					m_currentProperties.monsterType = static_cast<Data::MonsterType>(itemType);
+					m_pCurrentProperties->monsterType = static_cast<MonsterType>(itemType);
 				}
 
 				// HP
-				ImGui::InputInt("HP", &m_currentProperties.hp);
+				ImGui::InputInt("HP", &m_pCurrentProperties->hp);
 
 				// Move speed
-				ImGui::InputInt("Speed", &m_currentProperties.speed);
+				ImGui::InputInt("Speed", &m_pCurrentProperties->speed);
 
 				// Knockback resistance
-				ImGui::InputInt("Knockback resistance", &m_currentProperties.knockbackResistance);
+				ImGui::InputInt("Knockback resistance", &m_pCurrentProperties->knockbackResistance);
 
 				// Collision damage
-				ImGui::InputInt("Collision damage", &m_currentProperties.collisionDamage);
+				ImGui::InputInt("Collision damage", &m_pCurrentProperties->collisionDamage);
 
 				ImGui::TreePop();
 			}
@@ -64,10 +61,6 @@ void Tool::UI::UIMonsterProperties::ShowUIMonsterProperties(bool* p_open)
 				ImGui::TreePop();
 			}
 
-			// Save button
-			if (ImGui::Button("Save Properties")) {
-				SaveCurrentMonsterProperties();
-			}
 		}
 		else {
 			ImGui::Text("No monster selected. Select a monster to edit its properties.");
@@ -77,27 +70,9 @@ void Tool::UI::UIMonsterProperties::ShowUIMonsterProperties(bool* p_open)
 	}
 }
 
-void Tool::UI::UIMonsterProperties::LoadCurrentMonsterProperties()
+void Tool::UI::UIMonsterProperties::SetCurrentProperties(MonsterProperties& properties)
 {
-	if (m_mapEditor) {
-		MonsterProperties* properties = m_mapEditor->GetSelectedMonsterProperties();
-		if (properties) {
-			m_currentProperties = *properties;
-			m_hasValidSelection = true;
-			ConvertFromMonsterProperties(m_currentProperties);
-		}
-		else {
-			m_hasValidSelection = false;
-		}
-	}
-}
-
-void Tool::UI::UIMonsterProperties::SaveCurrentMonsterProperties()
-{
-	if (m_mapEditor && m_hasValidSelection) {
-		ConvertToMonsterProperties(m_currentProperties);
-		m_mapEditor->UpdateMonsterPropertiesFromUI(m_currentProperties);
-	}
+	m_pCurrentProperties = &properties;
 }
 
 
@@ -155,7 +130,7 @@ void Tool::UI::UIMonsterProperties::BehaviorChaseConfigUI(BehaviorChaseConfig* c
 	}
 }
 
-void Tool::UI::UIMonsterProperties::BehaviorDistanceConditionHelperConfigUI()
+void Tool::UI::UIMonsterProperties::BehaviorDistanceConditionHelperConfigUI(BehaviorDistanceConditionHelperConfig* config)
 {
 	static int maxDistance = 10000;
 	ImGui::InputInt("Max distance", &maxDistance);
@@ -164,7 +139,7 @@ void Tool::UI::UIMonsterProperties::BehaviorDistanceConditionHelperConfigUI()
 	ImGui::InputInt("Min distance", &minDistance);
 }
 
-void Tool::UI::UIMonsterProperties::BehaviorMovementBounceConfig()
+void Tool::UI::UIMonsterProperties::BehaviorMovementBounceConfigUI(BehaviorMovementBounceConfig* config)
 {
 
 }
@@ -189,7 +164,7 @@ void Tool::UI::UIMonsterProperties::BehaviorShootBarrageConfigUI(BehaviorShootBa
 
 	const char* bulletTypeNames[] = { "straight", "parabol", "mortal", "boss" };
 	if (ImGui::Combo("Bullet Type", &bulletType, bulletTypeNames, IM_ARRAYSIZE(bulletTypeNames))) {
-		if (config) config->bulletType = static_cast<Data::BulletType>(bulletType);
+		if (config) config->bulletType = static_cast<BulletType>(bulletType);
 	}
 
 	if (ImGui::InputInt("NumOfBullet", &numOfBullet)) {
@@ -202,7 +177,7 @@ void Tool::UI::UIMonsterProperties::BehaviorShootBarrageConfigUI(BehaviorShootBa
 }
 
 
-void Tool::UI::UIMonsterProperties::BehaviorShootProjectileConfig()
+void Tool::UI::UIMonsterProperties::BehaviorShootProjectileConfigUI(BehaviorShootProjectileConfig* config)
 {
 	static int coolDown = 10000;
 	ImGui::InputInt("CoolDown", &coolDown);
@@ -215,12 +190,12 @@ void Tool::UI::UIMonsterProperties::BehaviorShootProjectileConfig()
 	ImGui::Combo("Bullet Type", &itemType, bulletType, IM_ARRAYSIZE(bulletType), IM_ARRAYSIZE(bulletType));
 }
 
-void Tool::UI::UIMonsterProperties::BehaviorShootStrategyBaseConfig()
+void Tool::UI::UIMonsterProperties::BehaviorShootStrategyBaseConfigUI(BehaviorShootStrategyBaseConfig* config)
 {
 
 }
 
-void Tool::UI::UIMonsterProperties::BehaviorSpreadShotConfig()
+void Tool::UI::UIMonsterProperties::BehaviorSpreadShotConfigUI(BehaviorSpreadShotConfig* config)
 {
 	static int coolDown = 10000;
 	ImGui::InputInt("CoolDown", &coolDown);
@@ -333,25 +308,25 @@ void Tool::UI::UIMonsterProperties::AddBehaviorToNode(BehaviorNode& parent, cons
 void Tool::UI::UIMonsterProperties::ShowBehaviorConfiguration(BehaviorNode& node) {
 	// Display appropriate configuration UI based on node type
 	if (node.name == "BehaviorChase") {
-		BehaviorChaseConfig();
+		BehaviorChaseConfigUI();
 	}
 	else if (node.name == "BehaviorDistanceConditionHelper") {
-		BehaviorDistanceConditionHelperConfig();
+		BehaviorDistanceConditionHelperConfigUI();
 	}
 	else if (node.name == "BehaviorMovementBounce") {
-		BehaviorMovementBounceConfig();
+		BehaviorMovementBounceConfigUI();
 	}
 	else if (node.name == "BehaviorShootBarrage") {
-		BehaviorShootBarrageConfig();
+		BehaviorShootBarrageConfigUI();
 	}
 	else if (node.name == "BehaviorShootProjectile") {
-		BehaviorShootProjectileConfig();
+		BehaviorShootProjectileConfigUI();
 	}
 	else if (node.name == "BehaviorShootStrategyBase") {
-		BehaviorShootStrategyBaseConfig();
+		BehaviorShootStrategyBaseConfigUI();
 	}
 	else if (node.name == "BehaviorSpreadShot") {
-		BehaviorSpreadShotConfig();
+		BehaviorSpreadShotConfigUI();
 	}
 	else if (node.name == "BehaviorMultiConfig") {
 		// For nested BehaviorMultiConfig, show add behavior option

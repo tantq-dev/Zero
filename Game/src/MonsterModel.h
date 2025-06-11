@@ -19,15 +19,6 @@ struct MonsterItem {
 	std::string name;
 };
 
-struct PlacedMonster {
-	MonsterItem item;
-
-	PlacedMonster(const MonsterItem& monsterItem)
-		: item(monsterItem) {
-
-	};
-};
-
 // Enums for various property types
 enum class MonsterType {
 	Normal = 0,
@@ -231,3 +222,12 @@ inline std::unique_ptr<BehaviorConfig> CreateBehaviorConfig(const std::string& b
 	}
 	return nullptr;
 }
+
+struct PlacedMonster {
+	MonsterItem item;
+	MonsterProperties properties;
+	PlacedMonster(const MonsterItem& monsterItem)
+		: item(monsterItem) {
+
+	};
+};

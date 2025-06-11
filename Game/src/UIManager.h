@@ -9,10 +9,10 @@ namespace Tool {
 		public:
 			void Initialize();
 			void Render();
+			std::unique_ptr<UIMonsterProperties> M_UIMonsterProperties;
+			std::unique_ptr<UIMonsterPalate> M_UIMonsterPalate;
 		private:
 
-			std::unique_ptr<UIMonsterPalate> m_UIMonsterPalate;
-			std::unique_ptr<UIMonsterProperties> m_UIMonsterProperties;
 
 
 			bool m_isShowMonsterPalate = true;

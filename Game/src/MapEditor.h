@@ -29,7 +29,6 @@ namespace Tool
 		entt::registry m_registry;
 		entt::entity m_selectedEntity = entt::null;
 		MonsterItem m_selectedMonsterItem{ -1, "" };
-		std::unordered_map<entt::entity, std::unique_ptr<MonsterProperties>> m_monsterProperties;
 	};
 
 }
