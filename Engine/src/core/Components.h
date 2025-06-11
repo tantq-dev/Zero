@@ -36,6 +36,9 @@ namespace Components
 			: position(pos), scale(scl), rotation(rot)
 		{
 		}
+		Transform(const Vec2& pos, const Vec2& s) :position(pos), scale(s) {
+
+		}
 	};
 
 	struct Velocity

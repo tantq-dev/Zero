@@ -2,7 +2,7 @@
 #include "config/ApplicationConfig.h"
 namespace System
 {
-	void RenderSystem::Render(entt::registry& registry, SDL_Renderer& renderer)
+	void RenderSystem::RenderAnimation(entt::registry& registry, SDL_Renderer& renderer)
 	{
 		const auto view = registry.group<>(entt::get<Components::Transform, Components::Animator>);
 
@@ -34,6 +34,34 @@ namespace System
 
 	}
 
+
+	void RenderSystem::RenderSprite(entt::registry& registry, SDL_Renderer& renderer, System::CameraSystem& cam)
+	{
+		const auto view = registry.group<>(entt::get<Components::Transform, Components::Sprite>);
+
+		for (const auto entity : view)
+		{
+			const auto& transform = view.get<Components::Transform>(entity);
+
+			if (registry.all_of<Components::Sprite>(entity))
+			{
+				auto& sprite = registry.get<Components::Sprite>(entity);
+
+				Vec2 cameraPos = { 0,0 };
+				cam.WorldToCameraView(transform.position, cameraPos);
+
+				m_dstRect.x = cameraPos.x - transform.scale.x / 2 * cam.GetCameraZoom(); // Center the sprite should caculate from transform.position
+				m_dstRect.y = cameraPos.y - transform.scale.y / 2 * cam.GetCameraZoom(); // Center the sprite should caculate from transform.position
+				m_dstRect.w = transform.scale.x * cam.GetCameraZoom();
+				m_dstRect.h = transform.scale.y * cam.GetCameraZoom();
+				LOG_INFO("Render texture at: " + std::to_string(cameraPos.x) + std::to_string(cameraPos.y));
+				SDL_RenderTexture(&renderer, sprite.texture, nullptr, &m_dstRect);
+			}
+		}
+
+	}
+
+
 	void RenderSystem::RenderGrid(const Components::Grid& tileMap, SDL_Renderer& renderer, System::CameraSystem& cam)
 	{
 		float tileSize = tileMap.GetCellSize() * cam.GetCameraZoom();
@@ -48,8 +76,6 @@ namespace System
 		Vec2 gridWorldPos = { baseX, baseY };
 		Vec2 cameraPos = { 0,0 };
 		cam.WorldToCameraView(gridWorldPos, cameraPos);
-
-
 
 
 		// Set color for grid lines

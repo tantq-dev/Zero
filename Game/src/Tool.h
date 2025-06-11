@@ -6,6 +6,7 @@
 #include <system/InputSystem.h>
 #include <system/GridSystem.h>
 #include "UIManager.h"
+#include "MapEditor.h"
 
 namespace Tool
 {
@@ -28,6 +29,7 @@ namespace Tool
 		std::unique_ptr<System::CameraSystem>		m_cameraSystem;
 		std::unique_ptr<System::GridSystem>			m_gridSystem;
 		std::unique_ptr<UI::UIManager>				m_uiManager;
+		std::unique_ptr<MapEditor>					m_mapEditor;
 
 		Vec2 m_lastMousePosition = { 0.0f, 0.0f };
 
