@@ -172,32 +172,6 @@ struct MonsterProperties {
 		rootBehavior = std::make_unique<BehaviorMultiConfig>();
 	}
 
-	bool HasBehavior(const std::string& behaviorType) const {
-		return FindBehavior(behaviorType) != nullptr;
-	}
-
-	BehaviorConfig* FindBehavior(const std::string& behaviorType) const {
-		return FindBehaviorRecursive(rootBehavior.get(), behaviorType);
-	}
-
-private:
-	BehaviorConfig* FindBehaviorRecursive(BehaviorConfig* config, const std::string& behaviorType) const {
-		if (!config) return nullptr;
-
-		if (config->behaviorType == behaviorType) {
-			return config;
-		}
-
-		if (auto* multi = dynamic_cast<BehaviorMultiConfig*>(config)) {
-			for (auto& child : multi->childBehaviors) {
-				auto* found = FindBehaviorRecursive(child.get(), behaviorType);
-				if (found) return found;
-			}
-		}
-
-		return nullptr;
-	}
-
 	// Move constructor and assignment
 	MonsterProperties(MonsterProperties&&) = default;
 	MonsterProperties& operator=(MonsterProperties&&) = default;
