@@ -10,16 +10,20 @@ Tool::UI::UIMonsterPalette::UIMonsterPalette()
 	std::vector<std::string> keys;
 
 	for (const auto& pair : MonsterConfig) {
-		keys.push_back(pair.first); // collect keys
+		AddItem(pair.first, pair.second);
 	}
 
-	AddItems(keys);
+	
 }
 
 void Tool::UI::UIMonsterPalette::ShowMonsterPalette(bool* p_open)
 {
 	if (p_open)
 	{
+		if (m_cacheNeedsUpdate)
+		{
+			UpdateCache();
+		}
 
 		bool window_contents_visible = ImGui::Begin("Monster Palate", p_open, ImGuiWindowFlags_MenuBar);
 		if (!window_contents_visible)
@@ -82,28 +86,28 @@ void Tool::UI::UIMonsterPalette::ShowMonsterPalette(bool* p_open)
 				for (int line_idx = clipper.DisplayStart; line_idx < clipper.DisplayEnd; line_idx++)
 				{
 					const int item_min_idx_for_current_line = line_idx * column_count;
-					const int item_max_idx_for_current_line = fmin((line_idx + 1) * column_count, MonsterItems.size());
+					const int item_max_idx_for_current_line = fmin((line_idx + 1) * column_count, m_monsterTypeRegistry.GetAllTypes().size());
 					for (int item_idx = item_min_idx_for_current_line; item_idx < item_max_idx_for_current_line; ++item_idx)
 					{
-						MonsterItem* item_data = &MonsterItems[item_idx];
-						ImGui::PushID((int)item_data->id);
+                        MonsterTypeDefinition* item_data = m_cachedMonsterTypes[item_idx];
+						ImGui::PushID((int)item_data->item.id);
 
 						// Position item
 						ImVec2 pos = ImVec2(start_pos.x + (item_idx % column_count) * LayoutItemStep.x, start_pos.y + line_idx * LayoutItemStep.y);
 						ImGui::SetCursorScreenPos(pos);
 
 						ImGui::SetNextItemSelectionUserData(item_idx);
-						bool item_is_selected = selectedItem == item_data->id;
+						bool item_is_selected = selectedItem == item_data->item.id;
 						bool item_is_visible = ImGui::IsRectVisible(LayoutItemSize);
 						ImGui::Selectable("", item_is_selected, ImGuiSelectableFlags_None, LayoutItemSize);
 
 						// Check for a simple click
 						if (ImGui::IsItemClicked() && !ImGui::IsMouseDragging(ImGuiMouseButton_Left))
 						{
-							if (selectedItem == item_data->id)
+							if (selectedItem == item_data->item.id)
 								selectedItem = -1; // Deselect if already selected
 							else
-								selectedItem = item_data->id;
+								selectedItem = item_data->item.id;
 							//todo: send event to map editor know which monster selected now
 							Core::EventData eventData;
 							eventData.data = *item_data;  // Send the entire monster item
@@ -120,7 +124,7 @@ void Tool::UI::UIMonsterPalette::ShowMonsterPalette(bool* p_open)
 							draw_list->AddRectFilled(box_min, box_max, icon_bg_color);
 
 							// Get texture for the monster from ResourcesManager
-							ImTextureID texture_id = (ImTextureID)(intptr_t)ResourcesManager::GetInstance().GetTexture(item_data->name);
+							ImTextureID texture_id = (ImTextureID)(intptr_t)ResourcesManager::GetInstance().GetTexture(item_data->item.name);
 
 							// Calculate image area (slightly smaller than box to create padding)
 							const float padding = 2.0f;
@@ -140,8 +144,8 @@ void Tool::UI::UIMonsterPalette::ShowMonsterPalette(bool* p_open)
 								draw_list->AddRectFilled(image_min, image_max, placeholder_col);
 
 								// Center the first letter of monster name as a placeholder
-								if (item_data->name.length() > 0) {
-									char letter[2] = { item_data->name[0], '\0' };
+								if (item_data->item.name.length() > 0) {
+									char letter[2] = { item_data->item.name[0], '\0' };
 									ImVec2 text_size = ImGui::CalcTextSize(letter);
 									ImVec2 text_pos(
 										(image_min.x + image_max.x - text_size.x) * 0.5f,
@@ -154,7 +158,7 @@ void Tool::UI::UIMonsterPalette::ShowMonsterPalette(bool* p_open)
 							if (display_label)
 							{
 								ImU32 label_col = ImGui::GetColorU32(item_is_selected ? ImGuiCol_Text : ImGuiCol_TextDisabled);
-								draw_list->AddText(ImVec2(box_min.x, box_max.y - ImGui::GetFontSize()), label_col, item_data->name.c_str());
+								draw_list->AddText(ImVec2(box_min.x, box_max.y - ImGui::GetFontSize()), label_col, item_data->item.name.c_str());
 							}
 						}
 
@@ -175,24 +179,23 @@ void Tool::UI::UIMonsterPalette::ShowMonsterPalette(bool* p_open)
 }
 
 void Tool::UI::UIMonsterPalette::AddItems(int count) {
-	if (MonsterItems.size() == 0)
+	/*if (m_monsterItems.size() == 0)
 		NextItemId = 0;
-	MonsterItems.reserve(MonsterItems.size() + count);
+	m_monsterItems.reserve(m_monsterItems.size() + count);
 	for (int n = 0; n < count; n++, NextItemId++)
 	{
-		MonsterItems.push_back(MonsterItem(NextItemId, std::to_string(NextItemId % 20)));
-	}
+		m_monsterItems.push_back(MonsterItem(NextItemId, std::to_string(NextItemId % 20)));
+	}*/
 }
 
-void Tool::UI::UIMonsterPalette::AddItems(std::vector < std::string> names) {
-	if (MonsterItems.size() == 0)
-		NextItemId = 0;
-	MonsterItems.reserve(MonsterItems.size() + names.size());
-	for (int n = 0; n < names.size(); n++, NextItemId++)
-	{
-		MonsterItems.push_back(MonsterItem(NextItemId, names[n]));
-	}
+void Tool::UI::UIMonsterPalette::AddItem(std::string name, const char* path)
+{
+	m_monsterTypeRegistry.RegisterMonsterType(name, path);
 }
+
+//void Tool::UI::UIMonsterPalette::AddItems(std::vector < std::string> names) {
+//	
+//}
 
 void Tool::UI::UIMonsterPalette::UpdateLayoutSizes(float avail_width)
 {
@@ -204,7 +207,7 @@ void Tool::UI::UIMonsterPalette::UpdateLayoutSizes(float avail_width)
 	// Layout: calculate number of icon per line and number of lines
 	LayoutItemSize = ImVec2(floorf(IconSize), floorf(IconSize));
 	LayoutColumnCount = fmax((int)(avail_width / (LayoutItemSize.x + LayoutItemSpacing)), 1);
-	LayoutLineCount = (MonsterItems.size() + LayoutColumnCount - 1) / LayoutColumnCount;
+	LayoutLineCount = (m_cachedMonsterTypes.size() + LayoutColumnCount - 1) / LayoutColumnCount;
 
 	// Layout: when stretching: allocate remaining space to more spacing. Round before division, so item_spacing may be non-integer.
 	if (StretchSpacing && LayoutColumnCount > 1)
@@ -213,4 +216,14 @@ void Tool::UI::UIMonsterPalette::UpdateLayoutSizes(float avail_width)
 	LayoutItemStep = ImVec2(LayoutItemSize.x + LayoutItemSpacing, LayoutItemSize.y + LayoutItemSpacing);
 	LayoutSelectableSpacing = fmax(floorf(LayoutItemSpacing) - IconHitSpacing, 0.0f);
 	LayoutOuterPadding = floorf(LayoutItemSpacing * 0.5f);
+}
+
+void Tool::UI::UIMonsterPalette::UpdateCache()
+{
+	m_cachedMonsterTypes.clear();
+	m_cachedMonsterTypes.reserve(m_monsterTypeRegistry.GetAllTypes().size());
+	for (const auto& pair : m_monsterTypeRegistry.GetAllTypes()) {
+		m_cachedMonsterTypes.push_back(pair.second.get());
+	}
+	m_cacheNeedsUpdate = false;
 }

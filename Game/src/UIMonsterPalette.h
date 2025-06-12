@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 #include "MonsterModel.h"
-
+#include "MonsterTypeRegistry.h"
 
 
 namespace Tool {
@@ -14,8 +14,12 @@ namespace Tool {
 			UIMonsterPalette();
 			~UIMonsterPalette() = default;
 			void ShowMonsterPalette(bool* p_open);
+			void InvalidateCache() { m_cacheNeedsUpdate = true; }
 		private:
-			std::vector<MonsterItem> MonsterItems;
+			MonsterTypeRegistry m_monsterTypeRegistry;
+
+			std::vector<MonsterTypeDefinition*> m_cachedMonsterTypes; 
+			bool m_cacheNeedsUpdate = true; 
 
 			float           IconSize = 64.0f;
 			int             IconSpacing = 10;
@@ -33,10 +37,10 @@ namespace Tool {
 			int             LayoutLineCount = 0;
 
 			void AddItems(int count);
-
-			void AddItems(std::vector<std::string> monsterNameList);
+			void AddItem(std::string name, const char * path);
 
 			void UpdateLayoutSizes(float avail_width);
+			void UpdateCache();
 		};
 	}
 }

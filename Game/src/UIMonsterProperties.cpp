@@ -67,38 +67,38 @@ void Tool::UI::UIMonsterProperties::ShowUIMonsterProperties(bool* p_open)
 			if (ImGui::TreeNode("Stat")) {
 				// Name
 				char nameBuf[128];
-				strncpy(nameBuf, m_pCurrentProperties->name.c_str(), sizeof(nameBuf));
+				strncpy(nameBuf, m_pCurrentProperties->defaultProperties.name.c_str(), sizeof(nameBuf));
 				nameBuf[sizeof(nameBuf) - 1] = '\0';
 				if (ImGui::InputText("Name: ", nameBuf, IM_ARRAYSIZE(nameBuf))) {
-					m_pCurrentProperties->name = nameBuf;
+					m_pCurrentProperties->defaultProperties.name = nameBuf;
 					dataChanged = true;
 				}
 
 				// Monster type
 				const char* monsterType[] = { "Boss", "Normal" };
-				int itemType = static_cast<int>(m_pCurrentProperties->monsterType);
+				int itemType = static_cast<int>(m_pCurrentProperties->defaultProperties.monsterType);
 				if (ImGui::Combo("Monster Type", &itemType, monsterType, IM_ARRAYSIZE(monsterType))) {
-					m_pCurrentProperties->monsterType = static_cast<MonsterType>(itemType);
+					m_pCurrentProperties->defaultProperties.monsterType = static_cast<MonsterType>(itemType);
 					dataChanged = true;
 				}
 
 				// HP
-				if (ImGui::InputInt("HP", &m_pCurrentProperties->hp)) {
+				if (ImGui::InputInt("HP", &m_pCurrentProperties->defaultProperties.hp)) {
 					dataChanged = true;
 				}
 
 				// Move speed
-				if (ImGui::InputInt("Speed", &m_pCurrentProperties->speed)) {
+				if (ImGui::InputInt("Speed", &m_pCurrentProperties->defaultProperties.speed)) {
 					dataChanged = true;
 				}
 
 				// Knockback resistance
-				if (ImGui::InputInt("Knockback resistance", &m_pCurrentProperties->knockbackResistance)) {
+				if (ImGui::InputInt("Knockback resistance", &m_pCurrentProperties->defaultProperties.knockbackResistance)) {
 					dataChanged = true;
 				}
 
 				// Collision damage
-				if (ImGui::InputInt("Collision damage", &m_pCurrentProperties->collisionDamage)) {
+				if (ImGui::InputInt("Collision damage", &m_pCurrentProperties->defaultProperties.collisionDamage)) {
 					dataChanged = true;
 				}
 
@@ -133,7 +133,7 @@ void Tool::UI::UIMonsterProperties::ShowUIMonsterProperties(bool* p_open)
 	}
 }
 
-void Tool::UI::UIMonsterProperties::SetCurrentProperties(MonsterProperties& properties)
+void Tool::UI::UIMonsterProperties::SetCurrentProperties(MonsterTypeDefinition& properties)
 {
 	m_pCurrentProperties = &properties;
 	m_hasValidSelection = true;
@@ -532,17 +532,17 @@ std::unique_ptr<BehaviorConfig> Tool::UI::UIMonsterProperties::ConvertNodeToBeha
 }
 
 // Convert MonsterProperties to UI BehaviorNode tree
-void Tool::UI::UIMonsterProperties::ConvertFromMonsterProperties(const MonsterProperties& properties)
+void Tool::UI::UIMonsterProperties::ConvertFromMonsterProperties(const MonsterTypeDefinition& properties)
 {
 	// Reset and initialize root node
 	InitializeRootNode();
 
-	if (!properties.rootBehavior) {
+	if (!properties.defaultProperties.rootBehavior) {
 		return; // Nothing to convert
 	}
 
 	// Convert the root behavior and its children
-	auto rootConfig = dynamic_cast<const BehaviorMultiConfig*>(properties.rootBehavior.get());
+	auto rootConfig = dynamic_cast<const BehaviorMultiConfig*>(properties.defaultProperties.rootBehavior.get());
 	if (rootConfig) {
 		// Update root node config
 		if (auto* multiConfig = dynamic_cast<BehaviorMultiConfig*>(m_pRootNode->config.get())) {
@@ -562,18 +562,15 @@ void Tool::UI::UIMonsterProperties::ConvertFromMonsterProperties(const MonsterPr
 		}
 	}
 
-	// Log conversion for debugging
-	std::cout << "[" << "2025-06-11 17:45:06" << "] ConvertFromMonsterProperties: Converted "
-		<< m_pRootNode->children.size() << " behaviors for monster: "
-		<< properties.name << std::endl;
+
 }
 
 // Convert UI BehaviorNode tree to MonsterProperties
-void Tool::UI::UIMonsterProperties::ConvertToMonsterProperties(MonsterProperties& properties)
+void Tool::UI::UIMonsterProperties::ConvertToMonsterProperties(MonsterTypeDefinition& properties)
 {
 	if (!m_pRootNode) {
 		// Initialize empty behavior tree
-		properties.rootBehavior = std::make_unique<BehaviorMultiConfig>();
+		properties.defaultProperties.rootBehavior = std::make_unique<BehaviorMultiConfig>();
 		return;
 	}
 
@@ -593,7 +590,7 @@ void Tool::UI::UIMonsterProperties::ConvertToMonsterProperties(MonsterProperties
 		}
 	}
 	// Replace the properties' behavior tree
-	properties.rootBehavior = std::move(newRootBehavior);
+	properties.defaultProperties.rootBehavior = std::move(newRootBehavior);
 
 }
 

@@ -5,7 +5,7 @@ file(GLOB_RECURSE GAME_SRC CONFIGURE_DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
 )
 
-add_executable(ZeroGame ${GAME_SRC}      )
+add_executable(ZeroGame ${GAME_SRC}       "src/MonsterTypeRegistry.h" "src/MonsterTypeRegistry.cpp")
 
 target_include_directories(ZeroGame PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src

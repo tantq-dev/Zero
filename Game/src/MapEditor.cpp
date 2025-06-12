@@ -11,7 +11,7 @@ Tool::MapEditor::MapEditor()
 	AddWave();
 	Core::EventSystem::getInstance().subscribe(EventKeys::MonsterSelectedFromPalette,
 		[this](const Core::EventData& data) {
-			OnMonsterSelectedFromUI(data.get<MonsterItem>());
+			OnMonsterSelectedFromUI(data.get<MonsterTypeDefinition>().item);
 		});
 
 	Core::EventSystem::getInstance().subscribe(EventKeys::SwitchWave,

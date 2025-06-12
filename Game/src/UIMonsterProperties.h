@@ -90,7 +90,7 @@ namespace Tool {
             int m_nextNodeId = 0;  // For generating unique node IDs
 
             // Add reference to MapEditor and current properties
-            MonsterProperties* m_pCurrentProperties = nullptr;
+            MonsterTypeDefinition* m_pCurrentProperties = nullptr;
             bool m_hasValidSelection = false;
 
         public:
@@ -98,7 +98,7 @@ namespace Tool {
             ~UIMonsterProperties();
 
             void ShowUIMonsterProperties(bool* p_open);
-            void SetCurrentProperties(MonsterProperties& properties);
+            void SetCurrentProperties(MonsterTypeDefinition& properties);
 
         private:
             // Node creation and management
@@ -123,8 +123,8 @@ namespace Tool {
             void BehaviorMultiConfigUI(BehaviorNode& node);
 
             // Data conversion methods
-            void ConvertFromMonsterProperties(const MonsterProperties& properties);
-            void ConvertToMonsterProperties(MonsterProperties& properties);
+            void ConvertFromMonsterProperties(const MonsterTypeDefinition& properties);
+            void ConvertToMonsterProperties(MonsterTypeDefinition& properties);
             void SaveCurrentProperties();
             std::unique_ptr<BehaviorNode> ConvertBehaviorConfigToNode(const BehaviorConfig* config);
             std::unique_ptr<BehaviorConfig> ConvertNodeToBehaviorConfig(const BehaviorNode& node);

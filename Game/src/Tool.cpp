@@ -79,7 +79,7 @@ namespace Tool
 
 		Core::EventSystem::getInstance().subscribe(EventKeys::MonsterSelectedFromPalette,
 			[this](const Core::EventData& data) {
-				MonsterItem selectedMonster = data.get<MonsterItem>();
+				MonsterItem selectedMonster = data.get<MonsterTypeDefinition>().item;
 				LOG_INFO("Monster selected in palate: " + selectedMonster.name);
 			});
 	}

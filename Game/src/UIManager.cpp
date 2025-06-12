@@ -11,7 +11,8 @@ void Tool::UI::UIManager::Initialize()
 
 	Core::EventSystem::getInstance().subscribe(EventKeys::MonsterSelectedFromPalette,
 		[this](const Core::EventData& data) {
-			//M_UIMonsterProperties->SetCurrentProperties(data.get<PlacedMonster*>()->properties);
+			MonsterTypeDefinition pros = data.get<MonsterTypeDefinition>();
+			M_UIMonsterProperties->SetCurrentProperties(pros);
 			m_isShowMonsterProperty = true;
 		});
 }

@@ -245,7 +245,6 @@ struct PlacedMonster {
 	MonsterProperties properties;
 	PlacedMonster(const MonsterItem& monsterItem)
 		: item(monsterItem) {
-
 	};
 };
 
@@ -258,6 +257,10 @@ struct MonsterTypeDefinition {
 	MonsterTypeDefinition(int id, const std::string& name, const char* path)
 		: item{ id, name }, texturePath(path) {
 		defaultProperties.name = name;
-		// Initialize other defaults...
+		defaultProperties.hp = 10000; // Default HP
+		defaultProperties.speed = 10000; // Default speed
+		defaultProperties.knockbackResistance = 10000; // Default knockback resistance
+		defaultProperties.collisionDamage = 10000; // Default collision damage
+		defaultProperties.rootBehavior = std::make_unique<BehaviorMultiConfig>(); // Initialize with an empty behavior tree
 	}
 };
