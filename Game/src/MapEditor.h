@@ -2,6 +2,7 @@
 #include "MonsterModel.h"
 #include "utilities/Vec2.h"
 #include "entt.hpp"
+#include "WaveModel.h"
 
 namespace Tool
 {
@@ -9,8 +10,8 @@ namespace Tool
 	{
 	public:
 		MapEditor();
+		void AddWave();
 		~MapEditor();
-		void SelecteMonsterAtPosition(Vec2 clickPosition);
 		void AddMonsterToMap(Vec2 clickPosition);
 		void DeleteFromMap(Vec2 clickPosition);
 		void OnMonsterSelectedFromUI(MonsterItem monster);
@@ -18,17 +19,17 @@ namespace Tool
 		void ClickOnPlacedMonster(entt::entity& e, PlacedMonster& monster);
 		PlacedMonster* GetSelectedMonster();
 		entt::registry& GetMonsterRegistry();
-
-
-		// New methods for MonsterProperties integration
-		MonsterProperties* GetSelectedMonsterProperties();
-		MonsterProperties* GetMonsterProperties(entt::entity entity);
-		void UpdateMonsterPropertiesFromUI(const MonsterProperties& properties);
+		int GetNextWaveIndex() const;
+		void SwitchWave(int direction);
+		void SendWaveData();
+		void UpdateRenderingForCurrentWave();
 
 	private:
 		entt::registry m_registry;
 		entt::entity m_selectedEntity = entt::null;
 		MonsterItem m_selectedMonsterItem{ -1, "" };
+		entt::entity m_currentMonsterWave = entt::null;
+		std::vector<entt::entity> m_waveEntities;
 	};
 
 }

@@ -12,7 +12,11 @@ namespace System
 		const Components::Grid& GetGrid() const { return grid; }
 		Components::Cell* GetCell(const Vec2 mousePosition);
 		void ResetGridHightlight();
+		const float& GetGridHeight();
+		const float& GetGridWidth();
+
 	private:
 		Components::Grid grid = Components::Grid(0, 0, 0, 0);;
+		void InitializeGrid();
 	};
 } // namespace System

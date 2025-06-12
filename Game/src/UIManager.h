@@ -1,7 +1,8 @@
 #pragma once
-#include "UIMonsterPalate.h"
+#include "UIMonsterPalette.h"
 #include <iostream>
 #include "UIMonsterProperties.h"
+#include "UIWaveInformation.h"
 namespace Tool {
 	namespace UI {
 
@@ -10,11 +11,12 @@ namespace Tool {
 			void Initialize();
 			void Render();
 			std::unique_ptr<UIMonsterProperties> M_UIMonsterProperties;
-			std::unique_ptr<UIMonsterPalate> M_UIMonsterPalate;
+			std::unique_ptr<UIMonsterPalette> M_UIMonsterPalette;
+			std::unique_ptr<UIWaveInformation> M_UIWaveInformation;
 		private:
-			bool m_isShowMonsterPalate = true;
+			bool m_isShowMonsterPalette = true;
 			bool m_isShowMonsterProperty = false;
-
+			bool m_isShowWaveInformation = true;
 		};
 
 	}

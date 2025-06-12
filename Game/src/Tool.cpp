@@ -77,7 +77,7 @@ namespace Tool
 		m_cameraSystem->AddCamera("Main", camera);
 		m_cameraSystem->SetCurrentCamera("Main");
 
-		Core::EventSystem::getInstance().subscribe(EventKeys::MonsterSelectedFromPalate,
+		Core::EventSystem::getInstance().subscribe(EventKeys::MonsterSelectedFromPalette,
 			[this](const Core::EventData& data) {
 				MonsterItem selectedMonster = data.get<MonsterItem>();
 				LOG_INFO("Monster selected in palate: " + selectedMonster.name);
@@ -108,21 +108,29 @@ namespace Tool
 		Vec2 mousePos = m_inputSystem->GetMousePosition("Test_Mouse_Motion");
 		Vec2 mouseWorld = { 0,0 };
 		m_cameraSystem->CameraViewToWorld(mousePos, mouseWorld);
+		if (mouseWorld.x > m_gridSystem->GetGridWidth() / 2 ||
+			mouseWorld.x < -m_gridSystem->GetGridWidth() / 2 ||
+			mouseWorld.y > m_gridSystem->GetGridHeight() / 2 ||
+			mouseWorld.y < -m_gridSystem->GetGridHeight() / 2) {
+			//out of grid bound
+		}
+		else {
+			auto pCell = m_gridSystem->GetCell(mouseWorld);
 
-		auto pCell = m_gridSystem->GetCell(mouseWorld);
-
-		if (pCell) {
-			pCell->isColor = !pCell->isColor;
-			if (m_inputSystem->IsActionPressed("Test_Mouse"))
-			{
-				//todo: place monster at this grid
-				m_mapEditor->ClickOnMap(pCell->GetCenter());
-			}
-			else if (m_inputSystem->IsActionPressed("Right_Mouse"))
-			{
-				m_mapEditor->DeleteFromMap(pCell->GetCenter());
+			if (pCell) {
+				pCell->isColor = !pCell->isColor;
+				if (m_inputSystem->IsActionPressed("Test_Mouse"))
+				{
+					//todo: place monster at this grid
+					m_mapEditor->ClickOnMap(pCell->GetCenter());
+				}
+				else if (m_inputSystem->IsActionPressed("Right_Mouse"))
+				{
+					m_mapEditor->DeleteFromMap(pCell->GetCenter());
+				}
 			}
 		}
+
 
 		m_cameraSystem->AdjustCameraZoom(m_inputSystem->GetMouseWheelDelta("Test_Mouse_Wheel"));
 		m_inputSystem->ResetMouseWheelDelta("Test_Mouse_Wheel");

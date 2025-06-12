@@ -8,6 +8,9 @@
 #include <vector>
 #include "utilities/Logger.h"
 #include <stdexcept>
+#include "config/ApplicationConfig.h"
+
+
 #define MATRIX_2D_INT std::vector<std::vector<int>>
 namespace Components
 {
@@ -96,6 +99,7 @@ namespace Components
 	{
 		SDL_Texture* texture = nullptr;
 		bool flipHorizontal = false;
+		bool isVisible = true;
 		float rotation = 0.0f; // Rotation in radians
 		Sprite() = default;
 		explicit Sprite(SDL_Texture* tex, float rot = 0.0f)
@@ -248,18 +252,79 @@ namespace Components
 
 
 	//Grid
-	struct Cell
-	{
+	struct Cell {
 		Vec2 position;
 		Vec2 size;
 		bool isColor = false; // If true, the tile is colored
+
+		// Default constructor
 		Cell() = default;
-		Cell(const Vec2& pos, const Vec2& sz)
-			: position(pos), size(sz) {
+
+		// Parameterized constructor
+		Cell(const Vec2& pos, const Vec2& sz) : position(pos), size(sz) {}
+
+		// Constructor with color flag
+		Cell(const Vec2& pos, const Vec2& sz, bool colored)
+			: position(pos), size(sz), isColor(colored) {
 		}
+
+		// Getters
 		[[nodiscard]] Vec2 GetPosition() const { return position; }
 		[[nodiscard]] Vec2 GetSize() const { return size; }
-		[[nodiscard]] Vec2 GetCenter() const { return position + size * 0.5f; } // Center of the tile
+		[[nodiscard]] Vec2 GetCenter() const { return position + size * 0.5f; }
+		[[nodiscard]] bool IsColored() const { return isColor; }
+
+		// Setters
+		void SetPosition(const Vec2& pos) { position = pos; }
+		void SetSize(const Vec2& sz) { size = sz; }
+		void SetColored(bool colored) { isColor = colored; }
+		void ToggleColor() { isColor = !isColor; }
+
+		// Utility methods
+		[[nodiscard]] bool Contains(const Vec2& point) const {
+			return point.x >= position.x && point.x <= position.x + size.x &&
+				point.y >= position.y && point.y <= position.y + size.y;
+		}
+
+		[[nodiscard]] SDL_FRect ToSDLRect() const {
+			return SDL_FRect{
+				position.x,
+				position.y,
+				size.x,
+				size.y
+			};
+		}
+
+		// Get bounds
+		[[nodiscard]] Vec2 GetTopLeft() const { return position; }
+		[[nodiscard]] Vec2 GetTopRight() const { return Vec2{ position.x + size.x, position.y }; }
+		[[nodiscard]] Vec2 GetBottomLeft() const { return Vec2{ position.x, position.y + size.y }; }
+		[[nodiscard]] Vec2 GetBottomRight() const { return position + size; }
+
+		// Check if this cell overlaps with another
+		[[nodiscard]] bool Overlaps(const Cell& other) const {
+			return !(position.x + size.x < other.position.x ||
+				other.position.x + other.size.x < position.x ||
+				position.y + size.y < other.position.y ||
+				other.position.y + other.size.y < position.y);
+		}
+
+		// Distance from center to another cell's center
+		[[nodiscard]] float DistanceTo(const Cell& other) const {
+			Vec2 thisCenter = GetCenter();
+			Vec2 otherCenter = other.GetCenter();
+			Vec2 diff = otherCenter - thisCenter;
+			return sqrt(diff.x * diff.x + diff.y * diff.y);
+		}
+
+		// Equality operators
+		bool operator==(const Cell& other) const {
+			return position == other.position && size == other.size && isColor == other.isColor;
+		}
+
+		bool operator!=(const Cell& other) const {
+			return !(*this == other);
+		}
 	};
 
 	struct Grid
@@ -305,7 +370,6 @@ namespace Components
 		{
 			return numberCellRow;
 		}
-
 	};
 
 	// Camera 
@@ -313,8 +377,8 @@ namespace Components
 	{
 		Vec2 position = { 0,0 };
 		float zoom = 1.0f;
-		int width = 800; // Default width
-		int height = 600; // Default height
+		int width = ApplicationConfig::DEFAULT_WINDOW_WIDTH; // Default width
+		int height = ApplicationConfig::DEFAULT_WINDOW_HEIGHT; // Default height
 
 		[[nodiscard]] Vec2 GetPosition() const {
 			return position;

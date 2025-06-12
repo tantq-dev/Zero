@@ -46,7 +46,7 @@ namespace System
 			if (registry.all_of<Components::Sprite>(entity))
 			{
 				auto& sprite = registry.get<Components::Sprite>(entity);
-
+				if (!sprite.isVisible) continue;
 				Vec2 cameraPos = { 0,0 };
 				cam.WorldToCameraView(transform.position, cameraPos);
 
@@ -62,49 +62,23 @@ namespace System
 	}
 
 
-	void RenderSystem::RenderGrid(const Components::Grid& tileMap, SDL_Renderer& renderer, System::CameraSystem& cam)
+	void RenderSystem::RenderGrid(const Components::Grid& grid, SDL_Renderer& renderer, System::CameraSystem& cam)
 	{
-		float tileSize = tileMap.GetCellSize() * cam.GetCameraZoom();
-		const float mapRows = tileMap.GetHeight();
-		const float mapCols = tileMap.GetWidth();
+		float tileSize = grid.GetCellSize() * cam.GetCameraZoom();
+		const float mapRows = grid.GetHeight();
+		const float mapCols = grid.GetWidth();
 
 
-		// Calculate base position for the tilemap
-		const float baseX = 0;
-		const float baseY = 0;
+		const float baseX = -(mapCols * grid.GetCellSize()) / 2.0f;
+		const float baseY = -(mapRows * grid.GetCellSize()) / 2.0f;
+
+		LOG_INFO("Base x: " + std::to_string(baseX));
+		LOG_INFO("Base y: " + std::to_string(baseY));
+
 
 		Vec2 gridWorldPos = { baseX, baseY };
 		Vec2 cameraPos = { 0,0 };
 		cam.WorldToCameraView(gridWorldPos, cameraPos);
-
-
-		// Set color for grid lines
-		SDL_SetRenderDrawColor(&renderer, 100, 100, 100, 128);
-
-		// Prepare vertex arrays for horizontal and vertical lines
-		std::vector<SDL_FPoint> vertices;
-		vertices.reserve((mapRows + 1 + mapCols + 1) * 2); // 2 points per line
-
-		// Create horizontal grid lines
-		for (int r = 0; r <= mapRows; r++) {
-			const float y = r * tileSize;
-			vertices.push_back({ cameraPos.x, y + cameraPos.y });                // Start point
-			vertices.push_back({ cameraPos.x + static_cast<float>(mapCols * tileSize), y + cameraPos.y }); // End point
-		}
-
-		// Create vertical grid lines
-		for (int c = 0; c <= mapCols; c++) {
-			const float x = c * tileSize;
-			vertices.push_back({ x + cameraPos.x, cameraPos.y });                // Start point
-			vertices.push_back({ x + cameraPos.x, cameraPos.y + static_cast<float>(mapRows * tileSize) }); // End point
-		}
-
-		// Batch render all lines in one call
-		for (size_t i = 0; i < vertices.size(); i += 2) {
-			SDL_RenderLine(&renderer,
-				vertices[i].x, vertices[i].y,
-				vertices[i + 1].x, vertices[i + 1].y);
-		}
 
 		//// First, render all tiles with appropriate colors
 		for (int r = 0; r < mapRows; r++) {
@@ -124,7 +98,7 @@ namespace System
 				SDL_RenderRect(&renderer, &tileRect);
 
 				// Draw colored border for highlighted tiles
-				if (tileMap.cells[tileIndex].isColor) {
+				if (grid.cells[tileIndex].isColor) {
 					SDL_SetRenderDrawColor(&renderer, 255, 255, 255, 255);
 					SDL_RenderRect(&renderer, &tileRect);  // Draw just the outline
 				}

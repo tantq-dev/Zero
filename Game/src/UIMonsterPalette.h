@@ -9,11 +9,11 @@
 namespace Tool {
 	namespace UI {
 
-		class UIMonsterPalate {
+		class UIMonsterPalette {
 		public:
-			UIMonsterPalate();
-			~UIMonsterPalate() = default;
-			void ShowMonsterPalate(bool* p_open);
+			UIMonsterPalette();
+			~UIMonsterPalette() = default;
+			void ShowMonsterPalette(bool* p_open);
 		private:
 			std::vector<MonsterItem> MonsterItems;
 

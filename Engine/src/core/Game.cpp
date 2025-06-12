@@ -144,7 +144,6 @@ namespace Core
 			{
 				SDL_Delay(FRAME_DELAY - frameTime);
 			}
-
 		}
 	}
 

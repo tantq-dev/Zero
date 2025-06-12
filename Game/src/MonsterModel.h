@@ -38,6 +38,14 @@ enum class ContainerType {
 	Sequence = 2
 };
 
+struct BulletConfig {
+	BulletType bulletType = BulletType::Parabol;
+	int speed;
+	int aliveTime;
+	int damage;
+	int bounce;
+};
+
 // Base class for behavior configuration data
 struct BehaviorConfig {
 	std::string behaviorType;
@@ -70,10 +78,9 @@ struct BehaviorMovementBounceConfig : public BehaviorConfig {
 
 struct BehaviorShootBarrageConfig : public BehaviorConfig {
 	int coolDown = 10000;
-	BulletType bulletType = BulletType::Parabol;
 	int numOfBullet = 10000;
 	int spreadAngle = 10000;
-
+	BulletConfig bulletConfig;
 	BehaviorShootBarrageConfig() {
 		behaviorType = "BehaviorShootBarrage";
 	}
@@ -81,8 +88,7 @@ struct BehaviorShootBarrageConfig : public BehaviorConfig {
 
 struct BehaviorShootProjectileConfig : public BehaviorConfig {
 	int coolDown = 10000;
-	BulletType bulletType = BulletType::Parabol;
-
+	BulletConfig bulletConfig;
 	BehaviorShootProjectileConfig() {
 		behaviorType = "BehaviorShootProjectile";
 	}
@@ -96,9 +102,9 @@ struct BehaviorShootStrategyBaseConfig : public BehaviorConfig {
 
 struct BehaviorSpreadShotConfig : public BehaviorConfig {
 	int coolDown = 10000;
-	BulletType bulletType = BulletType::Parabol;
 	int numOfBullet = 10000;
 	int spreadAngle = 10000;
+	BulletConfig bulletConfig;
 
 	BehaviorSpreadShotConfig() {
 		behaviorType = "BehaviorSpreadShot";
@@ -241,4 +247,17 @@ struct PlacedMonster {
 		: item(monsterItem) {
 
 	};
+};
+
+// New structure for monster type definitions
+struct MonsterTypeDefinition {
+	MonsterItem item;                    // Basic info (id, name)
+	MonsterProperties defaultProperties; // Default stats and behavior
+	const char* texturePath;            // Asset path
+
+	MonsterTypeDefinition(int id, const std::string& name, const char* path)
+		: item{ id, name }, texturePath(path) {
+		defaultProperties.name = name;
+		// Initialize other defaults...
+	}
 };

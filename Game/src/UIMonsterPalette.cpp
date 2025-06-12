@@ -1,11 +1,11 @@
-#include "UIMonsterPalate.h"
+#include "UIMonsterPalette.h"
 #include "core/EventSystem.h"
 #include "EventKey.h"
 #include "MonsterModel.h"
 #include "resources/ResourcesManager.h"
 
 
-Tool::UI::UIMonsterPalate::UIMonsterPalate()
+Tool::UI::UIMonsterPalette::UIMonsterPalette()
 {
 	std::vector<std::string> keys;
 
@@ -16,7 +16,7 @@ Tool::UI::UIMonsterPalate::UIMonsterPalate()
 	AddItems(keys);
 }
 
-void Tool::UI::UIMonsterPalate::ShowMonsterPalate(bool* p_open)
+void Tool::UI::UIMonsterPalette::ShowMonsterPalette(bool* p_open)
 {
 	if (p_open)
 	{
@@ -107,8 +107,10 @@ void Tool::UI::UIMonsterPalate::ShowMonsterPalate(bool* p_open)
 							//todo: send event to map editor know which monster selected now
 							Core::EventData eventData;
 							eventData.data = *item_data;  // Send the entire monster item
-							Core::EventSystem::getInstance().publish(EventKeys::MonsterSelectedFromPalate, eventData);
+							Core::EventSystem::getInstance().publish(EventKeys::MonsterSelectedFromPalette, eventData);
 						}
+
+
 						if (item_is_visible)
 						{
 							ImVec2 box_min(pos.x - 1, pos.y - 1);
@@ -172,7 +174,7 @@ void Tool::UI::UIMonsterPalate::ShowMonsterPalate(bool* p_open)
 	}
 }
 
-void Tool::UI::UIMonsterPalate::AddItems(int count) {
+void Tool::UI::UIMonsterPalette::AddItems(int count) {
 	if (MonsterItems.size() == 0)
 		NextItemId = 0;
 	MonsterItems.reserve(MonsterItems.size() + count);
@@ -182,7 +184,7 @@ void Tool::UI::UIMonsterPalate::AddItems(int count) {
 	}
 }
 
-void Tool::UI::UIMonsterPalate::AddItems(std::vector < std::string> names) {
+void Tool::UI::UIMonsterPalette::AddItems(std::vector < std::string> names) {
 	if (MonsterItems.size() == 0)
 		NextItemId = 0;
 	MonsterItems.reserve(MonsterItems.size() + names.size());
@@ -192,7 +194,7 @@ void Tool::UI::UIMonsterPalate::AddItems(std::vector < std::string> names) {
 	}
 }
 
-void Tool::UI::UIMonsterPalate::UpdateLayoutSizes(float avail_width)
+void Tool::UI::UIMonsterPalette::UpdateLayoutSizes(float avail_width)
 {
 	// Layout: when not stretching: allow extending into right-most spacing.
 	LayoutItemSpacing = (float)IconSpacing;

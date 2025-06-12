@@ -19,7 +19,7 @@ namespace System {
 	}
 	void CameraSystem::AddCamera(const std::string name, const Components::Camera cam)
 	{
-		cameraMap.insert_or_assign(name, cam);	
+		cameraMap.insert_or_assign(name, cam);
 	}
 	const Components::Camera& CameraSystem::GetCurrentCamera()
 	{
@@ -33,16 +33,20 @@ namespace System {
 	{
 		float zoom = cameraMap.at(m_currentCamera).GetZoom();
 		Vec2 camPos = cameraMap.at(m_currentCamera).GetPosition();
-		worldPos.x = (viewPos.x / zoom) + camPos.x;
-		worldPos.y = (viewPos.y / zoom) + camPos.y;
+		Vec2 screenCenter = m_screenSize * 0.5f;
+
+		worldPos.x = ((viewPos.x - screenCenter.x) / zoom) + camPos.x;
+		worldPos.y = ((viewPos.y - screenCenter.y) / zoom) + camPos.y;
 	}
 
 	void CameraSystem::WorldToCameraView(const Vec2& worldPos, Vec2& viewPos)
 	{
 		float zoom = cameraMap.at(m_currentCamera).GetZoom();
 		Vec2 camPos = cameraMap.at(m_currentCamera).GetPosition();
-		viewPos.x = (worldPos.x - camPos.x) * zoom;
-		viewPos.y = (worldPos.y - camPos.y) * zoom;
+		Vec2 screenCenter = m_screenSize * 0.5f;
+
+		viewPos.x = (worldPos.x - camPos.x) * zoom + screenCenter.x;
+		viewPos.y = (worldPos.y - camPos.y) * zoom + screenCenter.y;
 	}
 }
 
