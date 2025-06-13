@@ -7,8 +7,16 @@ Tool::UI::UIWaveInformation::UIWaveInformation()
 {
 	Core::EventSystem::getInstance().subscribe(EventKeys::SendWaves,
 		[this](const Core::EventData& data) {
-			GetWaveInfomation(data.get<WaveInformation>());
+			GetWaveInfomation(data.get<std::vector<entt::entity>>());
 		});
+	Core::EventSystem::getInstance().subscribe(EventKeys::UISwitchWave,
+		[this](const Core::EventData& data) {
+			UpdateCurrentWave(data.get<int>());
+		});
+}
+
+void Tool::UI::UIWaveInformation::UpdateCurrentWave(int index) {
+	m_currentWave = entt::get<MonsterWave>(m_pWaveInformations[index]);
 }
 
 void Tool::UI::UIWaveInformation::DisplayWaveInformation(bool* p_open)
@@ -29,11 +37,11 @@ void Tool::UI::UIWaveInformation::DisplayWaveInformation(bool* p_open)
 			Core::EventSystem::getInstance().publish(EventKeys::SwitchWave, eventData);
 		}
 		ImGui::SameLine();
-		ImGui::Text("Wave Index: %s", std::to_string(m_pWaveInformation.waveIndex).c_str());
+		ImGui::Text("Wave Index: %s", std::to_string(m_currentWave->waveIndex).c_str());
 
 		ImGui::SameLine();
 
-		std::string nextButtonName = m_pWaveInformation.isLastWave ? "Add wave" : "Next wave";
+		std::string nextButtonName = m_currentWave->waveIndex == m_pWaveInformations.size() - 1 ? "Add wave" : "Next wave";
 
 		if (ImGui::Button(nextButtonName.c_str()))
 		{
@@ -43,7 +51,7 @@ void Tool::UI::UIWaveInformation::DisplayWaveInformation(bool* p_open)
 		}
 
 		ImGui::Separator();
-		ImGui::Text("Is Boss Wave: %s", std::to_string(m_pWaveInformation.isBossWave).c_str());
+		ImGui::Text("Is Boss Wave: %s", std::to_string(m_currentWave->isBossWave).c_str());
 
 		ImGui::End();
 	}

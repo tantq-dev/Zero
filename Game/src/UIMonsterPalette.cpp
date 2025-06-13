@@ -13,7 +13,12 @@ Tool::UI::UIMonsterPalette::UIMonsterPalette()
 		AddItem(pair.first, pair.second);
 	}
 
-	
+	Core::EventSystem::getInstance().subscribe(EventKeys::MonsterUpdated, [this](const Core::EventData& eventData) {
+		const auto& monsterType = eventData.get<MonsterTypeDefinition>();
+		m_monsterTypeRegistry.UpdateDefaultProperties(monsterType.item.name, monsterType.defaultProperties);
+		m_cacheNeedsUpdate = true; // Ensure cache is updated after selection
+		});
+
 }
 
 void Tool::UI::UIMonsterPalette::ShowMonsterPalette(bool* p_open)
@@ -89,7 +94,7 @@ void Tool::UI::UIMonsterPalette::ShowMonsterPalette(bool* p_open)
 					const int item_max_idx_for_current_line = fmin((line_idx + 1) * column_count, m_monsterTypeRegistry.GetAllTypes().size());
 					for (int item_idx = item_min_idx_for_current_line; item_idx < item_max_idx_for_current_line; ++item_idx)
 					{
-                        MonsterTypeDefinition* item_data = m_cachedMonsterTypes[item_idx];
+						MonsterTypeDefinition* item_data = m_cachedMonsterTypes[item_idx];
 						ImGui::PushID((int)item_data->item.id);
 
 						// Position item

@@ -160,11 +160,17 @@ void Tool::MapEditor::SwitchWave(int direction)
 
 void Tool::MapEditor::SendWaveData()
 {
-	Core::EventData eventData;
+	Core::EventData waveEventData;
 	const MonsterWave& wave = m_registry.get<MonsterWave>(m_currentMonsterWave);
-	const WaveInformation waveInfo(wave.waveIndex, wave.waveIndex == m_waveEntities.size() - 1, wave.isBossWave);
-	eventData.data = waveInfo;
-	Core::EventSystem::getInstance().publish(EventKeys::SendWaves, eventData);
+	waveEventData.data = m_waveEntities;
+
+	Core::EventData waveIndexData;
+	waveIndexData.data = wave.waveIndex;
+
+	Core::EventSystem::getInstance().publish(EventKeys::SendWaves, waveEventData);
+	Core::EventSystem::getInstance().publish(EventKeys::UISwitchWave, waveIndexData);
+
+
 }
 
 // Add this method to handle rendering logic when switching waves

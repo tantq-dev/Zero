@@ -2,6 +2,8 @@
 #include <imgui.h>
 #include <vector>
 #include <string>
+#include "EventKey.h"
+#include "core/EventSystem.h"
 
 Tool::UI::UIMonsterProperties::UIMonsterProperties()
 {
@@ -133,9 +135,9 @@ void Tool::UI::UIMonsterProperties::ShowUIMonsterProperties(bool* p_open)
 	}
 }
 
-void Tool::UI::UIMonsterProperties::SetCurrentProperties(MonsterTypeDefinition& properties)
+void Tool::UI::UIMonsterProperties::SetCurrentProperties(MonsterTypeDefinition properties)
 {
-	m_pCurrentProperties = &properties;
+	m_pCurrentProperties = new MonsterTypeDefinition(properties);
 	m_hasValidSelection = true;
 	m_nextNodeId = 0; // Reset node ID counter
 
@@ -270,28 +272,44 @@ void Tool::UI::UIMonsterProperties::ShowBehaviorConfiguration(BehaviorNode& node
 void Tool::UI::UIMonsterProperties::BehaviorChaseConfigUI(BehaviorNode& node)
 {
 	if (auto* config = dynamic_cast<BehaviorChaseConfig*>(node.config.get())) {
-		ImGui::InputInt("Chase Speed", &config->chaseSpeed);
+		if (ImGui::InputInt("Chase Speed", &config->chaseSpeed)) {
+			SaveCurrentProperties();
+		}
 	}
 }
 
 void Tool::UI::UIMonsterProperties::BehaviorShootBarrageConfigUI(BehaviorNode& node)
 {
+
 	if (auto* config = dynamic_cast<BehaviorShootBarrageConfig*>(node.config.get())) {
-		ImGui::InputInt("CoolDown", &config->coolDown);
+
+		bool hasChanged = false;
+
+		if (ImGui::InputInt("CoolDown", &config->coolDown)) {
+			hasChanged = true;
+		}
+
+
 
 		const char* bulletTypeNames[] = { "straight", "parabol", "mortal", "boss" };
 		int bulletType = static_cast<int>(config->bulletConfig.bulletType);
 		if (ImGui::Combo("Bullet Type", &bulletType, bulletTypeNames, IM_ARRAYSIZE(bulletTypeNames))) {
 			config->bulletConfig.bulletType = static_cast<BulletType>(bulletType);
+			hasChanged = true;
 		}
 
-		ImGui::InputInt("NumOfBullet", &config->numOfBullet);
-		ImGui::InputInt("SpreadAngle", &config->spreadAngle);
-		ImGui::InputInt("Speed", &config->bulletConfig.speed);
-		ImGui::InputInt("AliveTime", &config->bulletConfig.aliveTime);
-		ImGui::InputInt("Damage", &config->bulletConfig.damage);
-		ImGui::InputInt("Bounce", &config->bulletConfig.bounce);
-
+		if (ImGui::InputInt("NumOfBullet", &config->numOfBullet) ||
+			ImGui::InputInt("SpreadAngle", &config->spreadAngle) ||
+			ImGui::InputInt("Speed", &config->bulletConfig.speed) ||
+			ImGui::InputInt("AliveTime", &config->bulletConfig.aliveTime) ||
+			ImGui::InputInt("Damage", &config->bulletConfig.damage) ||
+			ImGui::InputInt("Bounce", &config->bulletConfig.bounce)) {
+			hasChanged = true;
+		}
+		if (hasChanged)
+		{
+			SaveCurrentProperties();
+		}
 
 
 	}
@@ -300,6 +318,7 @@ void Tool::UI::UIMonsterProperties::BehaviorShootBarrageConfigUI(BehaviorNode& n
 void Tool::UI::UIMonsterProperties::BehaviorMultiConfigUI(BehaviorNode& node)
 {
 	if (auto* config = dynamic_cast<BehaviorMultiConfig*>(node.config.get())) {
+		bool hasChanged = false;
 		// Container type selection
 		const char* containerTypes[] = {
 			"SelectorWithRunning",
@@ -309,6 +328,7 @@ void Tool::UI::UIMonsterProperties::BehaviorMultiConfigUI(BehaviorNode& node)
 		int containerType = static_cast<int>(config->containerType);
 		if (ImGui::Combo("Container Type", &containerType, containerTypes, IM_ARRAYSIZE(containerTypes))) {
 			config->containerType = static_cast<ContainerType>(containerType);
+			hasChanged = true;
 		}
 
 		ImGui::Separator();
@@ -329,6 +349,12 @@ void Tool::UI::UIMonsterProperties::BehaviorMultiConfigUI(BehaviorNode& node)
 
 		if (ImGui::Button("Add Child Behavior")) {
 			AddBehaviorToNode(node, availableItems[currentSelection]);
+			hasChanged = true;
+		}
+		if (hasChanged)
+		{
+			SaveCurrentProperties();
+
 		}
 	}
 }
@@ -337,8 +363,16 @@ void Tool::UI::UIMonsterProperties::BehaviorMultiConfigUI(BehaviorNode& node)
 void Tool::UI::UIMonsterProperties::BehaviorDistanceConditionHelperConfigUI(BehaviorNode& node)
 {
 	if (auto* config = dynamic_cast<BehaviorDistanceConditionHelperConfig*>(node.config.get())) {
-		ImGui::InputInt("Max distance", &config->maxDistance);
-		ImGui::InputInt("Min distance", &config->minDistance);
+		bool hasChanged = false;
+		if (ImGui::InputInt("Max distance", &config->maxDistance)) {
+			hasChanged = true;
+		}
+		if (ImGui::InputInt("Min distance", &config->minDistance)) {
+			hasChanged = true;
+		}
+		if (hasChanged) {
+			SaveCurrentProperties();
+		}
 	}
 }
 
@@ -351,17 +385,29 @@ void Tool::UI::UIMonsterProperties::BehaviorMovementBounceConfigUI(BehaviorNode&
 void Tool::UI::UIMonsterProperties::BehaviorShootProjectileConfigUI(BehaviorNode& node)
 {
 	if (auto* config = dynamic_cast<BehaviorShootProjectileConfig*>(node.config.get())) {
-		ImGui::InputInt("CoolDown", &config->coolDown);
+		bool hasChanged = false;
+
+		if (ImGui::InputInt("CoolDown", &config->coolDown)) {
+			hasChanged = true;
+		}
 
 		const char* bulletTypeNames[] = { "straight", "parabol", "mortal", "boss" };
 		int bulletType = static_cast<int>(config->bulletConfig.bulletType);
 		if (ImGui::Combo("Bullet Type", &bulletType, bulletTypeNames, IM_ARRAYSIZE(bulletTypeNames))) {
 			config->bulletConfig.bulletType = static_cast<BulletType>(bulletType);
+			hasChanged = true;
 		}
-		ImGui::InputInt("Speed", &config->bulletConfig.speed);
-		ImGui::InputInt("AliveTime", &config->bulletConfig.aliveTime);
-		ImGui::InputInt("Damage", &config->bulletConfig.damage);
-		ImGui::InputInt("Bounce", &config->bulletConfig.bounce);
+
+		if (ImGui::InputInt("Speed", &config->bulletConfig.speed) ||
+			ImGui::InputInt("AliveTime", &config->bulletConfig.aliveTime) ||
+			ImGui::InputInt("Damage", &config->bulletConfig.damage) ||
+			ImGui::InputInt("Bounce", &config->bulletConfig.bounce)) {
+			hasChanged = true;
+		}
+		if (hasChanged)
+		{
+			SaveCurrentProperties();
+		}
 	}
 }
 
@@ -376,21 +422,28 @@ void Tool::UI::UIMonsterProperties::BehaviorShootStrategyBaseConfigUI(BehaviorNo
 void Tool::UI::UIMonsterProperties::BehaviorSpreadShotConfigUI(BehaviorNode& node)
 {
 	if (auto* config = dynamic_cast<BehaviorSpreadShotConfig*>(node.config.get())) {
-		ImGui::InputInt("CoolDown", &config->coolDown);
+		bool hasChanged = false;
+
+		if (ImGui::InputInt("CoolDown", &config->coolDown)) {
+			hasChanged = true;
+		}
 
 		const char* bulletTypeNames[] = { "straight", "parabol", "mortal", "boss" };
 		int bulletType = static_cast<int>(config->bulletConfig.bulletType);
 		if (ImGui::Combo("Bullet Type", &bulletType, bulletTypeNames, IM_ARRAYSIZE(bulletTypeNames))) {
 			config->bulletConfig.bulletType = static_cast<BulletType>(bulletType);
+			hasChanged = true;
 		}
 
-		ImGui::InputInt("NumOfBullet", &config->numOfBullet);
-		ImGui::InputInt("SpreadAngle", &config->spreadAngle);
-
-		ImGui::InputInt("Speed", &config->bulletConfig.speed);
-		ImGui::InputInt("AliveTime", &config->bulletConfig.aliveTime);
-		ImGui::InputInt("Damage", &config->bulletConfig.damage);
-		ImGui::InputInt("Bounce", &config->bulletConfig.bounce);
+		if (
+			ImGui::InputInt("NumOfBullet", &config->numOfBullet) ||
+			ImGui::InputInt("SpreadAngle", &config->spreadAngle) ||
+			ImGui::InputInt("Speed", &config->bulletConfig.speed) ||
+			ImGui::InputInt("AliveTime", &config->bulletConfig.aliveTime) ||
+			ImGui::InputInt("Damage", &config->bulletConfig.damage) ||
+			ImGui::InputInt("Bounce", &config->bulletConfig.bounce)) {
+			hasChanged = true;
+		}
 	}
 }
 
@@ -599,5 +652,10 @@ void Tool::UI::UIMonsterProperties::SaveCurrentProperties()
 	if (m_pCurrentProperties && m_hasValidSelection) {
 		// Convert UI nodes back to monster properties
 		ConvertToMonsterProperties(*m_pCurrentProperties);
+		Core::EventData eventData;
+		eventData.data = *m_pCurrentProperties;
+
+		Core::EventSystem::getInstance().publish(EventKeys::MonsterUpdated, eventData);
+
 	}
 }

@@ -2,6 +2,8 @@
 #include <string>  
 #include <unordered_map>  
 #include <iostream>
+#include <vector>
+#include <memory>
 
 // Define the static member variable outside the struct  
 static std::unordered_map<std::string, const char*> MonsterConfig = {
@@ -40,16 +42,22 @@ enum class ContainerType {
 
 struct BulletConfig {
 	BulletType bulletType = BulletType::Parabol;
-	int speed;
-	int aliveTime;
-	int damage;
-	int bounce;
+	int speed = 0;
+	int aliveTime = 0;
+	int damage = 0;
+	int bounce = 0;
+
+	// Copy constructor and assignment operator for BulletConfig
+	BulletConfig() = default;
+	BulletConfig(const BulletConfig&) = default;
+	BulletConfig& operator=(const BulletConfig&) = default;
 };
 
 // Base class for behavior configuration data
 struct BehaviorConfig {
 	std::string behaviorType;
 	virtual ~BehaviorConfig() = default;
+	virtual std::unique_ptr<BehaviorConfig> clone() const = 0; // Pure virtual clone method
 };
 
 // Specific behavior configurations
@@ -58,6 +66,12 @@ struct BehaviorChaseConfig : public BehaviorConfig {
 
 	BehaviorChaseConfig() {
 		behaviorType = "BehaviorChase";
+	}
+
+	std::unique_ptr<BehaviorConfig> clone() const override {
+		auto copy = std::make_unique<BehaviorChaseConfig>();
+		copy->chaseSpeed = this->chaseSpeed;
+		return copy;
 	}
 };
 
@@ -68,11 +82,22 @@ struct BehaviorDistanceConditionHelperConfig : public BehaviorConfig {
 	BehaviorDistanceConditionHelperConfig() {
 		behaviorType = "BehaviorDistanceConditionHelper";
 	}
+
+	std::unique_ptr<BehaviorConfig> clone() const override {
+		auto copy = std::make_unique<BehaviorDistanceConditionHelperConfig>();
+		copy->maxDistance = this->maxDistance;
+		copy->minDistance = this->minDistance;
+		return copy;
+	}
 };
 
 struct BehaviorMovementBounceConfig : public BehaviorConfig {
 	BehaviorMovementBounceConfig() {
 		behaviorType = "BehaviorMovementBounce";
+	}
+
+	std::unique_ptr<BehaviorConfig> clone() const override {
+		return std::make_unique<BehaviorMovementBounceConfig>();
 	}
 };
 
@@ -81,22 +106,44 @@ struct BehaviorShootBarrageConfig : public BehaviorConfig {
 	int numOfBullet = 10000;
 	int spreadAngle = 10000;
 	BulletConfig bulletConfig;
+
 	BehaviorShootBarrageConfig() {
 		behaviorType = "BehaviorShootBarrage";
+	}
+
+	std::unique_ptr<BehaviorConfig> clone() const override {
+		auto copy = std::make_unique<BehaviorShootBarrageConfig>();
+		copy->coolDown = this->coolDown;
+		copy->numOfBullet = this->numOfBullet;
+		copy->spreadAngle = this->spreadAngle;
+		copy->bulletConfig = this->bulletConfig;
+		return copy;
 	}
 };
 
 struct BehaviorShootProjectileConfig : public BehaviorConfig {
 	int coolDown = 10000;
 	BulletConfig bulletConfig;
+
 	BehaviorShootProjectileConfig() {
 		behaviorType = "BehaviorShootProjectile";
+	}
+
+	std::unique_ptr<BehaviorConfig> clone() const override {
+		auto copy = std::make_unique<BehaviorShootProjectileConfig>();
+		copy->coolDown = this->coolDown;
+		copy->bulletConfig = this->bulletConfig;
+		return copy;
 	}
 };
 
 struct BehaviorShootStrategyBaseConfig : public BehaviorConfig {
 	BehaviorShootStrategyBaseConfig() {
 		behaviorType = "BehaviorShootStrategyBase";
+	}
+
+	std::unique_ptr<BehaviorConfig> clone() const override {
+		return std::make_unique<BehaviorShootStrategyBaseConfig>();
 	}
 };
 
@@ -109,6 +156,15 @@ struct BehaviorSpreadShotConfig : public BehaviorConfig {
 	BehaviorSpreadShotConfig() {
 		behaviorType = "BehaviorSpreadShot";
 	}
+
+	std::unique_ptr<BehaviorConfig> clone() const override {
+		auto copy = std::make_unique<BehaviorSpreadShotConfig>();
+		copy->coolDown = this->coolDown;
+		copy->numOfBullet = this->numOfBullet;
+		copy->spreadAngle = this->spreadAngle;
+		copy->bulletConfig = this->bulletConfig;
+		return copy;
+	}
 };
 
 struct BehaviorMultiConfig : public BehaviorConfig {
@@ -117,6 +173,20 @@ struct BehaviorMultiConfig : public BehaviorConfig {
 
 	BehaviorMultiConfig() {
 		behaviorType = "BehaviorMultiConfig";
+	}
+
+	std::unique_ptr<BehaviorConfig> clone() const override {
+		auto copy = std::make_unique<BehaviorMultiConfig>();
+		copy->containerType = this->containerType;
+
+		// Deep copy all child behaviors
+		for (const auto& child : childBehaviors) {
+			if (child) {
+				copy->childBehaviors.push_back(child->clone());
+			}
+		}
+
+		return copy;
 	}
 };
 
@@ -138,7 +208,7 @@ struct MonsterProperties {
 		rootBehavior = std::make_unique<BehaviorMultiConfig>();
 	}
 
-	// Copy constructor
+	// Copy constructor - NOW WITH PROPER DEEP COPY
 	MonsterProperties(const MonsterProperties& other)
 		: name(other.name)
 		, monsterType(other.monsterType)
@@ -146,12 +216,19 @@ struct MonsterProperties {
 		, speed(other.speed)
 		, knockbackResistance(other.knockbackResistance)
 		, collisionDamage(other.collisionDamage) {
-		// Deep copy the behavior tree (you'll need to implement this based on your needs)
-		rootBehavior = std::make_unique<BehaviorMultiConfig>();
-		// TODO: Implement deep copy of behavior tree
+
+		// Deep copy the behavior tree
+		if (other.rootBehavior) {
+			rootBehavior = std::unique_ptr<BehaviorMultiConfig>(
+				static_cast<BehaviorMultiConfig*>(other.rootBehavior->clone().release())
+			);
+		}
+		else {
+			rootBehavior = std::make_unique<BehaviorMultiConfig>();
+		}
 	}
 
-	// Assignment operator
+	// Assignment operator - NOW WITH PROPER DEEP COPY
 	MonsterProperties& operator=(const MonsterProperties& other) {
 		if (this != &other) {
 			name = other.name;
@@ -161,8 +238,15 @@ struct MonsterProperties {
 			knockbackResistance = other.knockbackResistance;
 			collisionDamage = other.collisionDamage;
 
-			rootBehavior = std::make_unique<BehaviorMultiConfig>();
-			// TODO: Implement deep copy of behavior tree
+			// Deep copy the behavior tree
+			if (other.rootBehavior) {
+				rootBehavior = std::unique_ptr<BehaviorMultiConfig>(
+					static_cast<BehaviorMultiConfig*>(other.rootBehavior->clone().release())
+				);
+			}
+			else {
+				rootBehavior = std::make_unique<BehaviorMultiConfig>();
+			}
 		}
 		return *this;
 	}

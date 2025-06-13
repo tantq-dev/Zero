@@ -1,19 +1,22 @@
 #pragma once
 #include "WaveModel.h"
+#include "entt.hpp"
 
 namespace Tool::UI {
 	class UIWaveInformation {
 	public:
 		UIWaveInformation();
+		void UpdateCurrentWave(int index);
 		~UIWaveInformation() = default;
 
 		void DisplayWaveInformation(bool* p_open);
 
-		void GetWaveInfomation(WaveInformation waveInfo) {
-			m_pWaveInformation = waveInfo;
+		void GetWaveInfomation(const std::vector<entt::entity> waveInfo) {
+			m_pWaveInformations = waveInfo;
 		}
 
 	private:
-		WaveInformation m_pWaveInformation = { 0,1,1 };
+		std::vector<entt::entity> m_pWaveInformations;
+		WaveInformation* m_currentWave = nullptr;
 	};
 }
