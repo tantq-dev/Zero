@@ -16,6 +16,8 @@ namespace Tool {
 		static constexpr std::string_view SendWaves = "send_waves";
 		static constexpr std::string_view SwitchWave = "switch_wave";
 		static constexpr std::string_view UISwitchWave = "ui_switch_wave";
+		static constexpr std::string_view AddWave = "add_wave";
+
 
 
 

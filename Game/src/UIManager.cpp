@@ -3,6 +3,11 @@
 #include "EventKey.h"
 #include "MonsterModel.h"
 
+Tool::UI::UIManager::UIManager()
+{
+	Initialize();
+}
+
 void Tool::UI::UIManager::Initialize()
 {
 	M_UIMonsterPalette = std::make_unique<UIMonsterPalette>();

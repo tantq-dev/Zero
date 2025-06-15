@@ -48,7 +48,7 @@ namespace Tool
 		m_mapEditor = std::make_unique<MapEditor>();
 
 
-		m_uiManager->Initialize();
+		//m_uiManager->Initialize();
 
 		Components::InputAction actionSpace("Test");
 		Components::InputAction actionMouse("Test_Mouse");

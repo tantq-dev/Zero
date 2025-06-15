@@ -8,6 +8,7 @@ namespace Tool {
 
 		class UIManager {
 		public:
+			UIManager();
 			void Initialize();
 			void Render();
 			std::unique_ptr<UIMonsterProperties> M_UIMonsterProperties;

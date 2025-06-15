@@ -4,7 +4,6 @@
 #include "MonsterModel.h"
 #include "resources/ResourcesManager.h"
 
-
 Tool::UI::UIMonsterPalette::UIMonsterPalette()
 {
 	std::vector<std::string> keys;
@@ -19,6 +18,9 @@ Tool::UI::UIMonsterPalette::UIMonsterPalette()
 		m_cacheNeedsUpdate = true; // Ensure cache is updated after selection
 		});
 
+	// Initialize popup state
+	m_showAddMonsterPopup = false;
+	memset(m_newMonsterName, 0, sizeof(m_newMonsterName));
 }
 
 void Tool::UI::UIMonsterPalette::ShowMonsterPalette(bool* p_open)
@@ -42,8 +44,10 @@ void Tool::UI::UIMonsterPalette::ShowMonsterPalette(bool* p_open)
 		{
 			if (ImGui::BeginMenu("File"))
 			{
-				if (ImGui::MenuItem("Add 10000 items")) {
-
+				if (ImGui::MenuItem("Add Monster")) {
+					m_showAddMonsterPopup = true;
+					// Clear the input field when opening the popup
+					memset(m_newMonsterName, 0, sizeof(m_newMonsterName));
 				}
 
 				if (ImGui::MenuItem("Clear items")) {
@@ -59,6 +63,9 @@ void Tool::UI::UIMonsterPalette::ShowMonsterPalette(bool* p_open)
 			}
 			ImGui::EndMenuBar();
 		}
+
+		// Handle Add Monster Popup
+		ShowAddMonsterPopup();
 
 		ImGui::SetNextWindowContentSize(ImVec2(0.0f, LayoutOuterPadding + LayoutLineCount * (LayoutItemSize.x + LayoutItemSpacing)));
 		if (ImGui::BeginChild("Assets", ImVec2(0.0f, -ImGui::GetTextLineHeightWithSpacing()), ImGuiChildFlags_Borders, ImGuiWindowFlags_NoMove))
@@ -118,7 +125,6 @@ void Tool::UI::UIMonsterPalette::ShowMonsterPalette(bool* p_open)
 							eventData.data = *item_data;  // Send the entire monster item
 							Core::EventSystem::getInstance().publish(EventKeys::MonsterSelectedFromPalette, eventData);
 						}
-
 
 						if (item_is_visible)
 						{
@@ -183,24 +189,96 @@ void Tool::UI::UIMonsterPalette::ShowMonsterPalette(bool* p_open)
 	}
 }
 
-void Tool::UI::UIMonsterPalette::AddItems(int count) {
-	/*if (m_monsterItems.size() == 0)
-		NextItemId = 0;
-	m_monsterItems.reserve(m_monsterItems.size() + count);
-	for (int n = 0; n < count; n++, NextItemId++)
+void Tool::UI::UIMonsterPalette::ShowAddMonsterPopup()
+{
+	if (m_showAddMonsterPopup)
 	{
-		m_monsterItems.push_back(MonsterItem(NextItemId, std::to_string(NextItemId % 20)));
-	}*/
+		ImGui::OpenPopup("Add New Monster");
+	}
+
+	// Center the popup
+	ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+	ImGui::SetNextWindowSize(ImVec2(300, 150), ImGuiCond_Appearing);
+
+	if (ImGui::BeginPopupModal("Add New Monster", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		ImGui::Text("Enter monster name:");
+		ImGui::Separator();
+
+		// Input field for monster name
+		ImGui::SetNextItemWidth(250.0f);
+		bool enterPressed = ImGui::InputText("##MonsterName", m_newMonsterName, sizeof(m_newMonsterName),
+			ImGuiInputTextFlags_EnterReturnsTrue);
+
+		ImGui::Spacing();
+
+		// Button layout
+		float buttonWidth = 80.0f;
+		float spacing = ImGui::GetStyle().ItemSpacing.x;
+		float totalWidth = buttonWidth * 2 + spacing;
+		float startX = (ImGui::GetContentRegionAvail().x - totalWidth) * 0.5f;
+
+		ImGui::SetCursorPosX(startX);
+
+		// Add button
+		if (ImGui::Button("Add", ImVec2(buttonWidth, 0)) || enterPressed)
+		{
+			std::string monsterName = std::string(m_newMonsterName);
+
+			// Check if name is not empty and doesn't already exist
+			if (!monsterName.empty() && m_monsterTypeRegistry.GetAllTypes().find(monsterName) == m_monsterTypeRegistry.GetAllTypes().end())
+			{
+				// Add new monster with default "Slug" texture
+				AddItem(monsterName, "assets//Slug.bmp");
+				m_cacheNeedsUpdate = true;
+
+				// Close popup and reset
+				m_showAddMonsterPopup = false;
+				memset(m_newMonsterName, 0, sizeof(m_newMonsterName));
+				ImGui::CloseCurrentPopup();
+			}
+			else if (monsterName.empty())
+			{
+				// Show error for empty name (you could add a status message here)
+			}
+			else
+			{
+				// Show error for duplicate name (you could add a status message here)
+			}
+		}
+
+		ImGui::SameLine();
+
+		// Cancel button
+		if (ImGui::Button("Cancel", ImVec2(buttonWidth, 0)))
+		{
+			m_showAddMonsterPopup = false;
+			memset(m_newMonsterName, 0, sizeof(m_newMonsterName));
+			ImGui::CloseCurrentPopup();
+		}
+
+		// Handle ESC key to close popup
+		if (ImGui::IsKeyPressed(ImGuiKey_Escape))
+		{
+			m_showAddMonsterPopup = false;
+			memset(m_newMonsterName, 0, sizeof(m_newMonsterName));
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::EndPopup();
+	}
+}
+
+void Tool::UI::UIMonsterPalette::AddItems(int count) {
+	// This method is now unused since we're adding one monster at a time via popup
 }
 
 void Tool::UI::UIMonsterPalette::AddItem(std::string name, const char* path)
 {
 	m_monsterTypeRegistry.RegisterMonsterType(name, path);
+	UpdateCache();
 }
-
-//void Tool::UI::UIMonsterPalette::AddItems(std::vector < std::string> names) {
-//	
-//}
 
 void Tool::UI::UIMonsterPalette::UpdateLayoutSizes(float avail_width)
 {

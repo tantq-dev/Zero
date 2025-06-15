@@ -9,6 +9,7 @@ Tool::MapEditor::MapEditor()
 	: m_selectedEntity(entt::null)
 {
 	AddWave();
+	SendWaveData();
 	Core::EventSystem::getInstance().subscribe(EventKeys::MonsterSelectedFromPalette,
 		[this](const Core::EventData& data) {
 			OnMonsterSelectedFromUI(data.get<MonsterTypeDefinition>().item);
@@ -17,6 +18,11 @@ Tool::MapEditor::MapEditor()
 	Core::EventSystem::getInstance().subscribe(EventKeys::SwitchWave,
 		[this](const Core::EventData& data) {
 			SwitchWave(data.get<int>());
+		});
+	Core::EventSystem::getInstance().subscribe(EventKeys::AddWave,
+		[this](const Core::EventData& data) {
+			AddWave();
+			SendWaveData();
 		});
 }
 
@@ -34,13 +40,11 @@ void Tool::MapEditor::AddWave()
 			return m_registry.get<MonsterWave>(a).waveIndex <
 				m_registry.get<MonsterWave>(b).waveIndex;
 		});
-	SendWaveData();
 }
 
 Tool::MapEditor::~MapEditor()
 {
 }
-
 
 
 void Tool::MapEditor::AddMonsterToMap(Vec2 clickPosition)
@@ -118,37 +122,11 @@ int Tool::MapEditor::GetNextWaveIndex() const
 	return maxIndex + 1;
 }
 
-void Tool::MapEditor::SwitchWave(int direction)
+void Tool::MapEditor::SwitchWave(int index)
 {
 	if (m_waveEntities.empty())
 		return;
-
-	if (m_currentMonsterWave == entt::null) {
-		// If no wave is selected, select the first or last one based on direction
-		m_currentMonsterWave = direction > 0 ? m_waveEntities.front() : m_waveEntities.back();
-		return;
-	}
-
-	// Find current wave index in our sorted array
-	auto it = std::find(m_waveEntities.begin(), m_waveEntities.end(), m_currentMonsterWave);
-	if (it == m_waveEntities.end())
-		return;
-
-	// Calculate new index with bounds checking
-	int currentIdx = std::distance(m_waveEntities.begin(), it);
-	int newIdx = currentIdx + direction;
-
-	// Wrap around or clamp as needed
-	if (newIdx < 0)
-	{
-		newIdx = m_waveEntities.size() - 1;  // Wrap to end
-	}
-	else if (newIdx >= m_waveEntities.size())
-	{
-		AddWave();
-	}
-
-	m_currentMonsterWave = m_waveEntities[newIdx];
+	m_currentMonsterWave = m_waveEntities[index];
 
 	// Notify that wave has changed
 	if (m_registry.valid(m_currentMonsterWave)) {
@@ -161,15 +139,18 @@ void Tool::MapEditor::SwitchWave(int direction)
 void Tool::MapEditor::SendWaveData()
 {
 	Core::EventData waveEventData;
-	const MonsterWave& wave = m_registry.get<MonsterWave>(m_currentMonsterWave);
-	waveEventData.data = m_waveEntities;
+	std::vector<MonsterWave*> monsterWave;
+	for (entt::entity &wave : m_waveEntities) {
+		monsterWave.push_back(&m_registry.get<MonsterWave>(wave));
+	}
+	waveEventData.data = monsterWave;
 
+	const MonsterWave& wave = m_registry.get<MonsterWave>(m_currentMonsterWave);
 	Core::EventData waveIndexData;
 	waveIndexData.data = wave.waveIndex;
 
 	Core::EventSystem::getInstance().publish(EventKeys::SendWaves, waveEventData);
 	Core::EventSystem::getInstance().publish(EventKeys::UISwitchWave, waveIndexData);
-
 
 }
 

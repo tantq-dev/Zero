@@ -2,6 +2,7 @@
 #include "WaveModel.h"
 #include "entt.hpp"
 
+
 namespace Tool::UI {
 	class UIWaveInformation {
 	public:
@@ -11,12 +12,12 @@ namespace Tool::UI {
 
 		void DisplayWaveInformation(bool* p_open);
 
-		void GetWaveInfomation(const std::vector<entt::entity> waveInfo) {
+		void GetWaveInfomation(const std::vector<MonsterWave*> waveInfo) {
 			m_pWaveInformations = waveInfo;
 		}
 
 	private:
-		std::vector<entt::entity> m_pWaveInformations;
-		WaveInformation* m_currentWave = nullptr;
+		std::vector<MonsterWave*> m_pWaveInformations;
+		MonsterWave* m_currentWave = nullptr;
 	};
 }

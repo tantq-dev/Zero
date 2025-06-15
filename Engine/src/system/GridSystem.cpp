@@ -28,19 +28,14 @@ namespace System
 
 		// Bounds checking
 		if (gridX < 0 || gridX >= gridWidth || gridY < 0 || gridY >= gridHeight) {
-			LOG_INFO("Mouse position out of grid bounds: (" +
-				std::to_string(mousePosition.x) + ", " +
-				std::to_string(mousePosition.y) + ")");
-			LOG_INFO("Grid indices: (" + std::to_string(gridX) + ", " + std::to_string(gridY) + ")");
+		
 			return nullptr;
 		}
 
 		// Calculate linear index (row-major order)
 		const int index = gridY * gridWidth + gridX;
 
-		LOG_INFO("Mouse position: (" + std::to_string(mousePosition.x) + ", " + std::to_string(mousePosition.y) + ")");
-		LOG_INFO("Grid coordinates: (" + std::to_string(gridX) + ", " + std::to_string(gridY) + ")");
-		LOG_INFO("Cell index: " + std::to_string(index));
+
 
 		Components::Cell* pCell = grid.GetCell(index);
 		return pCell;

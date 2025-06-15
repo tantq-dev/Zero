@@ -36,6 +36,12 @@ namespace Tool {
 			int             LayoutColumnCount = 0;
 			int             LayoutLineCount = 0;
 
+			bool m_showAddMonsterPopup;
+			char m_newMonsterName[256];
+
+			// Add this method declaration:
+			void ShowAddMonsterPopup();
+
 			void AddItems(int count);
 			void AddItem(std::string name, const char * path);
 

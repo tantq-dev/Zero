@@ -54,7 +54,6 @@ namespace System
 				m_dstRect.y = cameraPos.y - transform.scale.y / 2 * cam.GetCameraZoom(); // Center the sprite should caculate from transform.position
 				m_dstRect.w = transform.scale.x * cam.GetCameraZoom();
 				m_dstRect.h = transform.scale.y * cam.GetCameraZoom();
-				LOG_INFO("Render texture at: " + std::to_string(cameraPos.x) + std::to_string(cameraPos.y));
 				SDL_RenderTexture(&renderer, sprite.texture, nullptr, &m_dstRect);
 			}
 		}
@@ -72,8 +71,7 @@ namespace System
 		const float baseX = -(mapCols * grid.GetCellSize()) / 2.0f;
 		const float baseY = -(mapRows * grid.GetCellSize()) / 2.0f;
 
-		LOG_INFO("Base x: " + std::to_string(baseX));
-		LOG_INFO("Base y: " + std::to_string(baseY));
+
 
 
 		Vec2 gridWorldPos = { baseX, baseY };
