@@ -16,7 +16,7 @@ MonsterTypeDefinition* MonsterTypeRegistry::GetMonsterType(const std::string& na
 	return nullptr;
 }
 
-const std::unordered_map<std::string, std::unique_ptr<MonsterTypeDefinition>>& MonsterTypeRegistry::GetAllTypes() const
+const std::unordered_map<std::string, std::unique_ptr<MonsterTypeDefinition>>& MonsterTypeRegistry::GetMonsterTypeMap() const
 {
 	return m_monsterTypes;
 }
@@ -38,3 +38,15 @@ int MonsterTypeRegistry::GetNextMonsterTypeId()
 {
 	return m_nextMonsterTypeId++;
 }
+
+std::vector<MonsterTypeDefinition*> MonsterTypeRegistry::GetAllMonsterTypes()
+{
+	std::vector<MonsterTypeDefinition*> types;
+	types.reserve(m_monsterTypes.size());
+
+	for (const auto& pair : m_monsterTypes) {
+		types.push_back(pair.second.get());
+	}
+	return types;
+}
+

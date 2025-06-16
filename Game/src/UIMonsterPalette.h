@@ -15,6 +15,7 @@ namespace Tool {
 			~UIMonsterPalette() = default;
 			void ShowMonsterPalette(bool* p_open);
 			void InvalidateCache() { m_cacheNeedsUpdate = true; }
+			void ExportBullet();
 		private:
 			MonsterTypeRegistry m_monsterTypeRegistry;
 

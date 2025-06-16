@@ -39,6 +39,14 @@ void Tool::UI::UIManager::Render() {
 
 			ImGui::EndMenu();
 		}
+
+		if (ImGui::BeginMenu("File")) {
+			if (ImGui::MenuItem("Export Bullet")) {
+				M_UIMonsterPalette->ExportBullet();
+			}
+			ImGui::EndMenu();
+		}
+
 		ImGui::EndMainMenuBar();
 	}
 

@@ -47,6 +47,7 @@ namespace Tool
 		m_gridSystem = std::make_unique<System::GridSystem>(Components::Grid(10, 10, 24, 12));
 		m_uiManager = std::make_unique<UI::UIManager>();
 		m_mapEditor = std::make_unique<MapEditor>();
+		m_dataHandler = std::make_unique<DataHandler>();
 
 
 		//m_uiManager->Initialize();
@@ -82,6 +83,15 @@ namespace Tool
 			[this](const Core::EventData& data) {
 				MonsterItem selectedMonster = data.get<MonsterTypeDefinition>().item;
 				LOG_INFO("Monster selected in palate: " + selectedMonster.name);
+			});
+		Core::EventSystem::getInstance().subscribe(EventKeys::ExportBullet,
+			[this](const Core::EventData& data) {
+				// Access the registry pointer from the event data
+				auto* registry = data.get<MonsterTypeRegistry*>();
+				if (registry) {
+					auto monsters = registry->GetAllMonsterTypes();
+					m_dataHandler->ExportBulletConfig(monsters);
+				}
 			});
 	}
 

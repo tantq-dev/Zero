@@ -103,7 +103,7 @@ void Tool::UI::UIMonsterPalette::ShowMonsterPalette(bool* p_open)
 				for (int line_idx = clipper.DisplayStart; line_idx < clipper.DisplayEnd; line_idx++)
 				{
 					const int item_min_idx_for_current_line = line_idx * column_count;
-					const int item_max_idx_for_current_line = fmin((line_idx + 1) * column_count, m_monsterTypeRegistry.GetAllTypes().size());
+					const int item_max_idx_for_current_line = fmin((line_idx + 1) * column_count, m_monsterTypeRegistry.GetMonsterTypeMap().size());
 					for (int item_idx = item_min_idx_for_current_line; item_idx < item_max_idx_for_current_line; ++item_idx)
 					{
 						MonsterTypeDefinition* item_data = m_cachedMonsterTypes[item_idx];
@@ -194,6 +194,12 @@ void Tool::UI::UIMonsterPalette::ShowMonsterPalette(bool* p_open)
 	}
 }
 
+void Tool::UI::UIMonsterPalette::ExportBullet() {
+	Core::EventData eventData;
+	eventData.data = &m_monsterTypeRegistry;
+	Core::EventSystem::getInstance().publish(EventKeys::ExportBullet, eventData);
+}
+
 void Tool::UI::UIMonsterPalette::ShowAddMonsterPopup()
 {
 	if (m_showAddMonsterPopup)
@@ -242,7 +248,7 @@ void Tool::UI::UIMonsterPalette::ShowAddMonsterPopup()
 			std::string monsterName = std::string(m_newMonsterName);
 
 			// Check if name is not empty and doesn't already exist
-			if (!monsterName.empty() && m_monsterTypeRegistry.GetAllTypes().find(monsterName) == m_monsterTypeRegistry.GetAllTypes().end())
+			if (!monsterName.empty() && m_monsterTypeRegistry.GetMonsterTypeMap().find(monsterName) == m_monsterTypeRegistry.GetMonsterTypeMap().end())
 			{
 				// Add new monster with selected texture
 				AddItem(m_selectedValidMonster, monsterName, m_selectedTextureName);
@@ -541,8 +547,8 @@ void Tool::UI::UIMonsterPalette::UpdateLayoutSizes(float avail_width)
 void Tool::UI::UIMonsterPalette::UpdateCache()
 {
 	m_cachedMonsterTypes.clear();
-	m_cachedMonsterTypes.reserve(m_monsterTypeRegistry.GetAllTypes().size());
-	for (const auto& pair : m_monsterTypeRegistry.GetAllTypes()) {
+	m_cachedMonsterTypes.reserve(m_monsterTypeRegistry.GetMonsterTypeMap().size());
+	for (const auto& pair : m_monsterTypeRegistry.GetMonsterTypeMap()) {
 		m_cachedMonsterTypes.push_back(pair.second.get());
 	}
 	m_cacheNeedsUpdate = false;

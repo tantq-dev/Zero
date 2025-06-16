@@ -18,7 +18,8 @@ namespace Tool {
 		static constexpr std::string_view UISwitchWave = "ui_switch_wave";
 		static constexpr std::string_view AddWave = "add_wave";
 
-
+		//Data handler event
+		static constexpr std::string_view ExportBullet = "export_bullet";
 
 
 

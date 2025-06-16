@@ -7,6 +7,7 @@
 #include <system/GridSystem.h>
 #include "UIManager.h"
 #include "MapEditor.h"
+#include "DataHandler.h"
 
 namespace Tool
 {
@@ -30,6 +31,7 @@ namespace Tool
 		std::unique_ptr<System::GridSystem>			m_gridSystem;
 		std::unique_ptr<UI::UIManager>				m_uiManager;
 		std::unique_ptr<MapEditor>					m_mapEditor;
+		std::unique_ptr<DataHandler>				m_dataHandler;
 
 		Vec2 m_lastMousePosition = { 0.0f, 0.0f };
 
