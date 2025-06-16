@@ -5,15 +5,17 @@
 #include <vector>
 #include <memory>
 
+
+static std::unordered_map<std::string, const char*> BulletTextureMap = {
+	{"SlimeBullet", ""},
+	{"BossBullet",  ""},
+};
+
 // Define the static member variable outside the struct  
-static std::unordered_map<std::string, const char*> MonsterConfig = {
-	{"Slime1",	"assets//Slug.bmp"},
-	{"Slime2",	"assets//Snowman.bmp"},
-	{"Slime3",	"assets/Spicatus.bmp"},
-	{"Boss1",	"assets//Stabbycrab.bmp"},
-	{"Boss2",	"assets//Starfish.bmp"},
-	{"Boss3",	"assets//Staruss.bmp"},
-	{"Boss5",	"assets//Stellectric.bmp"},
+static std::unordered_map<std::string, const char*> MonsterTextureMap = {
+	{"Slime",		"assets//Slug.bmp"},
+	{"Android",	"assets//Snowman.bmp"},
+	{"Skeleton",	"assets/Spicatus.bmp"},
 };
 
 struct MonsterItem {
@@ -42,6 +44,7 @@ enum class ContainerType {
 
 struct BulletConfig {
 	BulletType bulletType = BulletType::Parabol;
+	std::string validBulletIngame = "";
 	int speed = 0;
 	int aliveTime = 0;
 	int damage = 0;
@@ -195,6 +198,7 @@ struct MonsterProperties {
 	// Basic stats
 	std::string name = "";
 	MonsterType monsterType = MonsterType::Normal;
+	std::string valideMonsterIngame = "";
 	int hp = 10000;
 	int speed = 10000;
 	int knockbackResistance = 10000;
@@ -215,7 +219,8 @@ struct MonsterProperties {
 		, hp(other.hp)
 		, speed(other.speed)
 		, knockbackResistance(other.knockbackResistance)
-		, collisionDamage(other.collisionDamage) {
+		, collisionDamage(other.collisionDamage)
+		, valideMonsterIngame(other.valideMonsterIngame) {
 
 		// Deep copy the behavior tree
 		if (other.rootBehavior) {
@@ -336,15 +341,21 @@ struct PlacedMonster {
 struct MonsterTypeDefinition {
 	MonsterItem item;                    // Basic info (id, name)
 	MonsterProperties defaultProperties; // Default stats and behavior
-	const char* texturePath;            // Asset path
+	std::string textureName;            // Asset path
 
-	MonsterTypeDefinition(int id, const std::string& name, const char* path)
-		: item{ id, name }, texturePath(path) {
+	MonsterTypeDefinition() : item({ -1,"" }), textureName("")
+	{
+
+	};
+
+	MonsterTypeDefinition(int id, const std::string& validMonster, const std::string& name, const std::string texName)
+		: item{ id, name }, textureName(texName) {
 		defaultProperties.name = name;
 		defaultProperties.hp = 10000; // Default HP
 		defaultProperties.speed = 10000; // Default speed
 		defaultProperties.knockbackResistance = 10000; // Default knockback resistance
 		defaultProperties.collisionDamage = 10000; // Default collision damage
-		defaultProperties.rootBehavior = std::make_unique<BehaviorMultiConfig>(); // Initialize with an empty behavior tree
+		defaultProperties.rootBehavior = std::make_unique<BehaviorMultiConfig>();
+		defaultProperties.valideMonsterIngame = validMonster;// Initialize with an empty behavior tree
 	}
 };

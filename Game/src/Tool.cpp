@@ -36,7 +36,8 @@ namespace Tool
 	{
 		//todo: clean up Magic number and magic string when function work correcly
 
-		ResourcesManager::GetInstance().LoadTextures(MonsterConfig, &renderer);
+
+		ResourcesManager::GetInstance().LoadTextures(MonsterTextureMap, &renderer);
 
 		m_physicSystem = std::make_unique<System::PhysicSystem>();
 		m_renderSystem = std::make_unique<System::RenderSystem>();

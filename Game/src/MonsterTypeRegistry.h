@@ -5,12 +5,12 @@
 
 class MonsterTypeRegistry {
 private:
-    std::unordered_map<std::string, std::unique_ptr<MonsterTypeDefinition>> m_monsterTypes;
-    int m_nextMonsterTypeId = 0;
+	std::unordered_map<std::string, std::unique_ptr<MonsterTypeDefinition>> m_monsterTypes;
+	int m_nextMonsterTypeId = 0;
 public:
-    void RegisterMonsterType(const std::string& name, const char* texturePath);
-    MonsterTypeDefinition* GetMonsterType(const std::string& name);
-    const std::unordered_map<std::string, std::unique_ptr<MonsterTypeDefinition>>& GetAllTypes() const;
-    void UpdateDefaultProperties(const std::string& name, const MonsterProperties& properties);
-	int GetNextMonsterTypeId() ;
+	void RegisterMonsterType(const std::string& validMonster, const std::string& name, std::string textureName);
+	MonsterTypeDefinition* GetMonsterType(const std::string& name);
+	const std::unordered_map<std::string, std::unique_ptr<MonsterTypeDefinition>>& GetAllTypes() const;
+	void UpdateDefaultProperties(const std::string& name, const MonsterProperties& properties);
+	int GetNextMonsterTypeId();
 };

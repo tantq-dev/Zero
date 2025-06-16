@@ -18,8 +18,8 @@ namespace Tool {
 		private:
 			MonsterTypeRegistry m_monsterTypeRegistry;
 
-			std::vector<MonsterTypeDefinition*> m_cachedMonsterTypes; 
-			bool m_cacheNeedsUpdate = true; 
+			std::vector<MonsterTypeDefinition*> m_cachedMonsterTypes;
+			bool m_cacheNeedsUpdate = true;
 
 			float           IconSize = 64.0f;
 			int             IconSpacing = 10;
@@ -39,14 +39,22 @@ namespace Tool {
 			bool m_showAddMonsterPopup;
 			char m_newMonsterName[256];
 
+			//  members for texture selection
+			bool m_showTextureDropdown;
+			std::string m_selectedTextureName;
+			std::vector<std::string> m_allValidMonster;
+			std::string m_selectedValidMonster;
+			int m_selectedTextureIndex;
+
 			// Add this method declaration:
 			void ShowAddMonsterPopup();
 
-			void AddItems(int count);
-			void AddItem(std::string name, const char * path);
+			void AddItem(std::string validMonster, std::string name, std::string textureName);
 
 			void UpdateLayoutSizes(float avail_width);
 			void UpdateCache();
+			void UpdateAvailableTextures();
+			void ShowTextureSelectionDropdown();
 		};
 	}
 }

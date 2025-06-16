@@ -92,6 +92,8 @@ namespace Tool {
 			// Add reference to MapEditor and current properties
 			MonsterTypeDefinition* m_pCurrentProperties = nullptr;
 			bool m_hasValidSelection = false;
+			int m_activeDropdownNodeId = -1;  // Replace m_showBehaviorDropdown with this
+			void ShowBehaviorDropdown(BehaviorNode& node);
 
 		public:
 			UIMonsterProperties();
@@ -99,10 +101,12 @@ namespace Tool {
 
 			void ShowUIMonsterProperties(bool* p_open);
 			void SetCurrentProperties(MonsterTypeDefinition properties);
+			void BehaviorMultiConfigSettingsOnly(BehaviorNode& node);
 
 		private:
 			// Node creation and management
 			std::unique_ptr<BehaviorNode> CreateBehaviorNode(const std::string& behaviorName);
+			bool m_showBehaviorDropdown = false;
 			void InitializeRootNode();
 			int GetNextNodeId() { return ++m_nextNodeId; }
 

@@ -1,15 +1,15 @@
 #include "MonsterTypeRegistry.h"
 
-void MonsterTypeRegistry::RegisterMonsterType(const std::string& name, const char* texturePath)
+void MonsterTypeRegistry::RegisterMonsterType(const std::string& validMonster, const std::string& name, std::string textureName)
 {
 	int monsterTypeId = GetNextMonsterTypeId();
-	m_monsterTypes.insert_or_assign(name, std::make_unique<MonsterTypeDefinition>(monsterTypeId,name, texturePath));
+	m_monsterTypes.insert_or_assign(std::to_string(monsterTypeId), std::make_unique<MonsterTypeDefinition>(monsterTypeId, validMonster, name, textureName));
 }
 
 MonsterTypeDefinition* MonsterTypeRegistry::GetMonsterType(const std::string& name)
 {
 	auto it = m_monsterTypes.find(name);
-	if (it!= m_monsterTypes.end())
+	if (it != m_monsterTypes.end())
 	{
 		return it->second.get();
 	}
@@ -34,7 +34,7 @@ void MonsterTypeRegistry::UpdateDefaultProperties(const std::string& name, const
 	}
 }
 
-int MonsterTypeRegistry::GetNextMonsterTypeId() 
+int MonsterTypeRegistry::GetNextMonsterTypeId()
 {
 	return m_nextMonsterTypeId++;
 }

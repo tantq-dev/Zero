@@ -12,7 +12,7 @@ Tool::MapEditor::MapEditor()
 	SendWaveData();
 	Core::EventSystem::getInstance().subscribe(EventKeys::MonsterSelectedFromPalette,
 		[this](const Core::EventData& data) {
-			OnMonsterSelectedFromUI(data.get<MonsterTypeDefinition>().item);
+			OnMonsterSelectedFromUI(data.get<MonsterTypeDefinition>());
 		});
 
 	Core::EventSystem::getInstance().subscribe(EventKeys::SwitchWave,
@@ -49,20 +49,20 @@ Tool::MapEditor::~MapEditor()
 
 void Tool::MapEditor::AddMonsterToMap(Vec2 clickPosition)
 {
-	if (m_selectedMonsterItem.id != -1) {
+	if (m_selectedMonsterItem.item.id != -1) {
 		auto entity = m_registry.create();
-		m_registry.emplace<PlacedMonster>(entity, m_selectedMonsterItem);
+		m_registry.emplace<PlacedMonster>(entity, m_selectedMonsterItem.item);
 		m_registry.emplace<Components::Transform>(entity, clickPosition, Vec2{ 10,10 });
-		m_registry.emplace<Components::Sprite>(entity, ResourcesManager::GetInstance().GetTexture(m_selectedMonsterItem.name));
+		m_registry.emplace<Components::Sprite>(entity, ResourcesManager::GetInstance().GetTexture(m_selectedMonsterItem.textureName));
 		m_selectedEntity = entity;
-		m_registry.get<PlacedMonster>(entity).properties.name = m_selectedMonsterItem.name;
+		m_registry.get<PlacedMonster>(entity).properties.name = m_selectedMonsterItem.item.name;
 		auto& currentWave = m_registry.get<MonsterWave>(m_currentMonsterWave);
 		currentWave.addMonster(entity);
 	}
 }
 
 
-void Tool::MapEditor::OnMonsterSelectedFromUI(MonsterItem monsterItem)
+void Tool::MapEditor::OnMonsterSelectedFromUI(MonsterTypeDefinition monsterItem)
 {
 	m_selectedMonsterItem = monsterItem;
 }
@@ -140,7 +140,7 @@ void Tool::MapEditor::SendWaveData()
 {
 	Core::EventData waveEventData;
 	std::vector<MonsterWave*> monsterWave;
-	for (entt::entity &wave : m_waveEntities) {
+	for (entt::entity& wave : m_waveEntities) {
 		monsterWave.push_back(&m_registry.get<MonsterWave>(wave));
 	}
 	waveEventData.data = monsterWave;

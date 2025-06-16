@@ -4,6 +4,7 @@
 #include <string>
 #include "EventKey.h"
 #include "core/EventSystem.h"
+#include "utilities/Logger.h"
 
 Tool::UI::UIMonsterProperties::UIMonsterProperties()
 {
@@ -104,6 +105,8 @@ void Tool::UI::UIMonsterProperties::ShowUIMonsterProperties(bool* p_open)
 					dataChanged = true;
 				}
 
+				ImGui::LabelText("Valid Monster:", m_pCurrentProperties->defaultProperties.valideMonsterIngame.c_str());
+
 				ImGui::TreePop();
 			}
 
@@ -167,22 +170,12 @@ void Tool::UI::UIMonsterProperties::BehaviorMultipleConfig()
 	}
 
 	// Add new behavior to root
-	ImGui::Text("Add New Behavior:");
-	if (ImGui::BeginCombo("Behavior Type", availableItems[currentSelection])) {
-		for (int n = 0; n < IM_ARRAYSIZE(availableItems); n++) {
-			bool isSelected = (currentSelection == n);
-			if (ImGui::Selectable(availableItems[n], isSelected)) {
-				currentSelection = n;
-			}
-			if (isSelected)
-				ImGui::SetItemDefaultFocus();
-		}
-		ImGui::EndCombo();
+	if (ImGui::Button("Add Behavior")) {
+		m_activeDropdownNodeId = m_pRootNode->id;
 	}
 
-	if (ImGui::Button("Add Behavior")) {
-		AddBehaviorToNode(*m_pRootNode, availableItems[currentSelection]);
-	}
+	// Show behavior selection dropdown for this specific node
+	ShowBehaviorDropdown(*m_pRootNode);
 
 	ImGui::Separator();
 
@@ -213,10 +206,31 @@ void Tool::UI::UIMonsterProperties::RenderBehaviorPanels(BehaviorNode& parentNod
 		// Show configuration when expanded
 		if (isOpen) {
 			ImGui::Indent();
+
+			// Show the behavior's configuration
 			ShowBehaviorConfiguration(node);
 
-			// If this behavior has children (like nested BehaviorMultiConfig), render them recursively
-			if (!node.children.empty()) {
+			// UPDATED: Special handling for BehaviorMultiConfig children
+			if (node.name == "BehaviorMultiConfig") {
+				ImGui::Separator();
+
+				// Add button for child MultiConfig nodes
+				if (ImGui::Button("Add Child Behavior")) {
+					m_activeDropdownNodeId = node.id;
+				}
+
+				// Show dropdown for this child MultiConfig
+				ShowBehaviorDropdown(node);
+
+				// Render its children recursively
+				if (!node.children.empty()) {
+					ImGui::Separator();
+					ImGui::Text("Child Behaviors:");
+					RenderBehaviorPanels(node);
+				}
+			}
+			// For other behavior types, still render children if they exist
+			else if (!node.children.empty()) {
 				ImGui::Separator();
 				ImGui::Text("Child Behaviors:");
 				RenderBehaviorPanels(node);
@@ -231,6 +245,7 @@ void Tool::UI::UIMonsterProperties::RenderBehaviorPanels(BehaviorNode& parentNod
 
 void Tool::UI::UIMonsterProperties::AddBehaviorToNode(BehaviorNode& parent, const std::string& behaviorName)
 {
+	LOG_INFO("Add behavior called");
 	auto newNode = CreateBehaviorNode(behaviorName);
 	newNode->parent = &parent;
 	parent.children.push_back(std::move(newNode));
@@ -261,12 +276,30 @@ void Tool::UI::UIMonsterProperties::ShowBehaviorConfiguration(BehaviorNode& node
 		BehaviorSpreadShotConfigUI(node);
 	}
 	else if (node.name == "BehaviorMultiConfig") {
-		BehaviorMultiConfigUI(node);
+		BehaviorMultiConfigSettingsOnly(node);
 	}
 	else {
 		ImGui::Text("No configuration available for this behavior type.");
 	}
 }
+void Tool::UI::UIMonsterProperties::BehaviorMultiConfigSettingsOnly(BehaviorNode& node)
+{
+	if (auto* multiConfig = dynamic_cast<BehaviorMultiConfig*>(node.config.get())) {
+		ImGui::Text("Container Type:");
+		static const char* containerTypes[] = {
+			"SelectorWithRunning",
+			"ProgressiveSequence",
+			"Sequence"
+		};
+		int containerType = static_cast<int>(multiConfig->containerType);
+		if (ImGui::Combo("Type", &containerType, containerTypes, IM_ARRAYSIZE(containerTypes))) {
+			multiConfig->containerType = static_cast<ContainerType>(containerType);
+			SaveCurrentProperties(); // Save when container type changes
+		}
+	}
+}
+
+
 
 // Updated configuration methods to work with node data
 void Tool::UI::UIMonsterProperties::BehaviorChaseConfigUI(BehaviorNode& node)
@@ -289,7 +322,24 @@ void Tool::UI::UIMonsterProperties::BehaviorShootBarrageConfigUI(BehaviorNode& n
 			hasChanged = true;
 		}
 
+		std::vector<const char*> validBulletsIngame;
 
+		for (auto& [name, texture] : BulletTextureMap) {
+			validBulletsIngame.push_back(name.c_str());
+		}
+
+		int currentBulletIndex = 0;
+		for (int i = 0; i < validBulletsIngame.size(); i++) {
+			if (config->bulletConfig.validBulletIngame == validBulletsIngame[i]) {
+				currentBulletIndex = i;
+				break;
+			}
+		}
+
+		if (ImGui::Combo("Valid Bullet Ingame", &currentBulletIndex, validBulletsIngame.data(), static_cast<int>(validBulletsIngame.size()))) {
+			config->bulletConfig.validBulletIngame = validBulletsIngame[currentBulletIndex];
+			hasChanged = true;
+		}
 
 		const char* bulletTypeNames[] = { "straight", "parabol", "mortal", "boss" };
 		int bulletType = static_cast<int>(config->bulletConfig.bulletType);
@@ -317,46 +367,34 @@ void Tool::UI::UIMonsterProperties::BehaviorShootBarrageConfigUI(BehaviorNode& n
 
 void Tool::UI::UIMonsterProperties::BehaviorMultiConfigUI(BehaviorNode& node)
 {
-	if (auto* config = dynamic_cast<BehaviorMultiConfig*>(node.config.get())) {
-		bool hasChanged = false;
-		// Container type selection
-		const char* containerTypes[] = {
+	if (auto* multiConfig = dynamic_cast<BehaviorMultiConfig*>(node.config.get())) {
+		ImGui::Text("Container Type:");
+		static const char* containerTypes[] = {
 			"SelectorWithRunning",
 			"ProgressiveSequence",
 			"Sequence"
 		};
-		int containerType = static_cast<int>(config->containerType);
-		if (ImGui::Combo("Container Type", &containerType, containerTypes, IM_ARRAYSIZE(containerTypes))) {
-			config->containerType = static_cast<ContainerType>(containerType);
-			hasChanged = true;
-		}
-
-		ImGui::Separator();
-
-		// Add child behavior option
-		ImGui::Text("Add Child Behavior:");
-		if (ImGui::BeginCombo("Child Behavior Type", availableItems[currentSelection])) {
-			for (int n = 0; n < IM_ARRAYSIZE(availableItems); n++) {
-				bool isSelected = (currentSelection == n);
-				if (ImGui::Selectable(availableItems[n], isSelected)) {
-					currentSelection = n;
-				}
-				if (isSelected)
-					ImGui::SetItemDefaultFocus();
-			}
-			ImGui::EndCombo();
-		}
-
-		if (ImGui::Button("Add Child Behavior")) {
-			AddBehaviorToNode(node, availableItems[currentSelection]);
-			hasChanged = true;
-		}
-		if (hasChanged)
-		{
+		int containerType = static_cast<int>(multiConfig->containerType);
+		if (ImGui::Combo("Type", &containerType, containerTypes, IM_ARRAYSIZE(containerTypes))) {
+			multiConfig->containerType = static_cast<ContainerType>(containerType);
 			SaveCurrentProperties();
-
 		}
+		ImGui::Separator();
 	}
+
+	// Add new behavior to this specific node
+	if (ImGui::Button("Add Behavior")) {
+		m_activeDropdownNodeId = node.id;
+	}
+
+	// Show behavior selection dropdown for this specific node
+	ShowBehaviorDropdown(node);
+
+	ImGui::Separator();
+
+	// Display behaviors as expandable panels
+	ImGui::Text("Behaviors:");
+	RenderBehaviorPanels(node);
 }
 
 // Implement other configuration UI methods similarly...
@@ -388,6 +426,24 @@ void Tool::UI::UIMonsterProperties::BehaviorShootProjectileConfigUI(BehaviorNode
 		bool hasChanged = false;
 
 		if (ImGui::InputInt("CoolDown", &config->coolDown)) {
+			hasChanged = true;
+		}
+		std::vector<const char*> validBulletsIngame;
+
+		for (auto& [name, texture] : BulletTextureMap) {
+			validBulletsIngame.push_back(name.c_str());
+		}
+
+		int currentBulletIndex = 0;
+		for (int i = 0; i < validBulletsIngame.size(); i++) {
+			if (config->bulletConfig.validBulletIngame == validBulletsIngame[i]) {
+				currentBulletIndex = i;
+				break;
+			}
+		}
+
+		if (ImGui::Combo("Valid Bullet Ingame", &currentBulletIndex, validBulletsIngame.data(), static_cast<int>(validBulletsIngame.size()))) {
+			config->bulletConfig.validBulletIngame = validBulletsIngame[currentBulletIndex];
 			hasChanged = true;
 		}
 
@@ -427,6 +483,26 @@ void Tool::UI::UIMonsterProperties::BehaviorSpreadShotConfigUI(BehaviorNode& nod
 		if (ImGui::InputInt("CoolDown", &config->coolDown)) {
 			hasChanged = true;
 		}
+
+		std::vector<const char*> validBulletsIngame;
+
+		for (auto& [name, texture] : BulletTextureMap) {
+			validBulletsIngame.push_back(name.c_str());
+		}
+
+		int currentBulletIndex = 0;
+		for (int i = 0; i < validBulletsIngame.size(); i++) {
+			if (config->bulletConfig.validBulletIngame == validBulletsIngame[i]) {
+				currentBulletIndex = i;
+				break;
+			}
+		}
+
+		if (ImGui::Combo("Valid Bullet Ingame", &currentBulletIndex, validBulletsIngame.data(), static_cast<int>(validBulletsIngame.size()))) {
+			config->bulletConfig.validBulletIngame = validBulletsIngame[currentBulletIndex];
+			hasChanged = true;
+		}
+
 
 		const char* bulletTypeNames[] = { "straight", "parabol", "mortal", "boss" };
 		int bulletType = static_cast<int>(config->bulletConfig.bulletType);
@@ -657,5 +733,67 @@ void Tool::UI::UIMonsterProperties::SaveCurrentProperties()
 
 		Core::EventSystem::getInstance().publish(EventKeys::MonsterUpdated, eventData);
 
+	}
+}
+
+void Tool::UI::UIMonsterProperties::ShowBehaviorDropdown(BehaviorNode& node)
+{
+	// Only show dropdown if this node is the active one
+	if (m_activeDropdownNodeId != node.id) {
+		return;
+	}
+
+	// Position dropdown below the button
+	ImVec2 buttonPos = ImGui::GetItemRectMin();
+	ImVec2 buttonSize = ImGui::GetItemRectSize();
+
+	ImGui::SetNextWindowPos(ImVec2(buttonPos.x, buttonPos.y + buttonSize.y));
+	ImGui::SetNextWindowSize(ImVec2(250.0f, 200.0f));
+
+	// Create unique window name using node ID
+	std::string windowName = "##BehaviorDropdown" + std::to_string(node.id);
+	bool isOpen = (m_activeDropdownNodeId == node.id);
+
+	if (ImGui::Begin(windowName.c_str(), &isOpen,
+		ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+		ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar))
+	{
+		ImGui::Text("Select Behavior:");
+		ImGui::Separator();
+
+		if (ImGui::BeginChild("BehaviorList", ImVec2(0, 150.0f), true))
+		{
+			for (int n = 0; n < IM_ARRAYSIZE(availableItems); n++) {
+				if (ImGui::Selectable(availableItems[n], false)) {
+					// Empty - just for visual feedback
+				}
+
+				if (ImGui::IsItemClicked())
+				{
+					AddBehaviorToNode(node, availableItems[n]);
+					m_activeDropdownNodeId = -1; // Close dropdown
+					break;
+				}
+
+				// Optional: Add hover effect or tooltip
+				if (ImGui::IsItemHovered()) {
+					ImGui::BeginTooltip();
+					ImGui::Text("Click to add: %s", availableItems[n]);
+					ImGui::EndTooltip();
+				}
+			}
+		}
+		ImGui::EndChild();
+
+		// Cancel button
+		if (ImGui::Button("Cancel", ImVec2(-1, 0))) {
+			m_activeDropdownNodeId = -1;
+		}
+	}
+	ImGui::End();
+
+	// Close dropdown if window was closed or clicked outside
+	if (!isOpen || (!ImGui::IsWindowHovered() && ImGui::IsMouseClicked(0))) {
+		m_activeDropdownNodeId = -1;
 	}
 }

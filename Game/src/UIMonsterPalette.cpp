@@ -8,10 +8,6 @@ Tool::UI::UIMonsterPalette::UIMonsterPalette()
 {
 	std::vector<std::string> keys;
 
-	for (const auto& pair : MonsterConfig) {
-		AddItem(pair.first, pair.second);
-	}
-
 	Core::EventSystem::getInstance().subscribe(EventKeys::MonsterUpdated, [this](const Core::EventData& eventData) {
 		const auto& monsterType = eventData.get<MonsterTypeDefinition>();
 		m_monsterTypeRegistry.UpdateDefaultProperties(monsterType.item.name, monsterType.defaultProperties);
@@ -21,6 +17,12 @@ Tool::UI::UIMonsterPalette::UIMonsterPalette()
 	// Initialize popup state
 	m_showAddMonsterPopup = false;
 	memset(m_newMonsterName, 0, sizeof(m_newMonsterName));
+
+	// Initialize texture selection state
+	m_showTextureDropdown = false;
+	m_selectedTextureName = ""; // Default texture
+	m_selectedTextureIndex = 0;
+	UpdateAvailableTextures();
 }
 
 void Tool::UI::UIMonsterPalette::ShowMonsterPalette(bool* p_open)
@@ -48,6 +50,9 @@ void Tool::UI::UIMonsterPalette::ShowMonsterPalette(bool* p_open)
 					m_showAddMonsterPopup = true;
 					// Clear the input field when opening the popup
 					memset(m_newMonsterName, 0, sizeof(m_newMonsterName));
+					// Reset texture selection to default
+					m_selectedTextureName = "Slime1";
+					UpdateAvailableTextures();
 				}
 
 				if (ImGui::MenuItem("Clear items")) {
@@ -135,7 +140,7 @@ void Tool::UI::UIMonsterPalette::ShowMonsterPalette(bool* p_open)
 							draw_list->AddRectFilled(box_min, box_max, icon_bg_color);
 
 							// Get texture for the monster from ResourcesManager
-							ImTextureID texture_id = (ImTextureID)(intptr_t)ResourcesManager::GetInstance().GetTexture(item_data->item.name);
+							ImTextureID texture_id = (ImTextureID)(intptr_t)ResourcesManager::GetInstance().GetTexture(item_data->textureName);
 
 							// Calculate image area (slightly smaller than box to create padding)
 							const float padding = 2.0f;
@@ -199,18 +204,28 @@ void Tool::UI::UIMonsterPalette::ShowAddMonsterPopup()
 	// Center the popup
 	ImVec2 center = ImGui::GetMainViewport()->GetCenter();
 	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-	ImGui::SetNextWindowSize(ImVec2(300, 150), ImGuiCond_Appearing);
+	ImGui::SetNextWindowSize(ImVec2(400, 250), ImGuiCond_Appearing);
 
 	if (ImGui::BeginPopupModal("Add New Monster", NULL, ImGuiWindowFlags_AlwaysAutoResize))
 	{
-		ImGui::Text("Enter monster name:");
+		ImGui::Text("Create New Monster:");
 		ImGui::Separator();
+		ImGui::Spacing();
 
-		// Input field for monster name
-		ImGui::SetNextItemWidth(250.0f);
+		// Monster name input
+		ImGui::Text("Monster Name:");
+		ImGui::SetNextItemWidth(350.0f);
 		bool enterPressed = ImGui::InputText("##MonsterName", m_newMonsterName, sizeof(m_newMonsterName),
 			ImGuiInputTextFlags_EnterReturnsTrue);
 
+		ImGui::Spacing();
+
+		// Texture selection
+		ImGui::Text("Select Texture:");
+		ShowTextureSelectionDropdown();
+
+		ImGui::Spacing();
+		ImGui::Separator();
 		ImGui::Spacing();
 
 		// Button layout
@@ -229,13 +244,14 @@ void Tool::UI::UIMonsterPalette::ShowAddMonsterPopup()
 			// Check if name is not empty and doesn't already exist
 			if (!monsterName.empty() && m_monsterTypeRegistry.GetAllTypes().find(monsterName) == m_monsterTypeRegistry.GetAllTypes().end())
 			{
-				// Add new monster with default "Slug" texture
-				AddItem(monsterName, "assets//Slug.bmp");
-				m_cacheNeedsUpdate = true;
+				// Add new monster with selected texture
+				AddItem(m_selectedValidMonster, monsterName, m_selectedTextureName);
 
 				// Close popup and reset
 				m_showAddMonsterPopup = false;
 				memset(m_newMonsterName, 0, sizeof(m_newMonsterName));
+				m_selectedTextureName = "Slime1";
+				m_selectedValidMonster = "";// Reset to default
 				ImGui::CloseCurrentPopup();
 			}
 			else if (monsterName.empty())
@@ -255,6 +271,8 @@ void Tool::UI::UIMonsterPalette::ShowAddMonsterPopup()
 		{
 			m_showAddMonsterPopup = false;
 			memset(m_newMonsterName, 0, sizeof(m_newMonsterName));
+			m_selectedTextureName = "Slime1";
+			m_selectedValidMonster = "";// Reset to default
 			ImGui::CloseCurrentPopup();
 		}
 
@@ -263,6 +281,8 @@ void Tool::UI::UIMonsterPalette::ShowAddMonsterPopup()
 		{
 			m_showAddMonsterPopup = false;
 			memset(m_newMonsterName, 0, sizeof(m_newMonsterName));
+			m_selectedTextureName = "Slime1";
+			m_selectedValidMonster = "";// Reset to default
 			ImGui::CloseCurrentPopup();
 		}
 
@@ -270,13 +290,230 @@ void Tool::UI::UIMonsterPalette::ShowAddMonsterPopup()
 	}
 }
 
-void Tool::UI::UIMonsterPalette::AddItems(int count) {
-	// This method is now unused since we're adding one monster at a time via popup
+void Tool::UI::UIMonsterPalette::ShowTextureSelectionDropdown()
+{
+	// Get current selected texture for display
+	ImTextureID currentTexture = (ImTextureID)(intptr_t)ResourcesManager::GetInstance().GetTexture(m_selectedTextureName);
+
+	// Create a button that shows the current selection
+	ImVec2 buttonSize(350.0f, 64.0f);
+	ImVec2 imageSize(56.0f, 56.0f);
+
+	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.2f, 0.2f, 1.0f));
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.4f, 0.4f, 0.4f, 1.0f));
+
+	if (ImGui::Button("##TextureSelectButton", buttonSize))
+	{
+		m_showTextureDropdown = !m_showTextureDropdown;
+	}
+
+	// Draw the current texture and name on the button
+	ImVec2 buttonMin = ImGui::GetItemRectMin();
+	ImVec2 buttonMax = ImGui::GetItemRectMax();
+	ImDrawList* drawList = ImGui::GetWindowDrawList();
+
+	// Draw current texture preview
+	ImVec2 imageMin(buttonMin.x + 4.0f, buttonMin.y + 4.0f);
+	ImVec2 imageMax(imageMin.x + imageSize.x, imageMin.y + imageSize.y);
+
+	if (currentTexture)
+	{
+		drawList->AddImage(currentTexture, imageMin, imageMax);
+	}
+	else
+	{
+		// Placeholder if texture doesn't exist
+		drawList->AddRectFilled(imageMin, imageMax, IM_COL32(100, 100, 100, 255));
+		drawList->AddText(ImVec2(imageMin.x + 20, imageMin.y + 20), IM_COL32(255, 255, 255, 255), "?");
+	}
+
+	// Draw texture name
+	ImVec2 textPos(imageMax.x + 8.0f, buttonMin.y + (buttonSize.y - ImGui::GetFontSize()) * 0.5f);
+	drawList->AddText(textPos, IM_COL32(255, 255, 255, 255), m_selectedTextureName.c_str());
+
+	// Draw dropdown arrow
+	ImVec2 arrowPos(buttonMax.x - 20.0f, buttonMin.y + (buttonSize.y - 10.0f) * 0.5f);
+	drawList->AddTriangleFilled(
+		ImVec2(arrowPos.x, arrowPos.y),
+		ImVec2(arrowPos.x + 10.0f, arrowPos.y),
+		ImVec2(arrowPos.x + 5.0f, arrowPos.y + 8.0f),
+		IM_COL32(255, 255, 255, 255)
+	);
+
+	ImGui::PopStyleColor(3);
+
+	// Show dropdown if open
+	// Show dropdown if open
+	if (m_showTextureDropdown)
+	{
+		// Set up the dropdown window properly
+		ImGui::SetNextWindowPos(ImVec2(buttonMin.x, buttonMax.y));
+		ImGui::SetNextWindowSize(ImVec2(buttonSize.x, 300.0f));
+
+		if (ImGui::Begin("##TextureDropdown", &m_showTextureDropdown,
+			ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
+			ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_AlwaysAutoResize))
+		{
+			if (ImGui::BeginChild("TextureList", ImVec2(0, 280.0f), true))
+			{
+				const int column_count = 4; // 4 items each line
+				const ImVec2 layoutItemSize = { 64.0f, 64.0f }; // Increased size to be visible
+				const float layoutItemSpacing = 2.0f;
+				const ImVec2 layoutItemStep = { layoutItemSize.x + layoutItemSpacing, layoutItemSize.y + layoutItemSpacing };
+
+				// Calculate proper line count
+				const int line_count = (m_allValidMonster.size() + column_count - 1) / column_count;
+
+				ImVec2 start_pos = ImGui::GetCursorScreenPos();
+				ImDrawList* draw_list = ImGui::GetWindowDrawList();
+
+				const ImU32 icon_bg_color = ImGui::GetColorU32(IM_COL32(35, 35, 35, 220));
+				const ImU32 selected_bg_color = ImGui::GetColorU32(IM_COL32(70, 120, 200, 255));
+				const bool display_label = true; // Always show labels for texture names
+
+				ImGuiListClipper clipper;
+				clipper.Begin(line_count, layoutItemStep.y);
+
+				while (clipper.Step())
+				{
+					for (int line_idx = clipper.DisplayStart; line_idx < clipper.DisplayEnd; line_idx++)
+					{
+						const int item_min_idx_for_current_line = line_idx * column_count;
+						const int item_max_idx_for_current_line = fmin((line_idx + 1) * column_count, (int)m_allValidMonster.size());
+
+						for (int item_idx = item_min_idx_for_current_line; item_idx < item_max_idx_for_current_line; ++item_idx)
+						{
+							const std::string& textureName = m_allValidMonster[item_idx];
+							ImGui::PushID(item_idx);
+
+							// Position item
+							ImVec2 pos = ImVec2(
+								start_pos.x + (item_idx % column_count) * layoutItemStep.x,
+								start_pos.y + line_idx * layoutItemStep.y
+							);
+							ImGui::SetCursorScreenPos(pos);
+
+							bool item_is_selected = (textureName == m_selectedTextureName);
+							bool item_is_visible = ImGui::IsRectVisible(layoutItemSize);
+
+							// Create invisible selectable for interaction
+							if (ImGui::Selectable("##textureItem", item_is_selected, ImGuiSelectableFlags_None, layoutItemSize))
+							{
+								m_selectedTextureName = textureName;
+								m_selectedValidMonster = textureName;
+								m_selectedTextureIndex = item_idx;
+								m_showTextureDropdown = false; // Close dropdown after selection
+							}
+
+							if (item_is_visible)
+							{
+								ImVec2 box_min(pos.x - 1, pos.y - 1);
+								ImVec2 box_max(box_min.x + layoutItemSize.x + 2, box_min.y + layoutItemSize.y + 2);
+
+								// Draw background color (different for selected)
+								ImU32 bg_color = item_is_selected ? selected_bg_color : icon_bg_color;
+								draw_list->AddRectFilled(box_min, box_max, bg_color);
+
+								// Get texture from ResourcesManager
+								ImTextureID texture_id = (ImTextureID)(intptr_t)ResourcesManager::GetInstance().GetTexture(textureName);
+
+								// Calculate image area (leave space for label at bottom)
+								const float padding = 2.0f;
+								const float label_height = display_label ? ImGui::GetFontSize() + 2.0f : 0.0f;
+								ImVec2 image_min(box_min.x + padding, box_min.y + padding);
+								ImVec2 image_max(box_max.x - padding, box_max.y - label_height - padding);
+
+								// Draw the texture if available
+								if (texture_id)
+								{
+									draw_list->AddImage(texture_id, image_min, image_max);
+								}
+								else
+								{
+									// Placeholder if texture doesn't exist
+									ImU32 placeholder_col = IM_COL32(100, 100, 100, 255);
+									draw_list->AddRectFilled(image_min, image_max, placeholder_col);
+
+									// Center the first letter of texture name as placeholder
+									if (!textureName.empty()) {
+										char letter[2] = { textureName[0], '\0' };
+										ImVec2 text_size = ImGui::CalcTextSize(letter);
+										ImVec2 text_pos(
+											(image_min.x + image_max.x - text_size.x) * 0.5f,
+											(image_min.y + image_max.y - text_size.y) * 0.5f
+										);
+										draw_list->AddText(text_pos, IM_COL32(255, 255, 255, 255), letter);
+									}
+								}
+
+								if (ImGui::IsItemClicked()) {
+									m_selectedTextureName = textureName;
+									m_selectedTextureIndex = item_idx;
+									m_selectedValidMonster = textureName;
+								}
+
+								// Draw label if enabled
+								if (display_label)
+								{
+									ImU32 label_col = ImGui::GetColorU32(item_is_selected ? ImGuiCol_Text : ImGuiCol_TextDisabled);
+
+									// Truncate long names to fit
+									std::string displayName = textureName;
+									float maxLabelWidth = layoutItemSize.x - 4.0f;
+									while (ImGui::CalcTextSize(displayName.c_str()).x > maxLabelWidth && displayName.length() > 3)
+									{
+										displayName = displayName.substr(0, displayName.length() - 4) + "...";
+									}
+
+									ImVec2 label_pos(box_min.x + 2.0f, box_max.y - ImGui::GetFontSize() - 2.0f);
+									draw_list->AddText(label_pos, label_col, displayName.c_str());
+								}
+							}
+
+							ImGui::PopID();
+						}
+					}
+				}
+			}
+			ImGui::EndChild();
+		}
+		ImGui::End();
+
+		// Close dropdown if clicked outside
+		if (!ImGui::IsWindowHovered() && ImGui::IsMouseClicked(0))
+		{
+			m_showTextureDropdown = false;
+		}
+	}
 }
 
-void Tool::UI::UIMonsterPalette::AddItem(std::string name, const char* path)
+void Tool::UI::UIMonsterPalette::UpdateAvailableTextures()
 {
-	m_monsterTypeRegistry.RegisterMonsterType(name, path);
+
+	m_allValidMonster.clear();
+
+	// Get all enum values from ValidMonsterIngame and convert to strings
+	for (auto& [validMonster, texturePath] : MonsterTextureMap)
+	{
+
+
+
+		m_allValidMonster.push_back(validMonster);
+
+	}
+
+	// Find the index of the currently selected texture
+	auto it = std::find(m_allValidMonster.begin(), m_allValidMonster.end(), m_selectedTextureName);
+	m_selectedTextureIndex = (it != m_allValidMonster.end()) ?
+		std::distance(m_allValidMonster.begin(), it) : 0;
+}
+
+
+
+void Tool::UI::UIMonsterPalette::AddItem(std::string validMonster, std::string name, std::string textureName)
+{
+	m_monsterTypeRegistry.RegisterMonsterType(validMonster, name, textureName);
 	UpdateCache();
 }
 

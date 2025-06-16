@@ -23,6 +23,26 @@ void Tool::UI::UIManager::Initialize()
 }
 
 void Tool::UI::UIManager::Render() {
+
+
+	if (ImGui::BeginMainMenuBar())
+	{
+		if (ImGui::BeginMenu("Window"))
+		{
+			if (ImGui::MenuItem("Monster Palette")) {
+				m_isShowMonsterPalette = true;
+			}
+
+			if (ImGui::MenuItem("Wave Information")) {
+				m_isShowWaveInformation = true;
+			}
+
+			ImGui::EndMenu();
+		}
+		ImGui::EndMainMenuBar();
+	}
+
+
 	if (m_isShowMonsterPalette)
 	{
 		M_UIMonsterPalette->ShowMonsterPalette(&m_isShowMonsterPalette);

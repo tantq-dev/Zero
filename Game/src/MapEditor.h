@@ -14,7 +14,7 @@ namespace Tool
 		~MapEditor();
 		void AddMonsterToMap(Vec2 clickPosition);
 		void DeleteFromMap(Vec2 clickPosition);
-		void OnMonsterSelectedFromUI(MonsterItem monster);
+		void OnMonsterSelectedFromUI(MonsterTypeDefinition monster);
 		void ClickOnMap(Vec2 clickPosition);
 		void ClickOnPlacedMonster(entt::entity& e, PlacedMonster& monster);
 		PlacedMonster* GetSelectedMonster();
@@ -27,7 +27,7 @@ namespace Tool
 	private:
 		entt::registry m_registry;
 		entt::entity m_selectedEntity = entt::null;
-		MonsterItem m_selectedMonsterItem{ -1, "" };
+		MonsterTypeDefinition m_selectedMonsterItem;
 		entt::entity m_currentMonsterWave = entt::null;
 		std::vector<entt::entity> m_waveEntities;
 	};
