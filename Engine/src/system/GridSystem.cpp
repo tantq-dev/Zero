@@ -28,13 +28,11 @@ namespace System
 
 		// Bounds checking
 		if (gridX < 0 || gridX >= gridWidth || gridY < 0 || gridY >= gridHeight) {
-		
 			return nullptr;
 		}
 
 		// Calculate linear index (row-major order)
 		const int index = gridY * gridWidth + gridX;
-
 
 
 		Components::Cell* pCell = grid.GetCell(index);
@@ -89,4 +87,27 @@ namespace System
 		return grid.GetWidth() * grid.cellSize;
 	}
 
+	Vec2 GridSystem::CellIndexInGridToWorldPosition(Vec2 gridPosition) {
+		const float cellSize = grid.GetCellSize();
+		const int gridWidth = grid.GetWidth();
+		const int gridHeight = grid.GetHeight();
+
+		// Convert grid coordinates to flattened array index (row-major order)
+		int index = static_cast<int>(gridPosition.y) * gridWidth + static_cast<int>(gridPosition.x);
+
+		// Bounds checking
+		if (gridPosition.x < 0 || gridPosition.x >= gridWidth ||
+			gridPosition.y < 0 || gridPosition.y >= gridHeight) {
+			// Return center of grid as fallback if out of bounds
+			return Vec2(0, 0);
+		}
+
+		// Get the cell at the calculated index and return its center
+		Components::Cell* cell = grid.GetCell(index);
+		if (cell) {
+			return cell->GetCenter();
+		}
+
+		return Vec2(0, 0); // Fallback
+	}
 }

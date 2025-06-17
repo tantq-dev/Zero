@@ -14,7 +14,7 @@ namespace System
 		void ResetGridHightlight();
 		const float& GetGridHeight();
 		const float& GetGridWidth();
-
+		Vec2 CellIndexInGridToWorldPosition(Vec2 gridPosition);
 	private:
 		Components::Grid grid = Components::Grid(0, 0, 0, 0);;
 		void InitializeGrid();
