@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <memory>
+#include "utilities/Vec2.h"
 
 
 static std::unordered_map<std::string, const char*> BulletTextureMap = {
@@ -332,6 +333,8 @@ inline std::unique_ptr<BehaviorConfig> CreateBehaviorConfig(const std::string& b
 struct PlacedMonster {
 	MonsterItem item;
 	MonsterProperties properties;
+	Vec2 positionInGrid = { 0,0 };
+	Vec2 worldPosition = { 0,0 };
 	PlacedMonster(const MonsterItem& monsterItem)
 		: item(monsterItem) {
 	};
@@ -358,4 +361,10 @@ struct MonsterTypeDefinition {
 		defaultProperties.rootBehavior = std::make_unique<BehaviorMultiConfig>();
 		defaultProperties.valideMonsterIngame = validMonster;// Initialize with an empty behavior tree
 	}
+
+	MonsterTypeDefinition(const MonsterTypeDefinition& def)
+		: item(def.item),
+		defaultProperties(def.defaultProperties),
+		textureName(def.textureName) {
+	} // copy constructor
 };

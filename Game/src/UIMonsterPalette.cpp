@@ -3,21 +3,22 @@
 #include "EventKey.h"
 #include "MonsterModel.h"
 #include "resources/ResourcesManager.h"
+#include "utilities/Logger.h"
 
 Tool::UI::UIMonsterPalette::UIMonsterPalette()
 {
 	std::vector<std::string> keys;
 
 	Core::EventSystem::getInstance().subscribe(EventKeys::MonsterUpdated, [this](const Core::EventData& eventData) {
+
 		const auto& monsterType = eventData.get<MonsterTypeDefinition>();
-		m_monsterTypeRegistry.UpdateDefaultProperties(monsterType.item.name, monsterType.defaultProperties);
+		m_monsterTypeRegistry.UpdateDefaultProperties(std::to_string(monsterType.item.id), monsterType.defaultProperties);
 		m_cacheNeedsUpdate = true; // Ensure cache is updated after selection
 		});
 
 	// Initialize popup state
 	m_showAddMonsterPopup = false;
 	memset(m_newMonsterName, 0, sizeof(m_newMonsterName));
-
 	// Initialize texture selection state
 	m_showTextureDropdown = false;
 	m_selectedTextureName = ""; // Default texture
@@ -198,6 +199,13 @@ void Tool::UI::UIMonsterPalette::ExportBullet() {
 	Core::EventData eventData;
 	eventData.data = &m_monsterTypeRegistry;
 	Core::EventSystem::getInstance().publish(EventKeys::ExportBullet, eventData);
+}
+
+void Tool::UI::UIMonsterPalette::ImportMonsterData(std::vector<MonsterTypeDefinition> data)
+{
+	m_monsterTypeRegistry.RegisterMonsterTypeFromData(data);
+	UpdateCache();
+
 }
 
 void Tool::UI::UIMonsterPalette::ShowAddMonsterPopup()
@@ -502,11 +510,7 @@ void Tool::UI::UIMonsterPalette::UpdateAvailableTextures()
 	// Get all enum values from ValidMonsterIngame and convert to strings
 	for (auto& [validMonster, texturePath] : MonsterTextureMap)
 	{
-
-
-
 		m_allValidMonster.push_back(validMonster);
-
 	}
 
 	// Find the index of the currently selected texture

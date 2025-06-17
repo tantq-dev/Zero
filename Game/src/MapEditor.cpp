@@ -47,15 +47,21 @@ Tool::MapEditor::~MapEditor()
 }
 
 
-void Tool::MapEditor::AddMonsterToMap(Vec2 clickPosition)
+void Tool::MapEditor::AddMonsterToMap(Vec2 clickPosition, Vec2 gridPosition)
 {
 	if (m_selectedMonsterItem.item.id != -1) {
+		LOG_INFO("Click at index: " + std::to_string(gridPosition.x) + " " + std::to_string(gridPosition.y));
 		auto entity = m_registry.create();
 		m_registry.emplace<PlacedMonster>(entity, m_selectedMonsterItem.item);
 		m_registry.emplace<Components::Transform>(entity, clickPosition, Vec2{ 10,10 });
 		m_registry.emplace<Components::Sprite>(entity, ResourcesManager::GetInstance().GetTexture(m_selectedMonsterItem.textureName));
 		m_selectedEntity = entity;
 		m_registry.get<PlacedMonster>(entity).properties.name = m_selectedMonsterItem.item.name;
+		m_registry.get<PlacedMonster>(entity).positionInGrid = gridPosition;
+		m_registry.get<PlacedMonster>(entity).worldPosition = clickPosition;
+
+
+
 		auto& currentWave = m_registry.get<MonsterWave>(m_currentMonsterWave);
 		currentWave.addMonster(entity);
 	}
@@ -67,7 +73,7 @@ void Tool::MapEditor::OnMonsterSelectedFromUI(MonsterTypeDefinition monsterItem)
 	m_selectedMonsterItem = monsterItem;
 }
 
-void Tool::MapEditor::ClickOnMap(Vec2 clickPosition)
+void Tool::MapEditor::ClickOnMap(Vec2 clickPosition, Vec2 gridPosition)
 {
 	auto& currentWave = m_registry.get<MonsterWave>(m_currentMonsterWave);
 
@@ -82,7 +88,7 @@ void Tool::MapEditor::ClickOnMap(Vec2 clickPosition)
 		}
 	}
 	// no monster in this place
-	AddMonsterToMap(clickPosition);
+	AddMonsterToMap(clickPosition, gridPosition);
 
 
 }
@@ -173,6 +179,25 @@ void Tool::MapEditor::UpdateRenderingForCurrentWave()
 				sprite.isVisible = true;
 			}
 		}
+	}
+}
+
+std::vector<MonsterWave*> Tool::MapEditor::GetWaves()
+{
+	std::vector<MonsterWave*> waves;
+	for (auto& wave : m_waveEntities) {
+		waves.push_back(&m_registry.get<MonsterWave>(wave));
+	}
+	return waves;
+}
+
+void Tool::MapEditor::AddWaveWithMonster(std::vector<PlacedMonster> monsters)
+{
+	AddWave();
+	for (auto& monster : monsters) {
+		m_selectedMonsterItem.item.id = monster.item.id;
+		m_selectedMonsterItem.textureName = monster.properties.valideMonsterIngame;
+		AddMonsterToMap(monster.worldPosition, monster.positionInGrid);
 	}
 }
 

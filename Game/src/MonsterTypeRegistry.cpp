@@ -1,5 +1,5 @@
 #include "MonsterTypeRegistry.h"
-
+#include "utilities/Logger.h"
 void MonsterTypeRegistry::RegisterMonsterType(const std::string& validMonster, const std::string& name, std::string textureName)
 {
 	int monsterTypeId = GetNextMonsterTypeId();
@@ -21,9 +21,10 @@ const std::unordered_map<std::string, std::unique_ptr<MonsterTypeDefinition>>& M
 	return m_monsterTypes;
 }
 
-void MonsterTypeRegistry::UpdateDefaultProperties(const std::string& name, const MonsterProperties& properties)
+void MonsterTypeRegistry::UpdateDefaultProperties(const std::string& id, const MonsterProperties& properties)
 {
-	auto it = m_monsterTypes.find(name);
+	LOG_INFO("UpdateDefaultProperties ");
+	auto it = m_monsterTypes.find(id);
 	if (it != m_monsterTypes.end())
 	{
 		it->second->defaultProperties = properties;
@@ -48,5 +49,18 @@ std::vector<MonsterTypeDefinition*> MonsterTypeRegistry::GetAllMonsterTypes()
 		types.push_back(pair.second.get());
 	}
 	return types;
+}
+
+void MonsterTypeRegistry::RegisterMonsterTypeFromData(std::vector<MonsterTypeDefinition> data)
+{
+	for (auto& monsterType : data)
+	{
+		if (monsterType.item.id >= m_nextMonsterTypeId)
+		{
+			m_nextMonsterTypeId = monsterType.item.id + 1;
+		}
+		m_monsterTypes.insert_or_assign(std::to_string(monsterType.item.id), std::make_unique<MonsterTypeDefinition>(monsterType));
+
+	}
 }
 

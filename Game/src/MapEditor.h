@@ -12,10 +12,10 @@ namespace Tool
 		MapEditor();
 		void AddWave();
 		~MapEditor();
-		void AddMonsterToMap(Vec2 clickPosition);
+		void AddMonsterToMap(Vec2 clickPosition, Vec2 gridPosition);
 		void DeleteFromMap(Vec2 clickPosition);
 		void OnMonsterSelectedFromUI(MonsterTypeDefinition monster);
-		void ClickOnMap(Vec2 clickPosition);
+		void ClickOnMap(Vec2 clickPosition, Vec2 gridPosition);
 		void ClickOnPlacedMonster(entt::entity& e, PlacedMonster& monster);
 		PlacedMonster* GetSelectedMonster();
 		entt::registry& GetMonsterRegistry();
@@ -23,6 +23,8 @@ namespace Tool
 		void SwitchWave(int direction);
 		void SendWaveData();
 		void UpdateRenderingForCurrentWave();
+		std::vector<MonsterWave*> GetWaves();
+		void AddWaveWithMonster(std::vector<PlacedMonster> monster);
 
 	private:
 		entt::registry m_registry;

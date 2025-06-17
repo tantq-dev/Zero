@@ -14,4 +14,5 @@ public:
 	void UpdateDefaultProperties(const std::string& name, const MonsterProperties& properties);
 	int GetNextMonsterTypeId();
 	std::vector<MonsterTypeDefinition*> GetAllMonsterTypes();
+	void RegisterMonsterTypeFromData(std::vector<MonsterTypeDefinition> data);
 };

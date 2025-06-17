@@ -20,6 +20,11 @@ void Tool::UI::UIManager::Initialize()
 			M_UIMonsterProperties->SetCurrentProperties(pros);
 			m_isShowMonsterProperty = true;
 		});
+	Core::EventSystem::getInstance().subscribe(EventKeys::SendMonsterData,
+		[this](const Core::EventData& data) {
+			std::vector<MonsterTypeDefinition> monsterData = data.get<std::vector<MonsterTypeDefinition>>();
+			M_UIMonsterPalette->ImportMonsterData(monsterData);
+		});
 }
 
 void Tool::UI::UIManager::Render() {
@@ -44,6 +49,13 @@ void Tool::UI::UIManager::Render() {
 			if (ImGui::MenuItem("Export Bullet")) {
 				M_UIMonsterPalette->ExportBullet();
 			}
+
+			if (ImGui::MenuItem("Import"))
+			{
+				Core::EventData eventData;
+				Core::EventSystem::getInstance().publish(EventKeys::ImportJson, eventData);
+			}
+
 			ImGui::EndMenu();
 		}
 

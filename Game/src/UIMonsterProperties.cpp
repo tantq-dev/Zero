@@ -726,11 +726,11 @@ void Tool::UI::UIMonsterProperties::ConvertToMonsterProperties(MonsterTypeDefini
 void Tool::UI::UIMonsterProperties::SaveCurrentProperties()
 {
 	if (m_pCurrentProperties && m_hasValidSelection) {
+
 		// Convert UI nodes back to monster properties
 		ConvertToMonsterProperties(*m_pCurrentProperties);
 		Core::EventData eventData;
 		eventData.data = *m_pCurrentProperties;
-
 		Core::EventSystem::getInstance().publish(EventKeys::MonsterUpdated, eventData);
 
 	}

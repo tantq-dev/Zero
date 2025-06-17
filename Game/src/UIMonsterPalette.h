@@ -16,6 +16,7 @@ namespace Tool {
 			void ShowMonsterPalette(bool* p_open);
 			void InvalidateCache() { m_cacheNeedsUpdate = true; }
 			void ExportBullet();
+			void ImportMonsterData(std::vector<MonsterTypeDefinition> data);
 		private:
 			MonsterTypeRegistry m_monsterTypeRegistry;
 

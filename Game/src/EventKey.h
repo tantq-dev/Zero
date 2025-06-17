@@ -20,6 +20,13 @@ namespace Tool {
 
 		//Data handler event
 		static constexpr std::string_view ExportBullet = "export_bullet";
+		static constexpr std::string_view ExportWaves = "export_waves";
+
+		static constexpr std::string_view ImportJson = "import";
+		static constexpr std::string_view SendMonsterData = "send_monster_data";
+		static constexpr std::string_view ImportMonsterWaveData = "import_monster_wave_data";
+		static constexpr std::string_view ImportWaveStructure = "import_wave_structure";
+
 
 
 

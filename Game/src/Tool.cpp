@@ -8,28 +8,6 @@
 #include "EventKey.h"
 
 
-// Helper function to generate a random float in a given range
-float RandomFloat(float min, float max) {
-	std::random_device rd;
-	std::mt19937 gen(rd());
-	std::uniform_real_distribution<float> dis(min, max);
-	return dis(gen);
-}
-
-void DrawCircle(SDL_Renderer* renderer, int centerX, int centerY, int radius)
-{
-	for (int y = -radius; y <= radius; ++y)
-	{
-		for (int x = -radius; x <= radius; ++x)
-		{
-			if (x * x + y * y <= radius * radius)
-			{
-				SDL_RenderPoint(renderer, centerX + x, centerY + y);
-			}
-		}
-	}
-}
-
 namespace Tool
 {
 	void Tool::Initialize(SDL_Renderer& renderer)
@@ -92,6 +70,19 @@ namespace Tool
 					auto monsters = registry->GetAllMonsterTypes();
 					m_dataHandler->ExportBulletConfig(monsters);
 				}
+				//todo: fix event to pass many arg and get this arg
+				m_dataHandler->ExportPositionJson(m_mapEditor->GetWaves(), m_mapEditor->GetMonsterRegistry());
+
+			});
+
+		Core::EventSystem::getInstance().subscribe(EventKeys::ImportJson,
+			[this](const Core::EventData& data) {
+				m_dataHandler->ImportAllData(m_gridSystem.get());
+			});
+
+		Core::EventSystem::getInstance().subscribe(EventKeys::ImportMonsterWaveData,
+			[this](const Core::EventData& data) {
+				m_mapEditor->AddWaveWithMonster(data.get<std::vector<PlacedMonster>>());
 			});
 	}
 
@@ -133,7 +124,7 @@ namespace Tool
 				if (m_inputSystem->IsActionPressed("Test_Mouse"))
 				{
 					//todo: place monster at this grid
-					m_mapEditor->ClickOnMap(pCell->GetCenter());
+					m_mapEditor->ClickOnMap(pCell->GetCenter(), pCell->GetGridIndex());
 				}
 				else if (m_inputSystem->IsActionPressed("Right_Mouse"))
 				{
