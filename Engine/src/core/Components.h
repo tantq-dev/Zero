@@ -255,17 +255,20 @@ namespace Components
 	struct Cell {
 		Vec2 position;
 		Vec2 size;
+		Vec2 gridIndex = { 0,0 };
 		bool isColor = false; // If true, the tile is colored
 
 		// Default constructor
 		Cell() = default;
 
 		// Parameterized constructor
-		Cell(const Vec2& pos, const Vec2& sz) : position(pos), size(sz) {}
+		Cell(const Vec2& pos, const Vec2& sz, const Vec2& grIndex) : position(pos), size(sz), gridIndex(grIndex) {
+
+		}
 
 		// Constructor with color flag
-		Cell(const Vec2& pos, const Vec2& sz, bool colored)
-			: position(pos), size(sz), isColor(colored) {
+		Cell(const Vec2& pos, const Vec2& sz, bool colored, const Vec2& grIndex)
+			: position(pos), size(sz), isColor(colored), gridIndex(grIndex) {
 		}
 
 		// Getters
@@ -273,6 +276,8 @@ namespace Components
 		[[nodiscard]] Vec2 GetSize() const { return size; }
 		[[nodiscard]] Vec2 GetCenter() const { return position + size * 0.5f; }
 		[[nodiscard]] bool IsColored() const { return isColor; }
+		[[nodiscard]] Vec2 GetGridIndex() const { return gridIndex; }
+
 
 		// Setters
 		void SetPosition(const Vec2& pos) { position = pos; }
@@ -341,7 +346,8 @@ namespace Components
 				cells.push_back(
 					{
 					Vec2{(i % numberCellCol) * cellSize, (i / numberCellCol) * cellSize}, // Calculate position based on index
-					Vec2{static_cast<float>(cellSize), static_cast<float>(cellSize)} // Set size
+					Vec2{static_cast<float>(cellSize), static_cast<float>(cellSize)},// Set size
+					Vec2{static_cast<float>(ceil(i % numberCellCol)),static_cast<float>(ceil(i / static_cast<int>(numberCellRow)))}
 					}
 				);
 			}
