@@ -77,11 +77,14 @@ namespace Tool
 
 		Core::EventSystem::getInstance().subscribe(EventKeys::ImportJson,
 			[this](const Core::EventData& data) {
+				m_mapEditor->ClearAllWave(); //clear data before import data to map
 				m_dataHandler->ImportAllData(m_gridSystem.get());
+
 			});
 
 		Core::EventSystem::getInstance().subscribe(EventKeys::ImportMonsterWaveData,
 			[this](const Core::EventData& data) {
+				
 				m_mapEditor->AddWaveWithMonster(data.get<std::vector<PlacedMonster>>());
 			});
 	}

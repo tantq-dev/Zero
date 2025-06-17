@@ -638,20 +638,12 @@ void Tool::DataHandler::ImportMonsterWavesFromJson(System::GridSystem* gridSyste
 					}
 				}
 
-				// Create and publish event to tell MapEditor to create these monsters
-				// We'll include the wave index and monster data
 				Core::EventData eventData;
 				eventData.data = monstersForWave;
 				Core::EventSystem::getInstance().publish(EventKeys::ImportMonsterWaveData, eventData);
 			}
 		}
 
-		//LOG_INFO("Successfully imported " + std::to_string(m_importedMonsterWave.size()) + " waves");
-
-		//// Send an event with all wave information for MapEditor to create proper wave structure
-		//Core::EventData waveEventData;
-		//waveEventData.data = m_importedMonsterWave;
-		//Core::EventSystem::getInstance().publish(EventKeys::ImportWaveStructure, waveEventData);
 	}
 	catch (const std::exception& e) {
 		LOG_ERROR("Error parsing monster_waves.json: " + std::string(e.what()));

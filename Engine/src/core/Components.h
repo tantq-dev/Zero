@@ -347,7 +347,7 @@ namespace Components
 					{
 					Vec2{(i % numberCellCol) * cellSize, (i / numberCellCol) * cellSize}, // Calculate position based on index
 					Vec2{static_cast<float>(cellSize), static_cast<float>(cellSize)},// Set size
-					Vec2{static_cast<float>(ceil(i % numberCellCol)),static_cast<float>(ceil(i / static_cast<int>(numberCellRow)))}
+					Vec2{static_cast<float>(ceil(i % numberCellCol)),static_cast<float>(ceil(i / static_cast<int>(numberCellCol)))}
 					}
 				);
 			}

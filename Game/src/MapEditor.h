@@ -25,7 +25,7 @@ namespace Tool
 		void UpdateRenderingForCurrentWave();
 		std::vector<MonsterWave*> GetWaves();
 		void AddWaveWithMonster(std::vector<PlacedMonster> monster);
-
+		void ClearAllWave();
 	private:
 		entt::registry m_registry;
 		entt::entity m_selectedEntity = entt::null;

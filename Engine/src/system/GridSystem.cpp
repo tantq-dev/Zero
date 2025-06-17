@@ -106,8 +106,8 @@ namespace System
 		Components::Cell* cell = grid.GetCell(index);
 		if (cell) {
 			return cell->GetCenter();
-		}
 
+		}
 		return Vec2(0, 0); // Fallback
 	}
 }

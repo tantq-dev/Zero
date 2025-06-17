@@ -50,7 +50,6 @@ Tool::MapEditor::~MapEditor()
 void Tool::MapEditor::AddMonsterToMap(Vec2 clickPosition, Vec2 gridPosition)
 {
 	if (m_selectedMonsterItem.item.id != -1) {
-		LOG_INFO("Click at index: " + std::to_string(gridPosition.x) + " " + std::to_string(gridPosition.y));
 		auto entity = m_registry.create();
 		m_registry.emplace<PlacedMonster>(entity, m_selectedMonsterItem.item);
 		m_registry.emplace<Components::Transform>(entity, clickPosition, Vec2{ 10,10 });
@@ -118,7 +117,6 @@ entt::registry& Tool::MapEditor::GetMonsterRegistry()
 int Tool::MapEditor::GetNextWaveIndex() const
 {
 	int maxIndex = -1;
-
 
 	for (auto entity : m_waveEntities) {
 		const auto& wave = m_registry.get<MonsterWave>(entity);
@@ -199,6 +197,12 @@ void Tool::MapEditor::AddWaveWithMonster(std::vector<PlacedMonster> monsters)
 		m_selectedMonsterItem.textureName = monster.properties.valideMonsterIngame;
 		AddMonsterToMap(monster.worldPosition, monster.positionInGrid);
 	}
+	SwitchWave(GetNextWaveIndex() - 1);
+}
+
+void Tool::MapEditor::ClearAllWave()
+{
+	m_waveEntities.clear();
 }
 
 
