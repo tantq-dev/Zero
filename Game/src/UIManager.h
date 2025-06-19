@@ -15,9 +15,11 @@ namespace Tool {
 			std::unique_ptr<UIMonsterPalette> M_UIMonsterPalette;
 			std::unique_ptr<UIWaveInformation> M_UIWaveInformation;
 		private:
+			std::string m_currentMonsterName = std::string();
 			bool m_isShowMonsterPalette = true;
 			bool m_isShowMonsterProperty = false;
 			bool m_isShowWaveInformation = true;
+			bool m_isShowToolTip = false;
 		};
 
 	}

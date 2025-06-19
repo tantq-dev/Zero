@@ -12,20 +12,26 @@ namespace Tool {
 	public:
 		DataHandler() = default;
 		~DataHandler() = default;
-		void ExportBulletConfig(const std::vector<MonsterTypeDefinition*>& monsterDefinitions);
+
+		void ExportAllToSingleJson(const std::vector<MonsterTypeDefinition*>& monsterDefinitions,
+			std::vector<MonsterWave*> waveInformations,
+			entt::registry& registry,
+			const std::string& mapId = "Map_1",
+			const std::string& mapName = "Default Map");
 		void ImportAllData(System::GridSystem* gridSystem);
-		void ExportPositionJson(std::vector<MonsterWave*> m_pWaveInformations, entt::registry& registry);
+		void ImportFromSingleJson(System::GridSystem* gridSystem);
 	private:
+		void GetBulletsFromMonsters(const std::vector<MonsterTypeDefinition*>& monsterDefinitions);
+		void ImportBulletsFromJson(const nlohmann::json& bulletsJson);
+		void ImportMonstersFromJson(const nlohmann::json& enemiesJson);
+		void ImportWavesFromJson(const nlohmann::json& wavesJson, System::GridSystem* gridSystem);
+
 		std::vector<BulletConfig> m_bullets;
 		std::vector<MonsterTypeDefinition> m_importedMonsterDefinitions;
 		std::vector<MonsterWave> m_importedMonsterWave;
 		std::unordered_map<std::string, BulletConfig> m_importedBulletConfigs;
+		entt::registry* m_registry = nullptr; // Changed from reference to pointer with default initialization
 		void GetBulletPropertiesFromMultipleBehavior(BehaviorMultiConfig* multipleBehavior);
-		void ExportToJson();
-		void ExportMonsterToJson(const std::vector<MonsterTypeDefinition*>& monsterDefinitions);
-		void ImportMonsterFromJson();
-		void ImportBulletFromJson();
-		void ImportMonsterWavesFromJson(System::GridSystem* gridSystem);
 		nlohmann::json ProcessBehaviorTree(const BehaviorConfig* behavior, const std::string& monsterId);
 		std::string GetBulletID(const BulletConfig& bulletConfig);
 		std::string BulletTypeToString(BulletType type);

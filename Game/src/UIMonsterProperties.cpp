@@ -78,7 +78,7 @@ void Tool::UI::UIMonsterProperties::ShowUIMonsterProperties(bool* p_open)
 				}
 
 				// Monster type
-				const char* monsterType[] = { "Boss", "Normal" };
+				const char* monsterType[] = { "Normal","Boss" };
 				int itemType = static_cast<int>(m_pCurrentProperties->defaultProperties.monsterType);
 				if (ImGui::Combo("Monster Type", &itemType, monsterType, IM_ARRAYSIZE(monsterType))) {
 					m_pCurrentProperties->defaultProperties.monsterType = static_cast<MonsterType>(itemType);
@@ -160,11 +160,16 @@ void Tool::UI::UIMonsterProperties::BehaviorMultipleConfig()
 		static const char* containerTypes[] = {
 			"SelectorWithRunning",
 			"ProgressiveSequence",
-			"Sequence"
+			"Sequence",
+			"Selector",
+			"Parallel",
+			"Race",
 		};
 		int containerType = static_cast<int>(multiConfig->containerType);
 		if (ImGui::Combo("Type", &containerType, containerTypes, IM_ARRAYSIZE(containerTypes))) {
 			multiConfig->containerType = static_cast<ContainerType>(containerType);
+			SaveCurrentProperties();
+
 		}
 		ImGui::Separator();
 	}
@@ -287,9 +292,12 @@ void Tool::UI::UIMonsterProperties::BehaviorMultiConfigSettingsOnly(BehaviorNode
 	if (auto* multiConfig = dynamic_cast<BehaviorMultiConfig*>(node.config.get())) {
 		ImGui::Text("Container Type:");
 		static const char* containerTypes[] = {
-			"SelectorWithRunning",
-			"ProgressiveSequence",
-			"Sequence"
+		"SelectorWithRunning",
+		"ProgressiveSequence",
+		"Sequence",
+		"Selector",
+		"Parallel",
+		"Race",
 		};
 		int containerType = static_cast<int>(multiConfig->containerType);
 		if (ImGui::Combo("Type", &containerType, containerTypes, IM_ARRAYSIZE(containerTypes))) {
@@ -371,8 +379,11 @@ void Tool::UI::UIMonsterProperties::BehaviorMultiConfigUI(BehaviorNode& node)
 		ImGui::Text("Container Type:");
 		static const char* containerTypes[] = {
 			"SelectorWithRunning",
-			"ProgressiveSequence",
-			"Sequence"
+		"ProgressiveSequence",
+		"Sequence",
+		"Selector",
+		"Parallel",
+		"Race",
 		};
 		int containerType = static_cast<int>(multiConfig->containerType);
 		if (ImGui::Combo("Type", &containerType, containerTypes, IM_ARRAYSIZE(containerTypes))) {

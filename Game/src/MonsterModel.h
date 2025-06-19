@@ -5,18 +5,20 @@
 #include <vector>
 #include <memory>
 #include "utilities/Vec2.h"
+#include <utilities/Logger.h>
 
 
 static std::unordered_map<std::string, const char*> BulletTextureMap = {
-	{"SlimeBullet", ""},
-	{"BossBullet",  ""},
+	{"bullet_01", ""},
 };
 
 // Define the static member variable outside the struct  
 static std::unordered_map<std::string, const char*> MonsterTextureMap = {
-	{"Slime",		"assets//Slug.bmp"},
-	{"Android",	"assets//Snowman.bmp"},
-	{"Skeleton",	"assets/Spicatus.bmp"},
+	{"Slime",			"assets//Slug.bmp"},
+	{"Ranger_Slime",	"assets//Starflake.bmp"},
+	{"Android",			"assets//Snowman.bmp" },
+	{"Skeleton",		"assets/Spicatus.bmp"},
+	{"Boss",			"assets//Thorn dragon.bmp"}
 };
 
 struct MonsterItem {
@@ -40,7 +42,10 @@ enum class BulletType {
 enum class ContainerType {
 	SelectorWithRunning = 0,
 	ProgressiveSequence = 1,
-	Sequence = 2
+	Sequence = 2,
+	Selector = 3,
+	Parallel = 4,
+	Race = 5,
 };
 
 struct BulletConfig {
@@ -337,6 +342,9 @@ struct PlacedMonster {
 	Vec2 worldPosition = { 0,0 };
 	PlacedMonster(const MonsterItem& monsterItem)
 		: item(monsterItem) {
+	};
+	PlacedMonster(const MonsterItem& monsterItem, const MonsterProperties prop)
+		: item(monsterItem), properties(prop) {
 	};
 };
 

@@ -68,10 +68,8 @@ namespace Tool
 				auto* registry = data.get<MonsterTypeRegistry*>();
 				if (registry) {
 					auto monsters = registry->GetAllMonsterTypes();
-					m_dataHandler->ExportBulletConfig(monsters);
+					m_dataHandler->ExportAllToSingleJson(monsters, m_mapEditor->GetWaves(), m_mapEditor->GetMonsterRegistry());
 				}
-				//todo: fix event to pass many arg and get this arg
-				m_dataHandler->ExportPositionJson(m_mapEditor->GetWaves(), m_mapEditor->GetMonsterRegistry());
 
 			});
 
@@ -84,7 +82,7 @@ namespace Tool
 
 		Core::EventSystem::getInstance().subscribe(EventKeys::ImportMonsterWaveData,
 			[this](const Core::EventData& data) {
-				
+
 				m_mapEditor->AddWaveWithMonster(data.get<std::vector<PlacedMonster>>());
 			});
 	}
@@ -124,6 +122,7 @@ namespace Tool
 
 			if (pCell) {
 				pCell->isColor = !pCell->isColor;
+				m_mapEditor->OnMonsterHover(pCell->GetCenter());
 				if (m_inputSystem->IsActionPressed("Test_Mouse"))
 				{
 					//todo: place monster at this grid

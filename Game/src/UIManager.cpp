@@ -25,6 +25,23 @@ void Tool::UI::UIManager::Initialize()
 			std::vector<MonsterTypeDefinition> monsterData = data.get<std::vector<MonsterTypeDefinition>>();
 			M_UIMonsterPalette->ImportMonsterData(monsterData);
 		});
+	Core::EventSystem::getInstance().subscribe(EventKeys::SendMonsterData,
+		[this](const Core::EventData& data) {
+			std::vector<MonsterTypeDefinition> monsterData = data.get<std::vector<MonsterTypeDefinition>>();
+			M_UIMonsterPalette->ImportMonsterData(monsterData);
+		});
+	Core::EventSystem::getInstance().subscribe(EventKeys::OnMonsterHover,
+		[this](const Core::EventData& data) {
+			std::string monsterName = data.get<std::string>();
+			m_currentMonsterName = monsterName;
+			if (monsterName == std::string())
+			{
+				m_isShowToolTip = false;
+			}
+			else {
+				m_isShowToolTip = true;
+			}
+		});
 }
 
 void Tool::UI::UIManager::Render() {
@@ -61,6 +78,12 @@ void Tool::UI::UIManager::Render() {
 
 		ImGui::EndMainMenuBar();
 	}
+
+
+	if (m_isShowToolTip) {
+		ImGui::SetTooltip(m_currentMonsterName.c_str());
+	}
+
 
 
 	if (m_isShowMonsterPalette)

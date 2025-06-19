@@ -51,18 +51,21 @@ void Tool::MapEditor::AddMonsterToMap(Vec2 clickPosition, Vec2 gridPosition)
 {
 	if (m_selectedMonsterItem.item.id != -1) {
 		auto entity = m_registry.create();
-		m_registry.emplace<PlacedMonster>(entity, m_selectedMonsterItem.item);
+		m_registry.emplace<PlacedMonster>(entity, m_selectedMonsterItem.item, m_selectedMonsterItem.defaultProperties);
 		m_registry.emplace<Components::Transform>(entity, clickPosition, Vec2{ 10,10 });
 		m_registry.emplace<Components::Sprite>(entity, ResourcesManager::GetInstance().GetTexture(m_selectedMonsterItem.textureName));
 		m_selectedEntity = entity;
-		m_registry.get<PlacedMonster>(entity).properties.name = m_selectedMonsterItem.item.name;
 		m_registry.get<PlacedMonster>(entity).positionInGrid = gridPosition;
 		m_registry.get<PlacedMonster>(entity).worldPosition = clickPosition;
-
-
-
 		auto& currentWave = m_registry.get<MonsterWave>(m_currentMonsterWave);
 		currentWave.addMonster(entity);
+
+		if (m_selectedMonsterItem.defaultProperties.monsterType == MonsterType::Boss) {
+			// If the monster is a boss, set it as the current wave's boss
+
+			currentWave.isBossWave = true;
+		}
+
 	}
 }
 
@@ -195,6 +198,7 @@ void Tool::MapEditor::AddWaveWithMonster(std::vector<PlacedMonster> monsters)
 	for (auto& monster : monsters) {
 		m_selectedMonsterItem.item.id = monster.item.id;
 		m_selectedMonsterItem.textureName = monster.properties.valideMonsterIngame;
+		m_selectedMonsterItem.defaultProperties = monster.properties;
 		AddMonsterToMap(monster.worldPosition, monster.positionInGrid);
 	}
 	SwitchWave(GetNextWaveIndex() - 1);
@@ -205,19 +209,45 @@ void Tool::MapEditor::ClearAllWave()
 	m_waveEntities.clear();
 }
 
+void Tool::MapEditor::OnMonsterHover(Vec2 clickPosition)
+{
+	auto& currentWave = m_registry.get<MonsterWave>(m_currentMonsterWave);
+
+	std::string monsterName = std::string();
+
+	for (auto entity : currentWave.monsterEntities) {
+		auto transform = m_registry.get<Components::Transform>(entity);
+		if (transform.position == clickPosition)
+		{
+			PlacedMonster& monster = m_registry.get<PlacedMonster>(entity);
+			//ClickOnPlacedMonster(entity, monster);
+			monsterName = monster.properties.name;
+			break;
+		}
+	}
+	Core::EventData evData;
+	evData.data = monsterName;
+	Core::EventSystem::getInstance().publish(EventKeys::OnMonsterHover, evData);
+
+}
+
 
 void Tool::MapEditor::DeleteFromMap(Vec2 clickPosition)
 {
 	entt::entity entityToDelete = entt::null;
 
 	auto group = m_registry.group<>(entt::get<Components::Transform, PlacedMonster>);
-
+	bool isBossWave = false;
 	for (auto entity : group) {
 		auto transform = group.get<Components::Transform>(entity);
 		if (transform.position == clickPosition)
 		{
 			entityToDelete = entity;
-			break; // Exit the loop once we find the entity to delete
+		}
+		if (group.get<PlacedMonster>(entity).properties.monsterType == MonsterType::Boss)
+		{
+			isBossWave = true;
+			break;
 		}
 	}
 
@@ -230,7 +260,21 @@ void Tool::MapEditor::DeleteFromMap(Vec2 clickPosition)
 		if (entityToDelete == m_selectedEntity) {
 			m_selectedEntity = entt::null;
 		}
+
+		bool isBossWave = false;
+		for (auto entity : group) {
+			if (group.get<PlacedMonster>(entity).properties.monsterType == MonsterType::Boss)
+			{
+				isBossWave = true;
+				break;
+			}
+		}
+		wave.isBossWave = isBossWave;
 	}
+
+
+
+
 }
 
 

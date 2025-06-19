@@ -27,7 +27,8 @@ namespace Tool {
 		static constexpr std::string_view ImportMonsterWaveData = "import_monster_wave_data";
 		static constexpr std::string_view ImportWaveStructure = "import_wave_structure";
 
-
+		static constexpr std::string_view OnMonsterHover = "on_monster_hover";
+		static constexpr std::string_view OnMonsterLeave = "on_monster_leave";
 
 
 		// Disallow instantiation
