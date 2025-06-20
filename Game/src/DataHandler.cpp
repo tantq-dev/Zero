@@ -8,34 +8,134 @@
 #include "core/EventSystem.h"
 #include "EventKey.h"
 #include <WaveModel.h>
+#include "BulletConfig.h"
+#include "BehaviorFactory.h"
+#include <BehaviorShootProjectileConfig.h>
 
+// Extract bullet properties from behaviors
+void Tool::DataHandler::GetBulletPropertiesFromBehavior(const BehaviorConfig* behavior)
+{
+	if (!behavior) return;
 
+	if (auto* multiConfig = dynamic_cast<const BehaviorMultiConfig*>(behavior)) {
+		// Process all child behaviors recursively
+		for (const auto& childBehavior : multiConfig->childBehaviors) {
+			GetBulletPropertiesFromBehavior(childBehavior.get());
+		}
+	}
+	else if (auto* shootProjectile = dynamic_cast<const BehaviorShootProjectileConfig*>(behavior)) {
+		m_bullets.push_back(shootProjectile->bulletConfig);
+	}
+	// Chase behavior doesn't use bullets
+}
 
+// Legacy method maintained for compatibility - redirects to new implementation
 void Tool::DataHandler::GetBulletPropertiesFromMultipleBehavior(BehaviorMultiConfig* multipleBehavior)
 {
-	for (auto& behavior : multipleBehavior->childBehaviors)
-	{
-		if (auto castedBehavior = dynamic_cast<BehaviorMultiConfig*>(behavior.get()))
-		{
-			GetBulletPropertiesFromMultipleBehavior(castedBehavior);
-		}
-		else if (auto castedBehavior = dynamic_cast<BehaviorShootBarrageConfig*>(behavior.get()))
-		{
-			m_bullets.push_back(castedBehavior->bulletConfig);
-		}
-		else if (auto castedBehavior = dynamic_cast<BehaviorShootProjectileConfig*>(behavior.get()))
-		{
-			m_bullets.push_back(castedBehavior->bulletConfig);
+	GetBulletPropertiesFromBehavior(multipleBehavior);
+}
 
-		}
-		else if (auto castedBehavior = dynamic_cast<BehaviorSpreadShotConfig*>(behavior.get()))
-		{
-			m_bullets.push_back(castedBehavior->bulletConfig);
-
+void Tool::DataHandler::GetBulletsFromMonsters(const std::vector<MonsterTypeDefinition*>& monsterDefinitions)
+{
+	m_bullets.clear();
+	for (auto* monsterDef : monsterDefinitions) {
+		if (monsterDef && monsterDef->defaultProperties.rootBehavior) {
+			GetBulletPropertiesFromBehavior(monsterDef->defaultProperties.rootBehavior.get());
 		}
 	}
 }
 
+// Process behavior tree using polymorphic serialization
+nlohmann::json Tool::DataHandler::ProcessBehaviorTree(const BehaviorConfig* behavior, const std::string& monsterId)
+{
+	if (!behavior) {
+		return nlohmann::json();
+	}
+
+	// Use polymorphic serialization based on behavior type
+	if (auto* multiConfig = dynamic_cast<const BehaviorMultiConfig*>(behavior)) {
+		return multiConfig->Serialize(monsterId);
+	}
+	else if (auto* chaseConfig = dynamic_cast<const BehaviorChaseConfig*>(behavior)) {
+		return chaseConfig->Serialize(monsterId);
+	}
+	else if (auto* projectileConfig = dynamic_cast<const BehaviorShootProjectileConfig*>(behavior)) {
+		return projectileConfig->Serialize(monsterId);
+	}
+
+	// Return empty JSON if behavior type is not supported
+	LOG_ERROR("Unsupported behavior type in ProcessBehaviorTree");
+	return nlohmann::json{ {"type", "Unknown"} };
+}
+
+// Import behavior tree from JSON
+std::unique_ptr<BehaviorMultiConfig> Tool::DataHandler::ImportBehaviorTree(const nlohmann::json& behaviorJson, const std::string& monsterId)
+{
+	// Always create a root behavior as MultiConfig
+	auto rootBehavior = std::make_unique<BehaviorMultiConfig>();
+
+	// Deserialize container type using polymorphic method
+	rootBehavior->Deserialize(behaviorJson);
+
+	// Process child behaviors if present
+	if (behaviorJson.contains("behaviors") && behaviorJson["behaviors"].is_array()) {
+		for (const auto& childJson : behaviorJson["behaviors"]) {
+			if (!childJson.contains("type")) continue;
+
+			std::string type = childJson["type"];
+			std::unique_ptr<BehaviorConfig> childBehavior;
+
+			// Create behavior based on type
+			if (type == "MultiConfig") {
+				childBehavior = BehaviorFactory::GetInstance().CreateBehavior("BehaviorMultiConfig");
+				if (childBehavior) childBehavior->Deserialize(childJson);
+			}
+			else if (type == "Chase") {
+				childBehavior = BehaviorFactory::GetInstance().CreateBehavior("BehaviorChase");
+				if (childBehavior) childBehavior->Deserialize(childJson);
+			}
+			else if (type == "ShootProjectile") {
+				childBehavior = BehaviorFactory::GetInstance().CreateBehavior("BehaviorShootProjectile");
+				if (childBehavior) childBehavior->Deserialize(childJson);
+
+				// Apply bullet config if needed
+				if (childBehavior && childJson.contains("bulletID")) {
+					ApplyBulletConfigsToNewBehavior(childBehavior.get(), childJson);
+				}
+			}
+			else {
+				LOG_ERROR("Unsupported behavior type in import: " + type);
+				continue;
+			}
+
+			// Add child behavior to root
+			if (childBehavior) {
+				rootBehavior->childBehaviors.push_back(std::move(childBehavior));
+			}
+		}
+	}
+
+	return rootBehavior;
+}
+
+// Apply bullet configurations to behaviors
+void Tool::DataHandler::ApplyBulletConfigsToNewBehavior(BehaviorConfig* behavior, const nlohmann::json& json)
+{
+	if (!behavior || !json.contains("bulletID")) {
+		return;
+	}
+
+	std::string bulletId = json["bulletID"];
+	if (m_importedBulletConfigs.find(bulletId) == m_importedBulletConfigs.end()) {
+		LOG_ERROR("Bullet ID not found in imported configs: " + bulletId);
+		return;
+	}
+
+	// Only ShootProjectile uses bullets in our simplified model
+	if (auto* shootProjectile = dynamic_cast<BehaviorShootProjectileConfig*>(behavior)) {
+		shootProjectile->bulletConfig = m_importedBulletConfigs[bulletId];
+	}
+}
 
 void Tool::DataHandler::ExportAllToSingleJson(const std::vector<MonsterTypeDefinition*>& monsterDefinitions, std::vector<MonsterWave*> waveInformations, entt::registry& registry, const std::string& mapId, const std::string& mapName)
 {
@@ -47,7 +147,7 @@ void Tool::DataHandler::ExportAllToSingleJson(const std::vector<MonsterTypeDefin
 	// Process bullets
 	GetBulletsFromMonsters(monsterDefinitions);
 
-	// Enemies section (from ExportMonsterToJson)
+	// Enemies section
 	nlohmann::json enemiesJson;
 
 	for (auto monsterDef : monsterDefinitions)
@@ -63,8 +163,8 @@ void Tool::DataHandler::ExportAllToSingleJson(const std::vector<MonsterTypeDefin
 		monsterJson["MaxHealth"] = monsterDef->defaultProperties.hp;
 
 		// Convert from internal integer format to float
-		float knockbackResistance = monsterDef->defaultProperties.knockbackResistance;
-		float moveSpeed = monsterDef->defaultProperties.speed;
+		float knockbackResistance = monsterDef->defaultProperties.knockbackResistance / 10000.0f;
+		float moveSpeed = monsterDef->defaultProperties.speed / 10000.0f;
 
 		monsterJson["KnockBackResistance"] = knockbackResistance;
 		monsterJson["MoveSpeed"] = moveSpeed;
@@ -83,7 +183,7 @@ void Tool::DataHandler::ExportAllToSingleJson(const std::vector<MonsterTypeDefin
 
 	rootJson["enemies"] = enemiesJson;
 
-	// Bullets section (from ExportToJson)
+	// Bullets section
 	nlohmann::json bulletsJson;
 	std::unordered_set<std::string> usedIDs;
 
@@ -99,7 +199,7 @@ void Tool::DataHandler::ExportAllToSingleJson(const std::vector<MonsterTypeDefin
 
 		nlohmann::json bulletJson;
 		bulletJson["ID"] = bulletID;
-		bulletJson["AssetID"] = bullet.validBulletIngame == std::string() ? "bullet_01" : bullet.validBulletIngame; // Default asset ID
+		bulletJson["AssetID"] = "9952908011400548"; // Default asset ID
 		bulletJson["MoveSpeed"] = bullet.speed;
 		bulletJson["Damage"] = bullet.damage;
 		bulletJson["AliveTime"] = bullet.aliveTime;
@@ -122,7 +222,7 @@ void Tool::DataHandler::ExportAllToSingleJson(const std::vector<MonsterTypeDefin
 	mapJson["mapId"] = mapId;
 	mapJson["mapName"] = mapName;
 
-	// Waves section (from ExportPositionJson)
+	// Waves section
 	nlohmann::json wavesJson = nlohmann::json::array();
 	for (auto wavePtr : waveInformations)
 	{
@@ -172,10 +272,6 @@ void Tool::DataHandler::ExportAllToSingleJson(const std::vector<MonsterTypeDefin
 	mapsJson[mapId] = mapJson;
 	rootJson["maps"] = mapsJson;
 
-
-
-
-
 	// Show file save dialog
 	std::string filePath = "";
 
@@ -224,103 +320,6 @@ void Tool::DataHandler::ExportAllToSingleJson(const std::vector<MonsterTypeDefin
 	}
 }
 
-void Tool::DataHandler::ImportFromSingleJson(System::GridSystem* gridSystem)
-{
-
-	LOG_INFO("Importing data from JSON file");
-
-	// Clear any previously imported data
-	m_importedMonsterDefinitions.clear();
-	m_importedBulletConfigs.clear();
-	m_importedMonsterWave.clear();
-
-	// Show file open dialog
-	std::string filePath = "";
-
-	// Using Windows file dialog
-#ifdef _WIN32
-	OPENFILENAMEA ofn;
-	char szFile[260] = { 0 };
-
-	ZeroMemory(&ofn, sizeof(ofn));
-	ofn.lStructSize = sizeof(ofn);
-	ofn.hwndOwner = NULL;
-	ofn.lpstrFile = szFile;
-	ofn.nMaxFile = sizeof(szFile);
-	ofn.lpstrFilter = "JSON Files\0*.json\0All Files\0*.*\0";
-	ofn.nFilterIndex = 1;
-	ofn.lpstrFileTitle = NULL;
-	ofn.nMaxFileTitle = 0;
-	ofn.lpstrInitialDir = NULL;
-	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-
-	if (GetOpenFileNameA(&ofn)) {
-		filePath = ofn.lpstrFile;
-	}
-#else
-	// Fallback to default path if not on Windows (could implement other platforms)
-	filePath = "gamedata.json";
-#endif
-
-	if (filePath.empty()) {
-		LOG_INFO("File selection canceled");
-		return;
-	}
-
-	std::ifstream inFile(filePath);
-	if (!inFile.is_open()) {
-		LOG_ERROR("Failed to open file: " + filePath);
-		return;
-	}
-
-	try {
-		// Parse the JSON file
-		nlohmann::json rootJson;
-		inFile >> rootJson;
-		inFile.close();
-
-		// Import bullets first (needed for behavior trees)
-		if (rootJson.contains("bullets")) {
-			ImportBulletsFromJson(rootJson["bullets"]);
-		}
-
-		// Import enemies
-		if (rootJson.contains("enemies")) {
-			ImportMonstersFromJson(rootJson["enemies"]);
-		}
-
-		// Import waves from first map
-		if (rootJson.contains("maps") && !rootJson["maps"].empty()) {
-			auto firstMap = rootJson["maps"].begin().value();
-			if (firstMap.contains("waves")) {
-				ImportWavesFromJson(firstMap["waves"], gridSystem);
-			}
-		}
-
-		// Notify other systems of the imported data
-		Core::EventData evData;
-		evData.data = m_importedMonsterDefinitions;
-		Core::EventSystem::getInstance().publish(EventKeys::SendMonsterData, evData);
-
-		LOG_INFO("All data imported successfully from: " + filePath);
-	}
-	catch (const std::exception& e) {
-		LOG_ERROR("Error parsing JSON file: " + std::string(e.what()));
-	}
-}
-
-
-void Tool::DataHandler::GetBulletsFromMonsters(const std::vector<MonsterTypeDefinition*>& monsterDefinitions)
-{
-	m_bullets.clear();
-	for (auto monsterDef : monsterDefinitions)
-	{
-		if (monsterDef) {
-			GetBulletPropertiesFromMultipleBehavior(monsterDef->defaultProperties.rootBehavior.get());
-		}
-	}
-}
-
 void Tool::DataHandler::ImportBulletsFromJson(const nlohmann::json& bulletsJson)
 {
 	m_importedBulletConfigs.clear();
@@ -344,29 +343,6 @@ void Tool::DataHandler::ImportBulletsFromJson(const nlohmann::json& bulletsJson)
 			bulletConfig.damage = bulletJson.value("Damage", 0);
 			bulletConfig.aliveTime = bulletJson.value("AliveTime", 0);
 			bulletConfig.bounce = bulletJson.value("Bounce", 0);
-
-			// Determine bullet type from MoveBehavior
-			std::string moveBehaviorType = "";
-			if (bulletJson.contains("MoveBehavior") && bulletJson["MoveBehavior"].contains("type")) {
-				moveBehaviorType = bulletJson["MoveBehavior"]["type"];
-			}
-
-			// Set bullet type based on move behavior
-			if (moveBehaviorType == "Bullet_Straight") {
-				bulletConfig.bulletType = BulletType::Straight;
-			}
-			else if (moveBehaviorType == "Bullet_Parabol") {
-				bulletConfig.bulletType = BulletType::Parabol;
-			}
-			else if (moveBehaviorType == "Bullet_Mortar") {
-				bulletConfig.bulletType = BulletType::Mortal;
-			}
-			else if (moveBehaviorType == "Bullet_Boss") {
-				bulletConfig.bulletType = BulletType::Boss;
-			}
-			else {
-				bulletConfig.bulletType = BulletType::Straight; // Default
-			}
 
 			// Add to imported bullet configs
 			m_importedBulletConfigs[bulletId] = bulletConfig;
@@ -423,10 +399,10 @@ void Tool::DataHandler::ImportMonstersFromJson(const nlohmann::json& enemiesJson
 
 			// Convert float values to internal integer format (multiply by 10000)
 			float knockback = enemyJson.value("KnockBackResistance", 0.5f);
-			monsterDef.defaultProperties.knockbackResistance = static_cast<int>(knockback);
+			monsterDef.defaultProperties.knockbackResistance = static_cast<int>(knockback * 10000.0f);
 
 			float speed = enemyJson.value("MoveSpeed", 1.5f);
-			monsterDef.defaultProperties.speed = static_cast<int>(speed);
+			monsterDef.defaultProperties.speed = static_cast<int>(speed * 10000.0f);
 
 			// Set monster type
 			std::string enemyType = enemyJson.value("EnemyType", "NORMAL");
@@ -533,110 +509,9 @@ void Tool::DataHandler::ImportWavesFromJson(const nlohmann::json& wavesJson, Sys
 	}
 }
 
-
-
-// Helper function to recursively process behavior tree
-nlohmann::json Tool::DataHandler::ProcessBehaviorTree(const BehaviorConfig* behavior, const std::string& monsterId)
-{
-	nlohmann::json behaviorJson;
-
-	if (auto multiConfig = dynamic_cast<const BehaviorMultiConfig*>(behavior)) {
-		behaviorJson["type"] = "MultiConfig";
-		// Map container type to behaviorType string
-		switch (multiConfig->containerType) {
-		case ContainerType::SelectorWithRunning:
-			behaviorJson["behaviorType"] = "SelectorWithRunning";
-			break;
-		case ContainerType::ProgressiveSequence:
-			behaviorJson["behaviorType"] = "ProgressiveSequence";
-			break;
-		case ContainerType::Sequence:
-			behaviorJson["behaviorType"] = "Sequence";
-			break;
-		case ContainerType::Selector:
-			behaviorJson["behaviorType"] = "Selector";
-			break;
-		case ContainerType::Race:
-			behaviorJson["behaviorType"] = "Race";
-			break;
-		case ContainerType::Parallel:
-			behaviorJson["behaviorType"] = "Parallel";
-			break;
-		}
-
-		// Process child behaviors
-		nlohmann::json behaviorsArray = nlohmann::json::array();
-		for (const auto& childBehavior : multiConfig->childBehaviors) {
-			if (childBehavior) {
-				behaviorsArray.push_back(ProcessBehaviorTree(childBehavior.get(), monsterId));
-			}
-		}
-		behaviorJson["behaviors"] = behaviorsArray;
-	}
-	else if (auto chaseConfig = dynamic_cast<const BehaviorChaseConfig*>(behavior)) {
-		behaviorJson["type"] = "Chase";
-		behaviorJson["speed"] = chaseConfig->chaseSpeed; // Convert to float
-	}
-	else if (auto distanceConfig = dynamic_cast<const BehaviorDistanceConditionHelperConfig*>(behavior)) {
-		behaviorJson["type"] = "DistanceConditionHelper";
-		behaviorJson["minDistance"] = distanceConfig->minDistance; // Convert to float
-		behaviorJson["maxDistance"] = distanceConfig->maxDistance; // Convert to float
-	}
-	else if (auto bounceConfig = dynamic_cast<const BehaviorMovementBounceConfig*>(behavior)) {
-		behaviorJson["type"] = "MovementBounce";
-	}
-	else if (auto projectileConfig = dynamic_cast<const BehaviorShootProjectileConfig*>(behavior)) {
-		behaviorJson["type"] = "ShootProjectile";
-		behaviorJson["cooldown"] = projectileConfig->coolDown; // Convert to float
-
-		// Bullet ID from bullet config or generate a placeholder
-		std::string bulletId = GetBulletID(projectileConfig->bulletConfig);
-		if (bulletId.empty()) {
-			bulletId = "bullet_straight_01"; // Default bullet ID
-		}
-		behaviorJson["bulletID"] = bulletId;
-		behaviorJson["enemyID"] = monsterId;
-	}
-	else if (auto spreadConfig = dynamic_cast<const BehaviorSpreadShotConfig*>(behavior)) {
-		behaviorJson["type"] = "SpreadShot";
-		behaviorJson["cooldown"] = spreadConfig->coolDown; // Convert to float
-
-		// Bullet ID from bullet config or generate a placeholder
-		std::string bulletId = GetBulletID(spreadConfig->bulletConfig);
-		if (bulletId.empty()) {
-			bulletId = "bullet_straight_01"; // Default bullet ID
-		}
-		behaviorJson["bulletID"] = bulletId;
-		behaviorJson["enemyID"] = monsterId;
-		behaviorJson["bulletCount"] = spreadConfig->numOfBullet;
-		behaviorJson["spreadAngle"] = spreadConfig->spreadAngle;
-	}
-	else if (auto barrageConfig = dynamic_cast<const BehaviorShootBarrageConfig*>(behavior)) {
-		behaviorJson["type"] = "ShootBarrage";
-		behaviorJson["cooldown"] = barrageConfig->coolDown; // Convert to float
-
-		// Bullet ID from bullet config or generate a placeholder
-		std::string bulletId = GetBulletID(barrageConfig->bulletConfig);
-		if (bulletId.empty()) {
-			bulletId = "bullet_straight_01"; // Default bullet ID
-		}
-		behaviorJson["bulletID"] = bulletId;
-		behaviorJson["enemyID"] = monsterId;
-		behaviorJson["bulletCount"] = barrageConfig->numOfBullet;
-		behaviorJson["spreadAngle"] = barrageConfig->spreadAngle;
-	}
-	else {
-		behaviorJson["type"] = "Unknown";
-	}
-
-	return behaviorJson;
-}
-
 std::string Tool::DataHandler::GetBulletID(const BulletConfig& bulletConfig)
 {
-
-	// If no ID specified, generate one based on the bullet properties
-	// This ensures the same bullet config gets the same ID across exports
+	// Generate a consistent ID based on bullet properties
 	std::string properties =
 		std::to_string(static_cast<int>(bulletConfig.bulletType)) + "_" +
 		std::to_string(bulletConfig.speed) + "_" +
@@ -652,162 +527,95 @@ std::string Tool::DataHandler::GetBulletID(const BulletConfig& bulletConfig)
 }
 
 std::string Tool::DataHandler::BulletTypeToString(BulletType type) {
-	switch (type)
-	{
-	case BulletType::Straight:
-		return "Bullet_Straight";
-		break;
-	case BulletType::Parabol:
-		return "Bullet_Parabol";
-		break;
-	case BulletType::Mortal:
-		return "Bullet_Mortar";
-		break;
-	case BulletType::Boss:
-		return "Bullet_Boss";
-		break;
-	default:
-		return "Bullet_Straight"; // bullet straight as default
-	}
+	// Simple implementation since we're focusing on just three behaviors
+	return "Bullet_Straight";
 }
-
-
 
 void Tool::DataHandler::ImportAllData(System::GridSystem* gridSystem)
 {
 	ImportFromSingleJson(gridSystem);
-
 }
 
-// Helper function to recursively import behavior tree from JSON
-std::unique_ptr<BehaviorMultiConfig> Tool::DataHandler::ImportBehaviorTree(const nlohmann::json& behaviorJson, const std::string& monsterId)
+void Tool::DataHandler::ImportFromSingleJson(System::GridSystem* gridSystem)
 {
-	auto rootBehavior = std::make_unique<BehaviorMultiConfig>();
+	LOG_INFO("Importing data from JSON file");
 
-	// Set container type based on behaviorType field
-	if (behaviorJson.contains("behaviorType")) {
-		std::string behaviorType = behaviorJson["behaviorType"];
-		if (behaviorType == "SelectorWithRunning") {
-			rootBehavior->containerType = ContainerType::SelectorWithRunning;
-		}
-		else if (behaviorType == "ProgressiveSequence") {
-			rootBehavior->containerType = ContainerType::ProgressiveSequence;
-		}
-		else if (behaviorType == "Sequence") {
-			rootBehavior->containerType = ContainerType::Sequence;
-		}
-		else if (behaviorType == "Selector") {
-			rootBehavior->containerType = ContainerType::Selector;
-		}
-		else if (behaviorType == "Parallel") {
-			rootBehavior->containerType = ContainerType::Parallel;
-		}
-		else if (behaviorType == "Race") {
-			rootBehavior->containerType = ContainerType::Race;
-		}
+	// Clear any previously imported data
+	m_importedMonsterDefinitions.clear();
+	m_importedBulletConfigs.clear();
+	m_importedMonsterWave.clear();
+
+	// Show file open dialog
+	std::string filePath = "";
+
+	// Using Windows file dialog
+#ifdef _WIN32
+	OPENFILENAMEA ofn;
+	char szFile[260] = { 0 };
+
+	ZeroMemory(&ofn, sizeof(ofn));
+	ofn.lStructSize = sizeof(ofn);
+	ofn.hwndOwner = NULL;
+	ofn.lpstrFile = szFile;
+	ofn.nMaxFile = sizeof(szFile);
+	ofn.lpstrFilter = "JSON Files\0*.json\0All Files\0*.*\0";
+	ofn.nFilterIndex = 1;
+	ofn.lpstrFileTitle = NULL;
+	ofn.nMaxFileTitle = 0;
+	ofn.lpstrInitialDir = NULL;
+	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+
+	if (GetOpenFileNameA(&ofn)) {
+		filePath = ofn.lpstrFile;
+	}
+#else
+	// Fallback to default path if not on Windows
+	filePath = "gamedata.json";
+#endif
+
+	if (filePath.empty()) {
+		LOG_INFO("File selection canceled");
+		return;
 	}
 
-	// Process child behaviors if present
-	if (behaviorJson.contains("behaviors") && behaviorJson["behaviors"].is_array()) {
-		for (const auto& childJson : behaviorJson["behaviors"]) {
-			if (childJson.contains("type")) {
-				std::string type = childJson["type"];
+	std::ifstream inFile(filePath);
+	if (!inFile.is_open()) {
+		LOG_ERROR("Failed to open file: " + filePath);
+		return;
+	}
 
-				if (type == "MultiConfig") {
-					// Recursively process nested MultiConfig
-					auto nestedMulti = ImportBehaviorTree(childJson, monsterId);
-					rootBehavior->childBehaviors.push_back(std::move(nestedMulti));
-				}
-				else if (type == "Chase") {
-					auto chaseConfig = std::make_unique<BehaviorChaseConfig>();
-					if (childJson.contains("speed")) {
-						float speed = childJson["speed"];
-						chaseConfig->chaseSpeed = static_cast<int>(speed);
-					}
-					rootBehavior->childBehaviors.push_back(std::move(chaseConfig));
-				}
-				else if (type == "DistanceConditionHelper") {
-					auto distanceConfig = std::make_unique<BehaviorDistanceConditionHelperConfig>();
-					if (childJson.contains("minDistance")) {
-						float minDist = childJson["minDistance"];
-						distanceConfig->minDistance = static_cast<int>(minDist);
-					}
-					if (childJson.contains("maxDistance")) {
-						float maxDist = childJson["maxDistance"];
-						distanceConfig->maxDistance = static_cast<int>(maxDist);
-					}
-					rootBehavior->childBehaviors.push_back(std::move(distanceConfig));
-				}
-				else if (type == "MovementBounce") {
-					auto bounceConfig = std::make_unique<BehaviorMovementBounceConfig>();
-					rootBehavior->childBehaviors.push_back(std::move(bounceConfig));
-				}
-				else if (type == "ShootProjectile") {
-					auto projectileConfig = std::make_unique<BehaviorShootProjectileConfig>();
-					if (childJson.contains("cooldown")) {
-						float cooldown = childJson["cooldown"];
-						projectileConfig->coolDown = static_cast<int>(cooldown);
-					}
+	try {
+		// Parse the JSON file
+		nlohmann::json rootJson;
+		inFile >> rootJson;
+		inFile.close();
 
-					// Set bullet config if a matching bullet ID exists
-					if (childJson.contains("bulletID")) {
-						std::string bulletId = childJson["bulletID"];
-						if (m_importedBulletConfigs.find(bulletId) != m_importedBulletConfigs.end()) {
-							projectileConfig->bulletConfig = m_importedBulletConfigs[bulletId];
-						}
-					}
+		// Import bullets first (needed for behavior trees)
+		if (rootJson.contains("bullets")) {
+			ImportBulletsFromJson(rootJson["bullets"]);
+		}
 
-					rootBehavior->childBehaviors.push_back(std::move(projectileConfig));
-				}
-				else if (type == "SpreadShot") {
-					auto spreadConfig = std::make_unique<BehaviorSpreadShotConfig>();
-					if (childJson.contains("cooldown")) {
-						float cooldown = childJson["cooldown"];
-						spreadConfig->coolDown = static_cast<int>(cooldown);
-					}
-					if (childJson.contains("bulletCount")) {
-						spreadConfig->numOfBullet = childJson["bulletCount"];
-					}
-					if (childJson.contains("spreadAngle")) {
-						spreadConfig->spreadAngle = childJson["spreadAngle"];
-					}
+		// Import enemies
+		if (rootJson.contains("enemies")) {
+			ImportMonstersFromJson(rootJson["enemies"]);
+		}
 
-					// Set bullet config if a matching bullet ID exists
-					if (childJson.contains("bulletID")) {
-						std::string bulletId = childJson["bulletID"];
-						if (m_importedBulletConfigs.find(bulletId) != m_importedBulletConfigs.end()) {
-							spreadConfig->bulletConfig = m_importedBulletConfigs[bulletId];
-						}
-					}
-
-					rootBehavior->childBehaviors.push_back(std::move(spreadConfig));
-				}
-				else if (type == "ShootBarrage") {
-					auto barrageConfig = std::make_unique<BehaviorShootBarrageConfig>();
-					if (childJson.contains("cooldown")) {
-						float cooldown = childJson["cooldown"];
-						barrageConfig->coolDown = static_cast<int>(cooldown);
-					}
-					if (childJson.contains("bulletCount")) {
-						barrageConfig->numOfBullet = childJson["bulletCount"];
-					}
-					if (childJson.contains("spreadAngle")) {
-						barrageConfig->spreadAngle = childJson["spreadAngle"];
-					}
-
-					// Set bullet config if a matching bullet ID exists
-					if (childJson.contains("bulletID")) {
-						std::string bulletId = childJson["bulletID"];
-						if (m_importedBulletConfigs.find(bulletId) != m_importedBulletConfigs.end()) {
-							barrageConfig->bulletConfig = m_importedBulletConfigs[bulletId];
-						}
-					}
-
-					rootBehavior->childBehaviors.push_back(std::move(barrageConfig));
-				}
+		// Import waves from first map
+		if (rootJson.contains("maps") && !rootJson["maps"].empty()) {
+			auto firstMap = rootJson["maps"].begin().value();
+			if (firstMap.contains("waves")) {
+				ImportWavesFromJson(firstMap["waves"], gridSystem);
 			}
 		}
-	}
 
-	return rootBehavior;
+		// Notify other systems of the imported data
+		Core::EventData evData;
+		evData.data = m_importedMonsterDefinitions;
+		Core::EventSystem::getInstance().publish(EventKeys::SendMonsterData, evData);
+
+		LOG_INFO("All data imported successfully from: " + filePath);
+	}
+	catch (const std::exception& e) {
+		LOG_ERROR("Error parsing JSON file: " + std::string(e.what()));
+	}
 }

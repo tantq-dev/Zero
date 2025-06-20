@@ -5,20 +5,21 @@
 #include "EventKey.h"
 #include "core/EventSystem.h"
 #include "utilities/Logger.h"
+#include "BulletConfig.h"
+#include "BehaviorFactory.h"
+#include <BehaviorShootProjectileConfig.h>
 
 Tool::UI::UIMonsterProperties::UIMonsterProperties()
 {
-
 }
 
 Tool::UI::UIMonsterProperties::~UIMonsterProperties()
 {
-
 }
 
 void Tool::UI::UIMonsterProperties::InitializeRootNode()
 {
-	m_pRootNode = std::make_unique<BehaviorNode>(GetNextNodeId(), "BehaviorMultipleConfig");
+	m_pRootNode = std::make_unique<BehaviorNode>(GetNextNodeId(), "BehaviorMultiConfig");
 	m_pRootNode->config = std::make_unique<BehaviorMultiConfig>();
 }
 
@@ -26,29 +27,20 @@ std::unique_ptr<Tool::UI::BehaviorNode> Tool::UI::UIMonsterProperties::CreateBeh
 {
 	auto node = std::make_unique<BehaviorNode>(GetNextNodeId(), behaviorName);
 
-	// Create appropriate config based on behavior name
+	// Only create supported behavior types
 	if (behaviorName == "BehaviorChase") {
 		node->config = std::make_unique<BehaviorChaseConfig>();
-	}
-	else if (behaviorName == "BehaviorDistanceConditionHelper") {
-		node->config = std::make_unique<BehaviorDistanceConditionHelperConfig>();
-	}
-	else if (behaviorName == "BehaviorMovementBounce") {
-		node->config = std::make_unique<BehaviorMovementBounceConfig>();
-	}
-	else if (behaviorName == "BehaviorShootBarrage") {
-		node->config = std::make_unique<BehaviorShootBarrageConfig>();
 	}
 	else if (behaviorName == "BehaviorShootProjectile") {
 		node->config = std::make_unique<BehaviorShootProjectileConfig>();
 	}
-	else if (behaviorName == "BehaviorShootStrategyBase") {
-		node->config = std::make_unique<BehaviorShootStrategyBaseConfig>();
-	}
-	else if (behaviorName == "BehaviorSpreadShot") {
-		node->config = std::make_unique<BehaviorSpreadShotConfig>();
-	}
 	else if (behaviorName == "BehaviorMultiConfig") {
+		node->config = std::make_unique<BehaviorMultiConfig>();
+	}
+	else {
+		LOG_ERROR("Attempted to create unsupported behavior type: " + behaviorName);
+		// Create a default MultiConfig as fallback
+		node->name = "BehaviorMultiConfig";
 		node->config = std::make_unique<BehaviorMultiConfig>();
 	}
 
@@ -169,7 +161,6 @@ void Tool::UI::UIMonsterProperties::BehaviorMultipleConfig()
 		if (ImGui::Combo("Type", &containerType, containerTypes, IM_ARRAYSIZE(containerTypes))) {
 			multiConfig->containerType = static_cast<ContainerType>(containerType);
 			SaveCurrentProperties();
-
 		}
 		ImGui::Separator();
 	}
@@ -205,6 +196,7 @@ void Tool::UI::UIMonsterProperties::RenderBehaviorPanels(BehaviorNode& parentNod
 		if (ImGui::Button("X")) {
 			parentNode.removeChild(i);
 			ImGui::PopID();
+			SaveCurrentProperties(); // Save when a behavior is removed
 			break; // Exit loop after deletion to avoid iterator issues
 		}
 
@@ -215,7 +207,7 @@ void Tool::UI::UIMonsterProperties::RenderBehaviorPanels(BehaviorNode& parentNod
 			// Show the behavior's configuration
 			ShowBehaviorConfiguration(node);
 
-			// UPDATED: Special handling for BehaviorMultiConfig children
+			// Special handling for BehaviorMultiConfig children
 			if (node.name == "BehaviorMultiConfig") {
 				ImGui::Separator();
 
@@ -234,12 +226,6 @@ void Tool::UI::UIMonsterProperties::RenderBehaviorPanels(BehaviorNode& parentNod
 					RenderBehaviorPanels(node);
 				}
 			}
-			// For other behavior types, still render children if they exist
-			else if (!node.children.empty()) {
-				ImGui::Separator();
-				ImGui::Text("Child Behaviors:");
-				RenderBehaviorPanels(node);
-			}
 
 			ImGui::Unindent();
 		}
@@ -250,10 +236,11 @@ void Tool::UI::UIMonsterProperties::RenderBehaviorPanels(BehaviorNode& parentNod
 
 void Tool::UI::UIMonsterProperties::AddBehaviorToNode(BehaviorNode& parent, const std::string& behaviorName)
 {
-	LOG_INFO("Add behavior called");
+	LOG_INFO("Add behavior called: " + behaviorName);
 	auto newNode = CreateBehaviorNode(behaviorName);
 	newNode->parent = &parent;
 	parent.children.push_back(std::move(newNode));
+	SaveCurrentProperties(); // Save when a new behavior is added
 }
 
 void Tool::UI::UIMonsterProperties::ShowBehaviorConfiguration(BehaviorNode& node)
@@ -262,42 +249,29 @@ void Tool::UI::UIMonsterProperties::ShowBehaviorConfiguration(BehaviorNode& node
 	if (node.name == "BehaviorChase") {
 		BehaviorChaseConfigUI(node);
 	}
-	else if (node.name == "BehaviorDistanceConditionHelper") {
-		BehaviorDistanceConditionHelperConfigUI(node);
-	}
-	else if (node.name == "BehaviorMovementBounce") {
-		BehaviorMovementBounceConfigUI(node);
-	}
-	else if (node.name == "BehaviorShootBarrage") {
-		BehaviorShootBarrageConfigUI(node);
-	}
 	else if (node.name == "BehaviorShootProjectile") {
 		BehaviorShootProjectileConfigUI(node);
-	}
-	else if (node.name == "BehaviorShootStrategyBase") {
-		BehaviorShootStrategyBaseConfigUI(node);
-	}
-	else if (node.name == "BehaviorSpreadShot") {
-		BehaviorSpreadShotConfigUI(node);
 	}
 	else if (node.name == "BehaviorMultiConfig") {
 		BehaviorMultiConfigSettingsOnly(node);
 	}
 	else {
-		ImGui::Text("No configuration available for this behavior type.");
+		ImGui::TextColored(ImVec4(1.0f, 0.3f, 0.3f, 1.0f),
+			"Unsupported behavior type: %s", node.name.c_str());
 	}
 }
+
 void Tool::UI::UIMonsterProperties::BehaviorMultiConfigSettingsOnly(BehaviorNode& node)
 {
 	if (auto* multiConfig = dynamic_cast<BehaviorMultiConfig*>(node.config.get())) {
 		ImGui::Text("Container Type:");
 		static const char* containerTypes[] = {
-		"SelectorWithRunning",
-		"ProgressiveSequence",
-		"Sequence",
-		"Selector",
-		"Parallel",
-		"Race",
+			"SelectorWithRunning",
+			"ProgressiveSequence",
+			"Sequence",
+			"Selector",
+			"Parallel",
+			"Race",
 		};
 		int containerType = static_cast<int>(multiConfig->containerType);
 		if (ImGui::Combo("Type", &containerType, containerTypes, IM_ARRAYSIZE(containerTypes))) {
@@ -307,128 +281,28 @@ void Tool::UI::UIMonsterProperties::BehaviorMultiConfigSettingsOnly(BehaviorNode
 	}
 }
 
-
-
 // Updated configuration methods to work with node data
 void Tool::UI::UIMonsterProperties::BehaviorChaseConfigUI(BehaviorNode& node)
 {
 	if (auto* config = dynamic_cast<BehaviorChaseConfig*>(node.config.get())) {
+		bool changed = false;
+
+		// Display the speed with a tooltip about the internal format
 		if (ImGui::InputInt("Chase Speed", &config->chaseSpeed)) {
+			changed = true;
+		}
+
+		if (ImGui::IsItemHovered()) {
+			ImGui::BeginTooltip();
+			ImGui::Text("Internal value (scaled by 10000)");
+			ImGui::Text("Actual speed: %.2f", config->chaseSpeed / 10000.0f);
+			ImGui::EndTooltip();
+		}
+
+		if (changed) {
 			SaveCurrentProperties();
 		}
 	}
-}
-
-void Tool::UI::UIMonsterProperties::BehaviorShootBarrageConfigUI(BehaviorNode& node)
-{
-
-	if (auto* config = dynamic_cast<BehaviorShootBarrageConfig*>(node.config.get())) {
-
-		bool hasChanged = false;
-
-		if (ImGui::InputInt("CoolDown", &config->coolDown)) {
-			hasChanged = true;
-		}
-
-		std::vector<const char*> validBulletsIngame;
-
-		for (auto& [name, texture] : BulletTextureMap) {
-			validBulletsIngame.push_back(name.c_str());
-		}
-
-		int currentBulletIndex = 0;
-		for (int i = 0; i < validBulletsIngame.size(); i++) {
-			if (config->bulletConfig.validBulletIngame == validBulletsIngame[i]) {
-				currentBulletIndex = i;
-				break;
-			}
-		}
-
-		if (ImGui::Combo("Valid Bullet Ingame", &currentBulletIndex, validBulletsIngame.data(), static_cast<int>(validBulletsIngame.size()))) {
-			config->bulletConfig.validBulletIngame = validBulletsIngame[currentBulletIndex];
-			hasChanged = true;
-		}
-
-		const char* bulletTypeNames[] = { "straight", "parabol", "mortal", "boss" };
-		int bulletType = static_cast<int>(config->bulletConfig.bulletType);
-		if (ImGui::Combo("Bullet Type", &bulletType, bulletTypeNames, IM_ARRAYSIZE(bulletTypeNames))) {
-			config->bulletConfig.bulletType = static_cast<BulletType>(bulletType);
-			hasChanged = true;
-		}
-
-		if (ImGui::InputInt("NumOfBullet", &config->numOfBullet) ||
-			ImGui::InputInt("SpreadAngle", &config->spreadAngle) ||
-			ImGui::InputInt("Speed", &config->bulletConfig.speed) ||
-			ImGui::InputInt("AliveTime", &config->bulletConfig.aliveTime) ||
-			ImGui::InputInt("Damage", &config->bulletConfig.damage) ||
-			ImGui::InputInt("Bounce", &config->bulletConfig.bounce)) {
-			hasChanged = true;
-		}
-		if (hasChanged)
-		{
-			SaveCurrentProperties();
-		}
-
-
-	}
-}
-
-void Tool::UI::UIMonsterProperties::BehaviorMultiConfigUI(BehaviorNode& node)
-{
-	if (auto* multiConfig = dynamic_cast<BehaviorMultiConfig*>(node.config.get())) {
-		ImGui::Text("Container Type:");
-		static const char* containerTypes[] = {
-			"SelectorWithRunning",
-		"ProgressiveSequence",
-		"Sequence",
-		"Selector",
-		"Parallel",
-		"Race",
-		};
-		int containerType = static_cast<int>(multiConfig->containerType);
-		if (ImGui::Combo("Type", &containerType, containerTypes, IM_ARRAYSIZE(containerTypes))) {
-			multiConfig->containerType = static_cast<ContainerType>(containerType);
-			SaveCurrentProperties();
-		}
-		ImGui::Separator();
-	}
-
-	// Add new behavior to this specific node
-	if (ImGui::Button("Add Behavior")) {
-		m_activeDropdownNodeId = node.id;
-	}
-
-	// Show behavior selection dropdown for this specific node
-	ShowBehaviorDropdown(node);
-
-	ImGui::Separator();
-
-	// Display behaviors as expandable panels
-	ImGui::Text("Behaviors:");
-	RenderBehaviorPanels(node);
-}
-
-// Implement other configuration UI methods similarly...
-void Tool::UI::UIMonsterProperties::BehaviorDistanceConditionHelperConfigUI(BehaviorNode& node)
-{
-	if (auto* config = dynamic_cast<BehaviorDistanceConditionHelperConfig*>(node.config.get())) {
-		bool hasChanged = false;
-		if (ImGui::InputInt("Max distance", &config->maxDistance)) {
-			hasChanged = true;
-		}
-		if (ImGui::InputInt("Min distance", &config->minDistance)) {
-			hasChanged = true;
-		}
-		if (hasChanged) {
-			SaveCurrentProperties();
-		}
-	}
-}
-
-void Tool::UI::UIMonsterProperties::BehaviorMovementBounceConfigUI(BehaviorNode& node)
-{
-	// No configuration for this behavior
-	ImGui::Text("No configuration available for Movement Bounce.");
 }
 
 void Tool::UI::UIMonsterProperties::BehaviorShootProjectileConfigUI(BehaviorNode& node)
@@ -436,100 +310,55 @@ void Tool::UI::UIMonsterProperties::BehaviorShootProjectileConfigUI(BehaviorNode
 	if (auto* config = dynamic_cast<BehaviorShootProjectileConfig*>(node.config.get())) {
 		bool hasChanged = false;
 
+		// CoolDown with tooltip
 		if (ImGui::InputInt("CoolDown", &config->coolDown)) {
 			hasChanged = true;
 		}
-		std::vector<const char*> validBulletsIngame;
 
-		for (auto& [name, texture] : BulletTextureMap) {
-			validBulletsIngame.push_back(name.c_str());
+		if (ImGui::IsItemHovered()) {
+			ImGui::BeginTooltip();
+			ImGui::Text("Internal value (scaled by 10000)");
+			ImGui::Text("Actual cooldown: %.2f seconds", config->coolDown / 10000.0f);
+			ImGui::EndTooltip();
 		}
 
-		int currentBulletIndex = 0;
-		for (int i = 0; i < validBulletsIngame.size(); i++) {
-			if (config->bulletConfig.validBulletIngame == validBulletsIngame[i]) {
-				currentBulletIndex = i;
-				break;
+		// Bullet properties
+		if (ImGui::CollapsingHeader("Bullet Properties", ImGuiTreeNodeFlags_DefaultOpen)) {
+			ImGui::Indent();
+
+			// Valid bullet selection
+			std::vector<const char*> validBulletsIngame;
+			for (auto& [name, texture] : BulletTextureMap) {
+				validBulletsIngame.push_back(name.c_str());
 			}
+
+			int currentBulletIndex = 0;
+			for (int i = 0; i < validBulletsIngame.size(); i++) {
+				if (config->bulletConfig.validBulletIngame == validBulletsIngame[i]) {
+					currentBulletIndex = i;
+					break;
+				}
+			}
+
+			if (ImGui::Combo("Bullet Type", &currentBulletIndex, validBulletsIngame.data(),
+				static_cast<int>(validBulletsIngame.size()))) {
+				config->bulletConfig.validBulletIngame = validBulletsIngame[currentBulletIndex];
+				hasChanged = true;
+			}
+
+			// Bullet properties
+			if (ImGui::InputInt("Speed", &config->bulletConfig.speed) ||
+				ImGui::InputInt("Alive Time", &config->bulletConfig.aliveTime) ||
+				ImGui::InputInt("Damage", &config->bulletConfig.damage) ||
+				ImGui::InputInt("Bounce", &config->bulletConfig.bounce)) {
+				hasChanged = true;
+			}
+
+			ImGui::Unindent();
 		}
 
-		if (ImGui::Combo("Valid Bullet Ingame", &currentBulletIndex, validBulletsIngame.data(), static_cast<int>(validBulletsIngame.size()))) {
-			config->bulletConfig.validBulletIngame = validBulletsIngame[currentBulletIndex];
-			hasChanged = true;
-		}
-
-		const char* bulletTypeNames[] = { "straight", "parabol", "mortal", "boss" };
-		int bulletType = static_cast<int>(config->bulletConfig.bulletType);
-		if (ImGui::Combo("Bullet Type", &bulletType, bulletTypeNames, IM_ARRAYSIZE(bulletTypeNames))) {
-			config->bulletConfig.bulletType = static_cast<BulletType>(bulletType);
-			hasChanged = true;
-		}
-
-		if (ImGui::InputInt("Speed", &config->bulletConfig.speed) ||
-			ImGui::InputInt("AliveTime", &config->bulletConfig.aliveTime) ||
-			ImGui::InputInt("Damage", &config->bulletConfig.damage) ||
-			ImGui::InputInt("Bounce", &config->bulletConfig.bounce)) {
-			hasChanged = true;
-		}
-		if (hasChanged)
-		{
+		if (hasChanged) {
 			SaveCurrentProperties();
-		}
-	}
-}
-
-
-
-void Tool::UI::UIMonsterProperties::BehaviorShootStrategyBaseConfigUI(BehaviorNode& node)
-{
-	// No configuration for this behavior
-	ImGui::Text("No configuration available for Shoot Strategy Base.");
-}
-
-void Tool::UI::UIMonsterProperties::BehaviorSpreadShotConfigUI(BehaviorNode& node)
-{
-	if (auto* config = dynamic_cast<BehaviorSpreadShotConfig*>(node.config.get())) {
-		bool hasChanged = false;
-
-		if (ImGui::InputInt("CoolDown", &config->coolDown)) {
-			hasChanged = true;
-		}
-
-		std::vector<const char*> validBulletsIngame;
-
-		for (auto& [name, texture] : BulletTextureMap) {
-			validBulletsIngame.push_back(name.c_str());
-		}
-
-		int currentBulletIndex = 0;
-		for (int i = 0; i < validBulletsIngame.size(); i++) {
-			if (config->bulletConfig.validBulletIngame == validBulletsIngame[i]) {
-				currentBulletIndex = i;
-				break;
-			}
-		}
-
-		if (ImGui::Combo("Valid Bullet Ingame", &currentBulletIndex, validBulletsIngame.data(), static_cast<int>(validBulletsIngame.size()))) {
-			config->bulletConfig.validBulletIngame = validBulletsIngame[currentBulletIndex];
-			hasChanged = true;
-		}
-
-
-		const char* bulletTypeNames[] = { "straight", "parabol", "mortal", "boss" };
-		int bulletType = static_cast<int>(config->bulletConfig.bulletType);
-		if (ImGui::Combo("Bullet Type", &bulletType, bulletTypeNames, IM_ARRAYSIZE(bulletTypeNames))) {
-			config->bulletConfig.bulletType = static_cast<BulletType>(bulletType);
-			hasChanged = true;
-		}
-
-		if (
-			ImGui::InputInt("NumOfBullet", &config->numOfBullet) ||
-			ImGui::InputInt("SpreadAngle", &config->spreadAngle) ||
-			ImGui::InputInt("Speed", &config->bulletConfig.speed) ||
-			ImGui::InputInt("AliveTime", &config->bulletConfig.aliveTime) ||
-			ImGui::InputInt("Damage", &config->bulletConfig.damage) ||
-			ImGui::InputInt("Bounce", &config->bulletConfig.bounce)) {
-			hasChanged = true;
 		}
 	}
 }
@@ -539,7 +368,9 @@ std::unique_ptr<Tool::UI::BehaviorNode> Tool::UI::UIMonsterProperties::ConvertBe
 {
 	if (!config) return nullptr;
 
-	auto node = std::make_unique<BehaviorNode>(GetNextNodeId(), config->behaviorType);
+	// Create a node based on behavior type
+	std::string behaviorType = config->GetBehaviorType();
+	auto node = std::make_unique<BehaviorNode>(GetNextNodeId(), behaviorType);
 
 	// Create a deep copy of the config for the node
 	if (auto* chase = dynamic_cast<const BehaviorChaseConfig*>(config)) {
@@ -547,38 +378,10 @@ std::unique_ptr<Tool::UI::BehaviorNode> Tool::UI::UIMonsterProperties::ConvertBe
 		configCopy->chaseSpeed = chase->chaseSpeed;
 		node->config = std::move(configCopy);
 	}
-	else if (auto* distance = dynamic_cast<const BehaviorDistanceConditionHelperConfig*>(config)) {
-		auto configCopy = std::make_unique<BehaviorDistanceConditionHelperConfig>();
-		configCopy->maxDistance = distance->maxDistance;
-		configCopy->minDistance = distance->minDistance;
-		node->config = std::move(configCopy);
-	}
-	else if (auto* bounce = dynamic_cast<const BehaviorMovementBounceConfig*>(config)) {
-		node->config = std::make_unique<BehaviorMovementBounceConfig>();
-	}
-	else if (auto* barrage = dynamic_cast<const BehaviorShootBarrageConfig*>(config)) {
-		auto configCopy = std::make_unique<BehaviorShootBarrageConfig>();
-		configCopy->coolDown = barrage->coolDown;
-		configCopy->bulletConfig = barrage->bulletConfig;
-		configCopy->numOfBullet = barrage->numOfBullet;
-		configCopy->spreadAngle = barrage->spreadAngle;
-		node->config = std::move(configCopy);
-	}
 	else if (auto* projectile = dynamic_cast<const BehaviorShootProjectileConfig*>(config)) {
 		auto configCopy = std::make_unique<BehaviorShootProjectileConfig>();
 		configCopy->coolDown = projectile->coolDown;
 		configCopy->bulletConfig = projectile->bulletConfig;
-		node->config = std::move(configCopy);
-	}
-	else if (auto* strategy = dynamic_cast<const BehaviorShootStrategyBaseConfig*>(config)) {
-		node->config = std::make_unique<BehaviorShootStrategyBaseConfig>();
-	}
-	else if (auto* spread = dynamic_cast<const BehaviorSpreadShotConfig*>(config)) {
-		auto configCopy = std::make_unique<BehaviorSpreadShotConfig>();
-		configCopy->coolDown = spread->coolDown;
-		configCopy->bulletConfig = spread->bulletConfig;
-		configCopy->numOfBullet = spread->numOfBullet;
-		configCopy->spreadAngle = spread->spreadAngle;
 		node->config = std::move(configCopy);
 	}
 	else if (auto* multi = dynamic_cast<const BehaviorMultiConfig*>(config)) {
@@ -596,8 +399,9 @@ std::unique_ptr<Tool::UI::BehaviorNode> Tool::UI::UIMonsterProperties::ConvertBe
 		}
 	}
 	else {
-		// Unknown behavior type, create default config
-		node->config = CreateBehaviorConfig(config->behaviorType);
+		// Unsupported behavior type, log warning and create default config
+		LOG_ERROR("Unsupported behavior type in ConvertBehaviorConfigToNode: " + behaviorType);
+		node->config = std::make_unique<BehaviorMultiConfig>();
 	}
 
 	return node;
@@ -610,62 +414,41 @@ std::unique_ptr<BehaviorConfig> Tool::UI::UIMonsterProperties::ConvertNodeToBeha
 
 	std::unique_ptr<BehaviorConfig> config;
 
-	// Create appropriate config based on node's config type
-	if (auto* chase = dynamic_cast<const BehaviorChaseConfig*>(node.config.get())) {
-		auto configCopy = std::make_unique<BehaviorChaseConfig>();
-		configCopy->chaseSpeed = chase->chaseSpeed;
-		config = std::move(configCopy);
-	}
-	else if (auto* distance = dynamic_cast<const BehaviorDistanceConditionHelperConfig*>(node.config.get())) {
-		auto configCopy = std::make_unique<BehaviorDistanceConditionHelperConfig>();
-		configCopy->maxDistance = distance->maxDistance;
-		configCopy->minDistance = distance->minDistance;
-		config = std::move(configCopy);
-	}
-	else if (auto* bounce = dynamic_cast<const BehaviorMovementBounceConfig*>(node.config.get())) {
-		config = std::make_unique<BehaviorMovementBounceConfig>();
-	}
-	else if (auto* barrage = dynamic_cast<const BehaviorShootBarrageConfig*>(node.config.get())) {
-		auto configCopy = std::make_unique<BehaviorShootBarrageConfig>();
-		configCopy->coolDown = barrage->coolDown;
-		configCopy->bulletConfig = barrage->bulletConfig;
-		configCopy->numOfBullet = barrage->numOfBullet;
-		configCopy->spreadAngle = barrage->spreadAngle;
-		config = std::move(configCopy);
-	}
-	else if (auto* projectile = dynamic_cast<const BehaviorShootProjectileConfig*>(node.config.get())) {
-		auto configCopy = std::make_unique<BehaviorShootProjectileConfig>();
-		configCopy->coolDown = projectile->coolDown;
-		configCopy->bulletConfig = projectile->bulletConfig;
-		config = std::move(configCopy);
-	}
-	else if (auto* strategy = dynamic_cast<const BehaviorShootStrategyBaseConfig*>(node.config.get())) {
-		config = std::make_unique<BehaviorShootStrategyBaseConfig>();
-	}
-	else if (auto* spread = dynamic_cast<const BehaviorSpreadShotConfig*>(node.config.get())) {
-		auto configCopy = std::make_unique<BehaviorSpreadShotConfig>();
-		configCopy->coolDown = spread->coolDown;
-		configCopy->bulletConfig = spread->bulletConfig;
-		configCopy->numOfBullet = spread->numOfBullet;
-		configCopy->spreadAngle = spread->spreadAngle;
-		config = std::move(configCopy);
-	}
-	else if (auto* multi = dynamic_cast<const BehaviorMultiConfig*>(node.config.get())) {
-		auto configCopy = std::make_unique<BehaviorMultiConfig>();
-		configCopy->containerType = multi->containerType;
-
-		// Recursively convert child nodes
-		for (const auto& childNode : node.children) {
-			auto childConfig = ConvertNodeToBehaviorConfig(*childNode);
-			if (childConfig) {
-				configCopy->childBehaviors.push_back(std::move(childConfig));
-			}
+	// Create appropriate config based on node's name
+	if (node.name == "BehaviorChase") {
+		if (auto* chase = dynamic_cast<const BehaviorChaseConfig*>(node.config.get())) {
+			auto configCopy = std::make_unique<BehaviorChaseConfig>();
+			configCopy->chaseSpeed = chase->chaseSpeed;
+			config = std::move(configCopy);
 		}
-		config = std::move(configCopy);
+	}
+	else if (node.name == "BehaviorShootProjectile") {
+		if (auto* projectile = dynamic_cast<const BehaviorShootProjectileConfig*>(node.config.get())) {
+			auto configCopy = std::make_unique<BehaviorShootProjectileConfig>();
+			configCopy->coolDown = projectile->coolDown;
+			configCopy->bulletConfig = projectile->bulletConfig;
+			config = std::move(configCopy);
+		}
+	}
+	else if (node.name == "BehaviorMultiConfig") {
+		if (auto* multi = dynamic_cast<const BehaviorMultiConfig*>(node.config.get())) {
+			auto configCopy = std::make_unique<BehaviorMultiConfig>();
+			configCopy->containerType = multi->containerType;
+
+			// Recursively convert child nodes
+			for (const auto& childNode : node.children) {
+				auto childConfig = ConvertNodeToBehaviorConfig(*childNode);
+				if (childConfig) {
+					configCopy->childBehaviors.push_back(std::move(childConfig));
+				}
+			}
+			config = std::move(configCopy);
+		}
 	}
 	else {
-		// Fallback: create config using factory
-		config = CreateBehaviorConfig(node.name);
+		// Unsupported behavior type, log warning and create default config
+		LOG_ERROR("Unsupported behavior type in ConvertNodeToBehaviorConfig: " + node.name);
+		config = std::make_unique<BehaviorMultiConfig>();
 	}
 
 	return config;
@@ -701,8 +484,6 @@ void Tool::UI::UIMonsterProperties::ConvertFromMonsterProperties(const MonsterTy
 			}
 		}
 	}
-
-
 }
 
 // Convert UI BehaviorNode tree to MonsterProperties
@@ -729,21 +510,19 @@ void Tool::UI::UIMonsterProperties::ConvertToMonsterProperties(MonsterTypeDefini
 			newRootBehavior->childBehaviors.push_back(std::move(childConfig));
 		}
 	}
+
 	// Replace the properties' behavior tree
 	properties.defaultProperties.rootBehavior = std::move(newRootBehavior);
-
 }
 
 void Tool::UI::UIMonsterProperties::SaveCurrentProperties()
 {
 	if (m_pCurrentProperties && m_hasValidSelection) {
-
 		// Convert UI nodes back to monster properties
 		ConvertToMonsterProperties(*m_pCurrentProperties);
 		Core::EventData eventData;
 		eventData.data = *m_pCurrentProperties;
 		Core::EventSystem::getInstance().publish(EventKeys::MonsterUpdated, eventData);
-
 	}
 }
 
@@ -774,14 +553,32 @@ void Tool::UI::UIMonsterProperties::ShowBehaviorDropdown(BehaviorNode& node)
 
 		if (ImGui::BeginChild("BehaviorList", ImVec2(0, 150.0f), true))
 		{
-			for (int n = 0; n < IM_ARRAYSIZE(availableItems); n++) {
-				if (ImGui::Selectable(availableItems[n], false)) {
+			// Only show the three supported behavior types
+			const char* supportedBehaviors[] = {
+				"BehaviorMultiConfig",
+				"BehaviorChase",
+				"BehaviorShootProjectile"
+			};
+
+			for (int n = 0; n < IM_ARRAYSIZE(supportedBehaviors); n++) {
+				// Add a more user-friendly display name
+				const char* displayName;
+				if (strcmp(supportedBehaviors[n], "BehaviorMultiConfig") == 0)
+					displayName = "Multi Behavior";
+				else if (strcmp(supportedBehaviors[n], "BehaviorChase") == 0)
+					displayName = "Chase";
+				else if (strcmp(supportedBehaviors[n], "BehaviorShootProjectile") == 0)
+					displayName = "Shoot Projectile";
+				else
+					displayName = supportedBehaviors[n];
+
+				if (ImGui::Selectable(displayName, false)) {
 					// Empty - just for visual feedback
 				}
 
 				if (ImGui::IsItemClicked())
 				{
-					AddBehaviorToNode(node, availableItems[n]);
+					AddBehaviorToNode(node, supportedBehaviors[n]);
 					m_activeDropdownNodeId = -1; // Close dropdown
 					break;
 				}
@@ -789,7 +586,7 @@ void Tool::UI::UIMonsterProperties::ShowBehaviorDropdown(BehaviorNode& node)
 				// Optional: Add hover effect or tooltip
 				if (ImGui::IsItemHovered()) {
 					ImGui::BeginTooltip();
-					ImGui::Text("Click to add: %s", availableItems[n]);
+					ImGui::Text("Click to add: %s", displayName);
 					ImGui::EndTooltip();
 				}
 			}
@@ -807,4 +604,27 @@ void Tool::UI::UIMonsterProperties::ShowBehaviorDropdown(BehaviorNode& node)
 	if (!isOpen || (!ImGui::IsWindowHovered() && ImGui::IsMouseClicked(0))) {
 		m_activeDropdownNodeId = -1;
 	}
+}
+
+// Create a behavior config for a behavior type
+std::unique_ptr<BehaviorConfig> Tool::UI::UIMonsterProperties::CreateBehaviorConfig(const std::string& behaviorType)
+{
+	// Use factory method if possible
+	auto config = BehaviorFactory::GetInstance().CreateBehavior(behaviorType);
+	if (config) return config;
+
+	// Fallback to direct creation for the three supported types
+	if (behaviorType == "BehaviorChase") {
+		return std::make_unique<BehaviorChaseConfig>();
+	}
+	else if (behaviorType == "BehaviorShootProjectile") {
+		return std::make_unique<BehaviorShootProjectileConfig>();
+	}
+	else if (behaviorType == "BehaviorMultiConfig") {
+		return std::make_unique<BehaviorMultiConfig>();
+	}
+
+	// Return MultiConfig as fallback for unsupported types
+	LOG_ERROR("Creating default MultiConfig for unsupported behavior type: " + behaviorType);
+	return std::make_unique<BehaviorMultiConfig>();
 }

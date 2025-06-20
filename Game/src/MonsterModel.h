@@ -6,6 +6,9 @@
 #include <memory>
 #include "utilities/Vec2.h"
 #include <utilities/Logger.h>
+#include "BulletConfig.h"
+#include <BehaviorMultiConfig.h>
+#include <BehaviorChaseConfig.h>
 
 
 static std::unordered_map<std::string, const char*> BulletTextureMap = {
@@ -32,172 +35,6 @@ enum class MonsterType {
 	Boss = 1
 };
 
-enum class BulletType {
-	Straight = 0,
-	Parabol = 1,
-	Mortal = 2,
-	Boss = 3
-};
-
-enum class ContainerType {
-	SelectorWithRunning = 0,
-	ProgressiveSequence = 1,
-	Sequence = 2,
-	Selector = 3,
-	Parallel = 4,
-	Race = 5,
-};
-
-struct BulletConfig {
-	BulletType bulletType = BulletType::Parabol;
-	std::string validBulletIngame = "";
-	int speed = 0;
-	int aliveTime = 0;
-	int damage = 0;
-	int bounce = 0;
-
-	// Copy constructor and assignment operator for BulletConfig
-	BulletConfig() = default;
-	BulletConfig(const BulletConfig&) = default;
-	BulletConfig& operator=(const BulletConfig&) = default;
-};
-
-// Base class for behavior configuration data
-struct BehaviorConfig {
-	std::string behaviorType;
-	virtual ~BehaviorConfig() = default;
-	virtual std::unique_ptr<BehaviorConfig> clone() const = 0; // Pure virtual clone method
-};
-
-// Specific behavior configurations
-struct BehaviorChaseConfig : public BehaviorConfig {
-	int chaseSpeed = 10000;
-
-	BehaviorChaseConfig() {
-		behaviorType = "BehaviorChase";
-	}
-
-	std::unique_ptr<BehaviorConfig> clone() const override {
-		auto copy = std::make_unique<BehaviorChaseConfig>();
-		copy->chaseSpeed = this->chaseSpeed;
-		return copy;
-	}
-};
-
-struct BehaviorDistanceConditionHelperConfig : public BehaviorConfig {
-	int maxDistance = 10000;
-	int minDistance = 10000;
-
-	BehaviorDistanceConditionHelperConfig() {
-		behaviorType = "BehaviorDistanceConditionHelper";
-	}
-
-	std::unique_ptr<BehaviorConfig> clone() const override {
-		auto copy = std::make_unique<BehaviorDistanceConditionHelperConfig>();
-		copy->maxDistance = this->maxDistance;
-		copy->minDistance = this->minDistance;
-		return copy;
-	}
-};
-
-struct BehaviorMovementBounceConfig : public BehaviorConfig {
-	BehaviorMovementBounceConfig() {
-		behaviorType = "BehaviorMovementBounce";
-	}
-
-	std::unique_ptr<BehaviorConfig> clone() const override {
-		return std::make_unique<BehaviorMovementBounceConfig>();
-	}
-};
-
-struct BehaviorShootBarrageConfig : public BehaviorConfig {
-	int coolDown = 10000;
-	int numOfBullet = 10000;
-	int spreadAngle = 10000;
-	BulletConfig bulletConfig;
-
-	BehaviorShootBarrageConfig() {
-		behaviorType = "BehaviorShootBarrage";
-	}
-
-	std::unique_ptr<BehaviorConfig> clone() const override {
-		auto copy = std::make_unique<BehaviorShootBarrageConfig>();
-		copy->coolDown = this->coolDown;
-		copy->numOfBullet = this->numOfBullet;
-		copy->spreadAngle = this->spreadAngle;
-		copy->bulletConfig = this->bulletConfig;
-		return copy;
-	}
-};
-
-struct BehaviorShootProjectileConfig : public BehaviorConfig {
-	int coolDown = 10000;
-	BulletConfig bulletConfig;
-
-	BehaviorShootProjectileConfig() {
-		behaviorType = "BehaviorShootProjectile";
-	}
-
-	std::unique_ptr<BehaviorConfig> clone() const override {
-		auto copy = std::make_unique<BehaviorShootProjectileConfig>();
-		copy->coolDown = this->coolDown;
-		copy->bulletConfig = this->bulletConfig;
-		return copy;
-	}
-};
-
-struct BehaviorShootStrategyBaseConfig : public BehaviorConfig {
-	BehaviorShootStrategyBaseConfig() {
-		behaviorType = "BehaviorShootStrategyBase";
-	}
-
-	std::unique_ptr<BehaviorConfig> clone() const override {
-		return std::make_unique<BehaviorShootStrategyBaseConfig>();
-	}
-};
-
-struct BehaviorSpreadShotConfig : public BehaviorConfig {
-	int coolDown = 10000;
-	int numOfBullet = 10000;
-	int spreadAngle = 10000;
-	BulletConfig bulletConfig;
-
-	BehaviorSpreadShotConfig() {
-		behaviorType = "BehaviorSpreadShot";
-	}
-
-	std::unique_ptr<BehaviorConfig> clone() const override {
-		auto copy = std::make_unique<BehaviorSpreadShotConfig>();
-		copy->coolDown = this->coolDown;
-		copy->numOfBullet = this->numOfBullet;
-		copy->spreadAngle = this->spreadAngle;
-		copy->bulletConfig = this->bulletConfig;
-		return copy;
-	}
-};
-
-struct BehaviorMultiConfig : public BehaviorConfig {
-	ContainerType containerType = ContainerType::SelectorWithRunning;
-	std::vector<std::unique_ptr<BehaviorConfig>> childBehaviors;
-
-	BehaviorMultiConfig() {
-		behaviorType = "BehaviorMultiConfig";
-	}
-
-	std::unique_ptr<BehaviorConfig> clone() const override {
-		auto copy = std::make_unique<BehaviorMultiConfig>();
-		copy->containerType = this->containerType;
-
-		// Deep copy all child behaviors
-		for (const auto& child : childBehaviors) {
-			if (child) {
-				copy->childBehaviors.push_back(child->clone());
-			}
-		}
-
-		return copy;
-	}
-};
 
 // Main monster properties struct
 struct MonsterProperties {
@@ -231,7 +68,7 @@ struct MonsterProperties {
 		// Deep copy the behavior tree
 		if (other.rootBehavior) {
 			rootBehavior = std::unique_ptr<BehaviorMultiConfig>(
-				static_cast<BehaviorMultiConfig*>(other.rootBehavior->clone().release())
+				static_cast<BehaviorMultiConfig*>(other.rootBehavior->Clone().release())
 			);
 		}
 		else {
@@ -252,7 +89,7 @@ struct MonsterProperties {
 			// Deep copy the behavior tree
 			if (other.rootBehavior) {
 				rootBehavior = std::unique_ptr<BehaviorMultiConfig>(
-					static_cast<BehaviorMultiConfig*>(other.rootBehavior->clone().release())
+					static_cast<BehaviorMultiConfig*>(other.rootBehavior->Clone().release())
 				);
 			}
 			else {
@@ -277,63 +114,6 @@ struct MonsterProperties {
 	MonsterProperties(MonsterProperties&&) = default;
 	MonsterProperties& operator=(MonsterProperties&&) = default;
 };
-
-// Helper functions for enum conversions
-inline const char* MonsterTypeToString(MonsterType type) {
-	switch (type) {
-	case MonsterType::Boss: return "Boss";
-	case MonsterType::Normal: return "Normal";
-	default: return "Unknown";
-	}
-}
-
-inline const char* BulletTypeToString(BulletType type) {
-	switch (type) {
-	case BulletType::Straight: return "straight";
-	case BulletType::Parabol: return "parabol";
-	case BulletType::Mortal: return "mortal";
-	case BulletType::Boss: return "boss";
-	default: return "unknown";
-	}
-}
-
-inline const char* ContainerTypeToString(ContainerType type) {
-	switch (type) {
-	case ContainerType::SelectorWithRunning: return "SelectorWithRunning";
-	case ContainerType::ProgressiveSequence: return "ProgressiveSequence";
-	case ContainerType::Sequence: return "Sequence";
-	default: return "Unknown";
-	}
-}
-
-// Factory function to create behavior configs
-inline std::unique_ptr<BehaviorConfig> CreateBehaviorConfig(const std::string& behaviorType) {
-	if (behaviorType == "BehaviorChase") {
-		return std::make_unique<BehaviorChaseConfig>();
-	}
-	else if (behaviorType == "BehaviorDistanceConditionHelper") {
-		return std::make_unique<BehaviorDistanceConditionHelperConfig>();
-	}
-	else if (behaviorType == "BehaviorMovementBounce") {
-		return std::make_unique<BehaviorMovementBounceConfig>();
-	}
-	else if (behaviorType == "BehaviorShootBarrage") {
-		return std::make_unique<BehaviorShootBarrageConfig>();
-	}
-	else if (behaviorType == "BehaviorShootProjectile") {
-		return std::make_unique<BehaviorShootProjectileConfig>();
-	}
-	else if (behaviorType == "BehaviorShootStrategyBase") {
-		return std::make_unique<BehaviorShootStrategyBaseConfig>();
-	}
-	else if (behaviorType == "BehaviorSpreadShot") {
-		return std::make_unique<BehaviorSpreadShotConfig>();
-	}
-	else if (behaviorType == "BehaviorMultiConfig") {
-		return std::make_unique<BehaviorMultiConfig>();
-	}
-	return nullptr;
-}
 
 struct PlacedMonster {
 	MonsterItem item;

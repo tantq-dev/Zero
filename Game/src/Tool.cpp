@@ -6,12 +6,37 @@
 #include "core/EventSystem.h"
 #include "MonsterModel.h"
 #include "EventKey.h"
+#include "BehaviorRegistration.h"
+#include "BehaviorUIRegistration.h"
+
 
 
 namespace Tool
 {
+	//bool InitializeBehaviorSystem()
+	//{
+	//	// Register all behavior types with factory
+	//	bool behaviorsRegistered = BehaviorRegistration::RegisterAllBehaviorTypes();
+	//	if (!behaviorsRegistered) {
+	//		LOG_ERROR("Failed to register behavior types");
+	//		return false;
+	//	}
+
+	//	// Register all UI descriptors
+	//	bool uiRegistered = RegisterBehaviorUIDescriptors();
+	//	if (!uiRegistered) {
+	//		LOG_ERROR("Failed to register behavior UI descriptors");
+	//		return false;
+	//	}
+
+	//	LOG_INFO("Behavior system initialized successfully");
+	//	return true;
+	//}
+
+
 	void Tool::Initialize(SDL_Renderer& renderer)
 	{
+		//InitializeBehaviorSystem();
 		//todo: clean up Magic number and magic string when function work correcly
 
 

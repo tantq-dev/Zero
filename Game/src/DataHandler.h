@@ -1,7 +1,7 @@
 #pragma once
 //#include "json.hpp"
 #include "MonsterModel.h"
-#include "BulletModel.h"
+#include "BulletConfig.h"
 #include "json.hpp"
 #include "entt.hpp"
 #include "WaveModel.h"
@@ -12,6 +12,8 @@ namespace Tool {
 	public:
 		DataHandler() = default;
 		~DataHandler() = default;
+
+		void ApplyBulletConfigsToNewBehavior(BehaviorConfig* behavior, const nlohmann::json& json);
 
 		void ExportAllToSingleJson(const std::vector<MonsterTypeDefinition*>& monsterDefinitions,
 			std::vector<MonsterWave*> waveInformations,
@@ -30,7 +32,9 @@ namespace Tool {
 		std::vector<MonsterTypeDefinition> m_importedMonsterDefinitions;
 		std::vector<MonsterWave> m_importedMonsterWave;
 		std::unordered_map<std::string, BulletConfig> m_importedBulletConfigs;
-		entt::registry* m_registry = nullptr; // Changed from reference to pointer with default initialization
+		entt::registry* m_registry = nullptr;
+		void GetBulletPropertiesFromBehavior(const BehaviorConfig* behavior);
+		// Changed from reference to pointer with default initialization
 		void GetBulletPropertiesFromMultipleBehavior(BehaviorMultiConfig* multipleBehavior);
 		nlohmann::json ProcessBehaviorTree(const BehaviorConfig* behavior, const std::string& monsterId);
 		std::string GetBulletID(const BulletConfig& bulletConfig);

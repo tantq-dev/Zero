@@ -95,6 +95,8 @@ namespace Tool {
 			int m_activeDropdownNodeId = -1;  // Replace m_showBehaviorDropdown with this
 			void ShowBehaviorDropdown(BehaviorNode& node);
 
+			std::unique_ptr<BehaviorConfig> CreateBehaviorConfig(const std::string& behaviorType);
+
 		public:
 			UIMonsterProperties();
 			~UIMonsterProperties();
@@ -118,13 +120,7 @@ namespace Tool {
 
 			// Configuration UI methods
 			void BehaviorChaseConfigUI(BehaviorNode& node);
-			void BehaviorDistanceConditionHelperConfigUI(BehaviorNode& node);
-			void BehaviorMovementBounceConfigUI(BehaviorNode& node);
-			void BehaviorShootBarrageConfigUI(BehaviorNode& node);
 			void BehaviorShootProjectileConfigUI(BehaviorNode& node);
-			void BehaviorShootStrategyBaseConfigUI(BehaviorNode& node);
-			void BehaviorSpreadShotConfigUI(BehaviorNode& node);
-			void BehaviorMultiConfigUI(BehaviorNode& node);
 
 			// Data conversion methods
 			void ConvertFromMonsterProperties(const MonsterTypeDefinition& properties);
