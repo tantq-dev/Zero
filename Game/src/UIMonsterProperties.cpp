@@ -5,6 +5,7 @@
 #include "EventKey.h"
 #include "core/EventSystem.h"
 #include "utilities/Logger.h"
+#include "BulletRegistry.h"
 
 Tool::UI::UIMonsterProperties::UIMonsterProperties()
 {
@@ -39,8 +40,9 @@ std::unique_ptr<Tool::UI::BehaviorNode> Tool::UI::UIMonsterProperties::CreateBeh
 	return node;
 }
 
-void Tool::UI::UIMonsterProperties::ShowUIMonsterProperties(bool* p_open)
+void Tool::UI::UIMonsterProperties::ShowUIMonsterProperties(bool* p_open, std::vector<std::string> currentBulletIDs )
 {
+	m_currentBulletIDs = currentBulletIDs;
 	if (p_open) {
 		bool window_contents_visible = ImGui::Begin("Monster Properties", p_open, ImGuiWindowFlags_MenuBar);
 		if (!window_contents_visible) {
@@ -316,6 +318,36 @@ bool Tool::UI::UIMonsterProperties::RenderConfigFields(const std::vector<ConfigF
 			if (ImGui::TreeNode(field.name.c_str())) {
 				changed |= RenderBulletConfigFields(bulletConfig);
 				ImGui::TreePop();
+			}
+			break;
+		}
+		case ConfigFieldType::BulletID: {
+			std::string* bulletId = static_cast<std::string*>(field.valuePtr);
+			
+			// Get available bullets from the bullet registry
+			std::vector<std::string> availableBullets = GetAvailableBulletIds();
+			std::vector<const char*> bulletOptions;
+			for (const auto& bullet : availableBullets) {
+				bulletOptions.push_back(bullet.c_str());
+			}
+
+			// Find current bullet index
+			int currentBulletIndex = 0;
+			for (int i = 0; i < availableBullets.size(); i++) {
+				if (*bulletId == availableBullets[i]) {
+					currentBulletIndex = i;
+					break;
+				}
+			}
+
+			if (ImGui::Combo(field.name.c_str(), &currentBulletIndex, bulletOptions.data(), static_cast<int>(bulletOptions.size()))) {
+				if (currentBulletIndex < availableBullets.size()) {
+					*bulletId = availableBullets[currentBulletIndex];
+					changed = true;
+					if (field.onChange) {
+						changed |= field.onChange(field.valuePtr);
+					}
+				}
 			}
 			break;
 		}
@@ -612,4 +644,9 @@ void Tool::UI::UIMonsterProperties::ShowBehaviorDropdown(BehaviorNode& node)
 	if (!isOpen || (!ImGui::IsWindowHovered() && ImGui::IsMouseClicked(0))) {
 		m_activeDropdownNodeId = -1;
 	}
+}
+
+std::vector<std::string> Tool::UI::UIMonsterProperties::GetAvailableBulletIds() const
+{
+	return m_currentBulletIDs;
 }

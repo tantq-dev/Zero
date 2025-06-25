@@ -79,7 +79,7 @@ namespace Tool {
 			std::vector<BehaviorType> availableBehavior = GetAvailableBehaviorTypes();
 			int currentSelection = 0;
 			int m_nextNodeId = 0;  // For generating unique node IDs
-
+			std::vector<std::string> m_currentBulletIDs;  // Store current bullet IDs
 			// Add reference to MapEditor and current properties
 			MonsterTypeDefinition* m_pCurrentProperties = nullptr;
 			bool m_hasValidSelection = false;
@@ -90,12 +90,13 @@ namespace Tool {
 			bool RenderConfigFields(const std::vector<ConfigField>& fields);
 			bool RenderBulletConfigFields(BulletConfig* bulletConfig);
 			std::vector<const char*> GetAvailableBullets() const;
+			std::vector<std::string> GetAvailableBulletIds() const;
 
 		public:
 			UIMonsterProperties();
 			~UIMonsterProperties();
 
-			void ShowUIMonsterProperties(bool* p_open);
+			void ShowUIMonsterProperties(bool* p_open, std::vector<std::string> currentBulletIDs);
 			void SetCurrentProperties(MonsterTypeDefinition properties);
 			void BehaviorMultiConfigSettingsOnly(BehaviorNode& node);
 

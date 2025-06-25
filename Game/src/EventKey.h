@@ -1,6 +1,9 @@
 #pragma once
 #include <string_view>
 
+// Forward declarations
+struct BulletDefinition;
+
 namespace Tool {
 	class EventKeys {
 	public:
@@ -11,6 +14,13 @@ namespace Tool {
 		static constexpr std::string_view MonsterUpdated = "monster_updated";
 		// Monster events from map
 		static constexpr std::string_view MonsterSelectedFromMap = "monster_selected_from_map";
+
+		// Bullet events from palette
+		static constexpr std::string_view BulletSelectedFromPalette = "bullet_selected_from_palette";
+		static constexpr std::string_view BulletCreated = "bullet_created";
+		static constexpr std::string_view BulletDeleted = "bullet_deleted";
+		static constexpr std::string_view BulletUpdated = "bullet_updated";
+		static constexpr std::string_view BulletPropertiesChanged = "bullet_properties_changed";
 
 		//Wave event
 		static constexpr std::string_view SendWaves = "send_waves";
@@ -35,3 +45,12 @@ namespace Tool {
 		EventKeys() = delete;
 	};
 }
+
+// Event structures for bullet-related events
+struct EventBulletSelected {
+	BulletDefinition* bullet;
+};
+
+struct EventBulletPropertiesChanged {
+	BulletDefinition* bullet;
+};

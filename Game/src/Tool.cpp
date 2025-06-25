@@ -27,6 +27,9 @@ namespace Tool
 		m_mapEditor = std::make_unique<MapEditor>();
 		m_dataHandler = std::make_unique<DataHandler>();
 
+		// Connect bullet registry to data handler for export
+		m_dataHandler->SetBulletRegistry(m_uiManager->GetBulletRegistry());
+
 
 		//m_uiManager->Initialize();
 

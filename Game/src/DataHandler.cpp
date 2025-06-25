@@ -1,6 +1,7 @@
 #include "DataHandler.h"
 #include "utilities/Logger.h"
 #include "MonsterModel.h"
+#include "BulletRegistry.h"
 #include <memory>
 #include <fstream>
 #include <unordered_set>
@@ -24,17 +25,21 @@ void Tool::DataHandler::GetBulletPropertiesFromMultipleBehavior(BehaviorMultiCon
 		}
 		else if (auto castedBehavior = dynamic_cast<BehaviorShootBarrageConfig*>(behavior.get()))
 		{
-			m_bullets.push_back(castedBehavior->bulletConfig);
+			if (!castedBehavior->bulletId.empty()) {
+				m_bulletIds.insert(castedBehavior->bulletId);
+			}
 		}
 		else if (auto castedBehavior = dynamic_cast<BehaviorShootProjectileConfig*>(behavior.get()))
 		{
-			m_bullets.push_back(castedBehavior->bulletConfig);
-
+			if (!castedBehavior->bulletId.empty()) {
+				m_bulletIds.insert(castedBehavior->bulletId);
+			}
 		}
 		else if (auto castedBehavior = dynamic_cast<BehaviorSpreadShotConfig*>(behavior.get()))
 		{
-			m_bullets.push_back(castedBehavior->bulletConfig);
-
+			if (!castedBehavior->bulletId.empty()) {
+				m_bulletIds.insert(castedBehavior->bulletId);
+			}
 		}
 	}
 }
@@ -86,34 +91,62 @@ void Tool::DataHandler::ExportAllToSingleJson(const std::vector<MonsterTypeDefin
 
 	rootJson["enemies"] = enemiesJson;
 
-	// Bullets section (from ExportToJson)
+	// Bullets section - Get actual bullet definitions for the IDs used in behaviors
 	nlohmann::json bulletsJson;
-	std::unordered_set<std::string> usedIDs;
-
-	for (const auto& bullet : m_bullets)
+	
+	for (const std::string& bulletId : m_bulletIds)
 	{
-		std::string bulletID = BulletConfig::GetBulletID(bullet);
-
-		// Skip duplicate bullets
-		if (usedIDs.find(bulletID) != usedIDs.end()) {
-			continue;
-		}
-		usedIDs.insert(bulletID);
-
+		if (bulletId.empty()) continue;
+		
 		nlohmann::json bulletJson;
-		bulletJson["ID"] = bulletID;
-		bulletJson["AssetID"] = bullet.validBulletIngame; // Default asset ID
-		bulletJson["MoveSpeed"] = bullet.speed;
-		bulletJson["Damage"] = bullet.damage;
-		bulletJson["AliveTime"] = bullet.aliveTime;
-		bulletJson["Elemental"] = "";
-		bulletJson["Bounce"] = bullet.bounce;
+		bulletJson["ID"] = bulletId;
+		
+		// Try to get bullet data from bullet registry if available
+		BulletDefinition* bulletDef = nullptr;
+		if (m_bulletRegistry) {
+			bulletDef = m_bulletRegistry->GetBulletType(bulletId);
+		}
+		
+		if (bulletDef) {
+			// Use actual bullet data from registry
+			bulletJson["AssetID"] = bulletDef->config.validBulletIngame;
+			bulletJson["MoveSpeed"] = bulletDef->config.speed;
+			bulletJson["Damage"] = bulletDef->config.damage;
+			bulletJson["AliveTime"] = bulletDef->config.aliveTime;
+			bulletJson["Elemental"] = "";
+			bulletJson["Bounce"] = bulletDef->config.bounce;
 
-		nlohmann::json moveBehavior;
-		moveBehavior["type"] = BulletTypeToString(bullet.bulletType);
-		bulletJson["MoveBehavior"] = moveBehavior;
+			nlohmann::json moveBehavior;
+			moveBehavior["type"] = BulletTypeToString(bulletDef->config.bulletType);
+			bulletJson["MoveBehavior"] = moveBehavior;
+		} else {
+			// Fallback to default values if bullet not found in registry
+			bulletJson["AssetID"] = "bullet_01";
+			bulletJson["MoveSpeed"] = 100;
+			bulletJson["Damage"] = 10;
+			bulletJson["AliveTime"] = 60;
+			bulletJson["Elemental"] = "";
+			bulletJson["Bounce"] = 0;
 
-		bulletsJson[bulletID] = bulletJson;
+			nlohmann::json moveBehavior;
+			// Try to determine bullet type from ID
+			if (bulletId.find("straight") != std::string::npos) {
+				moveBehavior["type"] = "Straight";
+			} else if (bulletId.find("parabol") != std::string::npos) {
+				moveBehavior["type"] = "Parabol";
+			} else if (bulletId.find("mortal") != std::string::npos) {
+				moveBehavior["type"] = "Mortal";
+			} else if (bulletId.find("boss") != std::string::npos) {
+				moveBehavior["type"] = "Boss";
+			} else {
+				moveBehavior["type"] = "Straight";
+			}
+			bulletJson["MoveBehavior"] = moveBehavior;
+			
+			LOG_INFO("Warning: Bullet definition not found for ID: " + bulletId + ", using defaults");
+		}
+
+		bulletsJson[bulletId] = bulletJson;
 	}
 
 	rootJson["bullets"] = bulletsJson;
@@ -311,7 +344,7 @@ void Tool::DataHandler::ImportFromSingleJson(System::GridSystem* gridSystem)
 
 void Tool::DataHandler::GetBulletsFromMonsters(const std::vector<MonsterTypeDefinition*>& monsterDefinitions)
 {
-	m_bullets.clear();
+	m_bulletIds.clear();
 	for (auto monsterDef : monsterDefinitions)
 	{
 		if (monsterDef) {

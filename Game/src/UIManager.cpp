@@ -2,6 +2,7 @@
 #include "core/EventSystem.h"
 #include "EventKey.h"
 #include "MonsterModel.h"
+#include "BulletRegistry.h"
 
 Tool::UI::UIManager::UIManager()
 {
@@ -12,18 +13,16 @@ void Tool::UI::UIManager::Initialize()
 {
 	M_UIMonsterPalette = std::make_unique<UIMonsterPalette>();
 	M_UIMonsterProperties = std::make_unique<UIMonsterProperties>();
+	M_UIBulletPalette = std::make_unique<UIBulletPalette>();
+	M_UIBulletProperties = std::make_unique<UIBulletProperties>();
 	M_UIWaveInformation = std::make_unique<UIWaveInformation>();
 
+	// Monster event subscriptions
 	Core::EventSystem::getInstance().subscribe(EventKeys::MonsterSelectedFromPalette,
 		[this](const Core::EventData& data) {
 			MonsterTypeDefinition pros = data.get<MonsterTypeDefinition>();
 			M_UIMonsterProperties->SetCurrentProperties(pros);
 			m_isShowMonsterProperty = true;
-		});
-	Core::EventSystem::getInstance().subscribe(EventKeys::SendMonsterData,
-		[this](const Core::EventData& data) {
-			std::vector<MonsterTypeDefinition> monsterData = data.get<std::vector<MonsterTypeDefinition>>();
-			M_UIMonsterPalette->ImportMonsterData(monsterData);
 		});
 	Core::EventSystem::getInstance().subscribe(EventKeys::SendMonsterData,
 		[this](const Core::EventData& data) {
@@ -42,6 +41,14 @@ void Tool::UI::UIManager::Initialize()
 				m_isShowToolTip = true;
 			}
 		});
+
+	// Bullet event subscriptions
+	Core::EventSystem::getInstance().subscribe(EventKeys::BulletSelectedFromPalette,
+		[this](const Core::EventData& data) {
+			BulletDefinition* bullet = data.get<BulletDefinition*>();
+			M_UIBulletProperties->SetCurrentBullet(bullet);
+			m_isShowBulletProperty = true;
+		});
 }
 
 void Tool::UI::UIManager::Render() {
@@ -53,6 +60,10 @@ void Tool::UI::UIManager::Render() {
 		{
 			if (ImGui::MenuItem("Monster Palette")) {
 				m_isShowMonsterPalette = true;
+			}
+
+			if (ImGui::MenuItem("Bullet Palette")) {
+				m_isShowBulletPalette = true;
 			}
 
 			if (ImGui::MenuItem("Wave Information")) {
@@ -92,7 +103,15 @@ void Tool::UI::UIManager::Render() {
 	}
 	if (m_isShowMonsterProperty)
 	{
-		M_UIMonsterProperties->ShowUIMonsterProperties(&m_isShowMonsterProperty);
+		M_UIMonsterProperties->ShowUIMonsterProperties(&m_isShowMonsterProperty, M_UIBulletPalette->GetBulletRegistry().GetBulletTypeNames());
+	}
+	if (m_isShowBulletPalette)
+	{
+		M_UIBulletPalette->ShowBulletPalette(&m_isShowBulletPalette);
+	}
+	if (m_isShowBulletProperty)
+	{
+		M_UIBulletProperties->ShowUIBulletProperties(&m_isShowBulletProperty);
 	}
 	if (m_isShowWaveInformation)
 	{

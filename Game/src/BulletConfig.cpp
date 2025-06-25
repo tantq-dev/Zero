@@ -1,4 +1,7 @@
 #include "MonsterModel.h"
+#include <string>
+#include <functional>
+
 std::string BulletConfig::GetBulletID(const BulletConfig& bulletConfig)
 {
 

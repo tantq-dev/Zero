@@ -63,6 +63,7 @@ enum class ConfigFieldType {
 	Combo,
 	Text,
 	Bullet,  // Special field type for bullet configuration
+	BulletID, // Special field type for bullet ID selection
 	None
 };
 
@@ -157,6 +158,16 @@ struct ConfigField {
 	ConfigField(const std::string& fieldName, BulletConfig* ptr,
 		std::function<bool(void*)> callback = nullptr)
 		: type(ConfigFieldType::Bullet), name(fieldName), valuePtr(ptr), onChange(callback) {
+	}
+
+	// Constructor for BulletID fields (dropdown selection)
+	ConfigField(const std::string& fieldName, std::string* ptr, ConfigFieldType fieldType,
+		std::function<bool(void*)> callback = nullptr)
+		: type(fieldType), name(fieldName), valuePtr(ptr), onChange(callback) {
+		// Only allow BulletID type for this constructor
+		if (fieldType != ConfigFieldType::BulletID) {
+			type = ConfigFieldType::Text;
+		}
 	}
 };
 
@@ -408,7 +419,7 @@ struct BehaviorShootBarrageConfig : public BehaviorConfigBase<BehaviorShootBarra
 	int coolDown = 10000;
 	int numOfBullet = 10000;
 	int spreadAngle = 10000;
-	BulletConfig bulletConfig;
+	std::string bulletId = "";
 
 	BehaviorShootBarrageConfig() {
 		behaviorType = BehaviorTypeToString(BehaviorType::ShootBarrage);
@@ -419,7 +430,7 @@ struct BehaviorShootBarrageConfig : public BehaviorConfigBase<BehaviorShootBarra
 		copy->coolDown = this->coolDown;
 		copy->numOfBullet = this->numOfBullet;
 		copy->spreadAngle = this->spreadAngle;
-		copy->bulletConfig = this->bulletConfig;
+		copy->bulletId = this->bulletId;
 		return copy;
 	}
 
@@ -428,12 +439,12 @@ struct BehaviorShootBarrageConfig : public BehaviorConfigBase<BehaviorShootBarra
 		nlohmann::json behaviorJson;
 		behaviorJson["cooldown"] = coolDown; // Convert to float
 
-		// Bullet ID from bullet config or generate a placeholder
-		std::string bulletId = BulletConfig::GetBulletID(bulletConfig);
-		if (bulletId.empty()) {
-			bulletId = "bullet_straight_01"; // Default bullet ID
+		// Use the bullet ID directly
+		if (!bulletId.empty()) {
+			behaviorJson["bulletID"] = bulletId;
+		} else {
+			behaviorJson["bulletID"] = "bullet_straight_01"; // Default bullet ID
 		}
-		behaviorJson["bulletID"] = bulletId;
 		behaviorJson["enemyID"] = monsterId;
 		behaviorJson["bulletCount"] = numOfBullet;
 		behaviorJson["spreadAngle"] = spreadAngle;
@@ -454,13 +465,9 @@ struct BehaviorShootBarrageConfig : public BehaviorConfigBase<BehaviorShootBarra
 			spreadAngle = json["spreadAngle"];
 		}
 
-		// Set bullet config if a matching bullet ID exists
+		// Store bullet ID directly
 		if (json.contains("bulletID")) {
-			std::string bulletId = json["bulletID"];
-			auto it = bulletConfigs.find(bulletId);
-			if (it != bulletConfigs.end()) {
-				bulletConfig = it->second;
-			}
+			bulletId = json["bulletID"];
 		}
 
 		return true;
@@ -472,7 +479,7 @@ struct BehaviorShootBarrageConfig : public BehaviorConfigBase<BehaviorShootBarra
 			ConfigField("CoolDown", &nonConstThis->coolDown),
 			ConfigField("NumOfBullet", &nonConstThis->numOfBullet),
 			ConfigField("SpreadAngle", &nonConstThis->spreadAngle),
-			ConfigField("Bullet Config", &nonConstThis->bulletConfig)
+			ConfigField("Bullet ID", &nonConstThis->bulletId, ConfigFieldType::BulletID)
 		};
 	}
 };
@@ -480,7 +487,7 @@ struct BehaviorShootBarrageConfig : public BehaviorConfigBase<BehaviorShootBarra
 // BehaviorShootProjectileConfig
 struct BehaviorShootProjectileConfig : public BehaviorConfigBase<BehaviorShootProjectileConfig> {
 	int coolDown = 10000;
-	BulletConfig bulletConfig;
+	std::string bulletId = "";
 
 	BehaviorShootProjectileConfig() {
 		behaviorType = BehaviorTypeToString(BehaviorType::ShootProjectile);
@@ -489,7 +496,7 @@ struct BehaviorShootProjectileConfig : public BehaviorConfigBase<BehaviorShootPr
 	std::unique_ptr<BehaviorConfig> clone() const override {
 		auto copy = std::make_unique<BehaviorShootProjectileConfig>();
 		copy->coolDown = this->coolDown;
-		copy->bulletConfig = this->bulletConfig;
+		copy->bulletId = this->bulletId;
 		return copy;
 	}
 
@@ -498,12 +505,12 @@ struct BehaviorShootProjectileConfig : public BehaviorConfigBase<BehaviorShootPr
 		nlohmann::json behaviorJson;
 		behaviorJson["cooldown"] = coolDown; // Convert to float
 
-		// Bullet ID from bullet config or generate a placeholder
-		std::string bulletId = BulletConfig::GetBulletID(bulletConfig);
-		if (bulletId.empty()) {
-			bulletId = "bullet_straight_01"; // Default bullet ID
+		// Use the bullet ID directly
+		if (!bulletId.empty()) {
+			behaviorJson["bulletID"] = bulletId;
+		} else {
+			behaviorJson["bulletID"] = "bullet_straight_01"; // Default bullet ID
 		}
-		behaviorJson["bulletID"] = bulletId;
 		behaviorJson["enemyID"] = monsterId;
 
 		return behaviorJson;
@@ -516,13 +523,9 @@ struct BehaviorShootProjectileConfig : public BehaviorConfigBase<BehaviorShootPr
 			coolDown = static_cast<int>(cooldown);
 		}
 
-		// Set bullet config if a matching bullet ID exists
+		// Store bullet ID directly
 		if (json.contains("bulletID")) {
-			std::string bulletId = json["bulletID"];
-			auto it = bulletConfigs.find(bulletId);
-			if (it != bulletConfigs.end()) {
-				bulletConfig = it->second;
-			}
+			bulletId = json["bulletID"];
 		}
 
 		return true;
@@ -532,7 +535,7 @@ struct BehaviorShootProjectileConfig : public BehaviorConfigBase<BehaviorShootPr
 		auto* nonConstThis = const_cast<BehaviorShootProjectileConfig*>(this);
 		return {
 			ConfigField("CoolDown", &nonConstThis->coolDown),
-			ConfigField("Bullet Config", &nonConstThis->bulletConfig)
+			ConfigField("Bullet ID", &nonConstThis->bulletId, ConfigFieldType::BulletID)
 		};
 	}
 };
@@ -570,7 +573,7 @@ struct BehaviorSpreadShotConfig : public BehaviorConfigBase<BehaviorSpreadShotCo
 	int coolDown = 10000;
 	int numOfBullet = 10000;
 	int spreadAngle = 10000;
-	BulletConfig bulletConfig;
+	std::string bulletId = "";
 
 	BehaviorSpreadShotConfig() {
 		behaviorType = BehaviorTypeToString(BehaviorType::SpreadShot);
@@ -581,7 +584,7 @@ struct BehaviorSpreadShotConfig : public BehaviorConfigBase<BehaviorSpreadShotCo
 		copy->coolDown = this->coolDown;
 		copy->numOfBullet = this->numOfBullet;
 		copy->spreadAngle = this->spreadAngle;
-		copy->bulletConfig = this->bulletConfig;
+		copy->bulletId = this->bulletId;
 		return copy;
 	}
 
@@ -589,12 +592,12 @@ struct BehaviorSpreadShotConfig : public BehaviorConfigBase<BehaviorSpreadShotCo
 		nlohmann::json behaviorJson;
 		behaviorJson["cooldown"] = coolDown; // Convert to float
 
-		// Bullet ID from bullet config or generate a placeholder
-		std::string bulletId = BulletConfig::GetBulletID(bulletConfig);
-		if (bulletId.empty()) {
-			bulletId = "bullet_straight_01"; // Default bullet ID
+		// Use the bullet ID directly
+		if (!bulletId.empty()) {
+			behaviorJson["bulletID"] = bulletId;
+		} else {
+			behaviorJson["bulletID"] = "bullet_straight_01"; // Default bullet ID
 		}
-		behaviorJson["bulletID"] = bulletId;
 		behaviorJson["enemyID"] = monsterId;
 		behaviorJson["bulletCount"] = numOfBullet;
 		behaviorJson["spreadAngle"] = spreadAngle;
@@ -615,13 +618,9 @@ struct BehaviorSpreadShotConfig : public BehaviorConfigBase<BehaviorSpreadShotCo
 			spreadAngle = json["spreadAngle"];
 		}
 
-		// Set bullet config if a matching bullet ID exists
+		// Store bullet ID directly
 		if (json.contains("bulletID")) {
-			std::string bulletId = json["bulletID"];
-			auto it = bulletConfigs.find(bulletId);
-			if (it != bulletConfigs.end()) {
-				bulletConfig = it->second;
-			}
+			bulletId = json["bulletID"];
 		}
 		return true;
 	}
@@ -632,7 +631,7 @@ struct BehaviorSpreadShotConfig : public BehaviorConfigBase<BehaviorSpreadShotCo
 			ConfigField("CoolDown", &nonConstThis->coolDown),
 			ConfigField("NumOfBullet", &nonConstThis->numOfBullet),
 			ConfigField("SpreadAngle", &nonConstThis->spreadAngle),
-			ConfigField("Bullet Config", &nonConstThis->bulletConfig)
+			ConfigField("Bullet ID", &nonConstThis->bulletId, ConfigFieldType::BulletID)
 		};
 	}
 };
