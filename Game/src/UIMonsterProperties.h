@@ -76,16 +76,7 @@ namespace Tool {
 		class UIMonsterProperties {
 		private:
 			std::unique_ptr<BehaviorNode> m_pRootNode;
-			const char* availableItems[8] = {
-				"BehaviorChase",
-				"BehaviorDistanceConditionHelper",
-				"BehaviorMovementBounce",
-				"BehaviorShootBarrage",
-				"BehaviorShootProjectile",
-				"BehaviorShootStrategyBase",
-				"BehaviorSpreadShot",
-				"BehaviorMultiConfig"
-			};
+			std::vector<BehaviorType> availableBehavior = GetAvailableBehaviorTypes();
 			int currentSelection = 0;
 			int m_nextNodeId = 0;  // For generating unique node IDs
 
@@ -95,7 +86,10 @@ namespace Tool {
 			int m_activeDropdownNodeId = -1;  // Replace m_showBehaviorDropdown with this
 			void ShowBehaviorDropdown(BehaviorNode& node);
 
-			std::unique_ptr<BehaviorConfig> CreateBehaviorConfig(const std::string& behaviorType);
+			// Generic rendering method
+			bool RenderConfigFields(const std::vector<ConfigField>& fields);
+			bool RenderBulletConfigFields(BulletConfig* bulletConfig);
+			std::vector<const char*> GetAvailableBullets() const;
 
 		public:
 			UIMonsterProperties();
@@ -107,7 +101,7 @@ namespace Tool {
 
 		private:
 			// Node creation and management
-			std::unique_ptr<BehaviorNode> CreateBehaviorNode(const std::string& behaviorName);
+			std::unique_ptr<BehaviorNode> CreateBehaviorNode(const BehaviorType type);
 			bool m_showBehaviorDropdown = false;
 			void InitializeRootNode();
 			int GetNextNodeId() { return ++m_nextNodeId; }
@@ -115,12 +109,9 @@ namespace Tool {
 			// Rendering methods
 			void BehaviorMultipleConfig();
 			void RenderBehaviorPanels(BehaviorNode& parentNode);
-			void AddBehaviorToNode(BehaviorNode& parent, const std::string& behaviorName);
+			void AddBehaviorToNode(BehaviorNode& parent, const BehaviorType type);
 			void ShowBehaviorConfiguration(BehaviorNode& node);
 
-			// Configuration UI methods
-			void BehaviorChaseConfigUI(BehaviorNode& node);
-			void BehaviorShootProjectileConfigUI(BehaviorNode& node);
 
 			// Data conversion methods
 			void ConvertFromMonsterProperties(const MonsterTypeDefinition& properties);
