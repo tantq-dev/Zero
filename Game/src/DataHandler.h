@@ -24,7 +24,6 @@ namespace Tool {
 		void ImportAllData(System::GridSystem* gridSystem);
 		void ImportFromSingleJson(System::GridSystem* gridSystem);
 		void SetBulletRegistry( BulletRegistry* bulletRegistry) { m_bulletRegistry = bulletRegistry; }
-		const std::unordered_map<std::string, BulletConfig>& GetImportedBulletConfigs() const { return m_importedBulletConfigs; }
 	private:
 		void GetBulletsFromMonsters(const std::vector<MonsterTypeDefinition*>& monsterDefinitions);
 		void ImportBulletsFromJson(const nlohmann::json& bulletsJson);

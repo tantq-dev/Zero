@@ -100,10 +100,10 @@ inline std::string BulletTypeToString(BulletType type) {
 }
 
 inline BulletType StringToBulletType(const std::string& str) {
-	if (str == "Bullet_Straight") return BulletType::Straight;
-	if (str == "Bullet_Parabol") return BulletType::Parabol;
-	if (str == "Bullet_Mortal")  return BulletType::Mortal;
-	if (str == "Bullet_Boss")    return BulletType::Boss;
+	if (str.find("Straight") != std::string::npos) return BulletType::Straight;
+	if (str.find("Parabol") != std::string::npos) return BulletType::Parabol;
+	if (str.find("Mortal") != std::string::npos) return BulletType::Mortal;
+	if (str.find("Boss") != std::string::npos) return BulletType::Boss;
 	return BulletType::COUNT;
 }
 
@@ -146,7 +146,7 @@ static std::unordered_map<std::string, const char*> BulletTextureMap = {
 
 struct SpawnerBulletConfig;
 struct BulletConfig {
-	std::string name = "";  // Display name for the bullet
+	int ID = 0;
 	BulletType bulletType = BulletType::Parabol;
 	std::string validBulletIngame = BulletTextureMap.begin()->first;
 	int speed = 0;
@@ -159,7 +159,7 @@ struct BulletConfig {
 	BulletConfig() = default;
 	BulletConfig(const BulletConfig& bulletConfig);
 	BulletConfig& operator=(const BulletConfig&);
-	BulletConfig clone();
+	static std::string GetBulletID(const BulletConfig& bulletConfig);
 
 };
 
@@ -345,7 +345,7 @@ public:
 struct SpawnerBulletConfig : public BehaviorConfigBase<SpawnerBulletConfig> {
 	std::string bulletId = "";
 	SpawnerType spawnerType;
-	int timeActivate = 10000;
+	float timeActivate = 10000;
 	int numOfBullet = 10000;
 	int spreadAngle = 0;
 
@@ -373,7 +373,7 @@ struct SpawnerBulletConfig : public BehaviorConfigBase<SpawnerBulletConfig> {
 			behaviorJson["bulletID"] = bulletId;
 		}
 		else {
-			behaviorJson["bulletID"] = "bullet_straight_01"; // Default bullet ID
+			behaviorJson["bulletID"] = "0"; // Default bullet ID
 		}
 		return behaviorJson;
 	}
@@ -381,7 +381,7 @@ struct SpawnerBulletConfig : public BehaviorConfigBase<SpawnerBulletConfig> {
 	bool DeserializeSpecific(const nlohmann::json& json, const std::string& monsterId) override {
 		if (json.contains("timeActivate")) {
 			float timeActivateKey = json["timeActivate"];
-			timeActivate = static_cast<int>(timeActivateKey);
+			timeActivate = static_cast<float>(timeActivateKey);
 		}
 		// Store bullet ID directly
 		if (json.contains("bulletID")) {
@@ -613,7 +613,7 @@ struct BehaviorShootProjectileConfig : public BehaviorConfigBase<BehaviorShootPr
 		if (!bulletId.empty()) {
 			behaviorJson["bulletID"] = bulletId;
 		} else {
-			behaviorJson["bulletID"] = "bullet_straight_01"; // Default bullet ID
+			behaviorJson["bulletID"] = "0"; // Default bullet ID
 		}
 		behaviorJson["enemyID"] = monsterId;
 

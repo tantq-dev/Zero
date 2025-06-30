@@ -8,17 +8,13 @@
 
 Tool::UI::UIBulletProperties::UIBulletProperties()
 {
-	Core::EventSystem::getInstance().subscribe(EventKeys::BulletCreated,
-		[this](const Core::EventData& data) {
-			m_currentBulletIDs = data.get<std::vector<std::string>>();
-		});
 }
 
 Tool::UI::UIBulletProperties::~UIBulletProperties()
 {
 }
 
-void Tool::UI::UIBulletProperties::ShowUIBulletProperties(bool* p_open)
+void Tool::UI::UIBulletProperties::ShowUIBulletProperties(bool* p_open, std::vector<std::string> currentBulletIDs)
 {
 	if (p_open) {
 		bool window_contents_visible = ImGui::Begin("Bullet Properties", p_open, ImGuiWindowFlags_MenuBar);
@@ -56,7 +52,7 @@ void Tool::UI::UIBulletProperties::ShowUIBulletProperties(bool* p_open)
 			// Bullet configuration
 			ImGui::Text("Bullet Configuration:");
 			if (ImGui::TreeNode("Config")) {
-				if (RenderBulletConfigFields(&m_pCurrentBullet->config)) {
+				if (RenderBulletConfigFields(&m_pCurrentBullet->config, currentBulletIDs)) {
 					dataChanged = true;
 				}
 				ImGui::TreePop();
@@ -93,28 +89,32 @@ void Tool::UI::UIBulletProperties::SaveCurrentBullet()
 	}
 }
 
-bool Tool::UI::UIBulletProperties::RenderBulletSpawnerConfigField(SpawnerBulletConfig* bulletSpawnerConfig)
+bool Tool::UI::UIBulletProperties::RenderBulletSpawnerConfigField(SpawnerBulletConfig* bulletSpawnerConfig, std::vector<std::string> currentBulletIDs)
 {
 	bool changed = false;
 
-
-	// Get available bullets
-
-	std::vector<const char*> validBulletsIngame = GetCurrentBulletConfigs();
+	// Get available bullets from the bullet registry
+	std::vector<std::string> availableBullets = currentBulletIDs;
+	std::vector<const char*> bulletOptions;
+	for (const auto& bullet : availableBullets) {
+		bulletOptions.push_back(bullet.c_str());
+	}
 
 	// Find current bullet index
 	int currentBulletIndex = 0;
-	for (int i = 0; i < validBulletsIngame.size(); i++) {
-		if (bulletSpawnerConfig->bulletId == validBulletsIngame[i]) {
+	for (int i = 0; i < availableBullets.size(); i++) {
+		if (bulletSpawnerConfig->bulletId == availableBullets[i]) {
 			currentBulletIndex = i;
 			break;
 		}
 	}
 
 	// Bullet type dropdown
-	if (ImGui::Combo("Valid Bullet ", &currentBulletIndex, validBulletsIngame.data(), static_cast<int>(validBulletsIngame.size()))) {
-		bulletSpawnerConfig->bulletId = validBulletsIngame[currentBulletIndex];
-		changed = true;
+	if (ImGui::Combo("Valid Bullet ", &currentBulletIndex, bulletOptions.data(), static_cast<int>(bulletOptions.size()))) {
+		if (currentBulletIndex < availableBullets.size()) {
+			bulletSpawnerConfig->bulletId = availableBullets[currentBulletIndex];
+			changed = true;
+		}
 	}
 
 
@@ -133,7 +133,7 @@ bool Tool::UI::UIBulletProperties::RenderBulletSpawnerConfigField(SpawnerBulletC
 		changed = true;
 	}
 
-	if (ImGui::InputInt("Time Activate", &bulletSpawnerConfig->timeActivate)) {
+	if (ImGui::InputFloat("Time Activate", &bulletSpawnerConfig->timeActivate)) {
 		changed = true;
 	}
 
@@ -148,13 +148,12 @@ bool Tool::UI::UIBulletProperties::RenderBulletSpawnerConfigField(SpawnerBulletC
 	return changed;
 }
 
-bool Tool::UI::UIBulletProperties::RenderBulletConfigFields(BulletConfig* bulletConfig)
+bool Tool::UI::UIBulletProperties::RenderBulletConfigFields(BulletConfig* bulletConfig, std::vector<std::string> currentBulletIDs)
 {
 	bool changed = false;
 
-
 	// Get available bullets
-	std::vector<const char*> validBulletsIngame = GetValidBullet();
+	std::vector<const char*> validBulletsIngame = GetAvailableBulletConfig();
 
 	// Find current bullet index
 	int currentBulletIndex = 0;
@@ -214,28 +213,24 @@ bool Tool::UI::UIBulletProperties::RenderBulletConfigFields(BulletConfig* bullet
 	}
 
 	if (bulletConfig->spawnerBullet) {
-		RenderBulletSpawnerConfigField(&*bulletConfig->spawnerBullet);
+		RenderBulletSpawnerConfigField(&*bulletConfig->spawnerBullet, currentBulletIDs);
 	}
 
 	return changed;
 }
 
-std::vector<const char*> Tool::UI::UIBulletProperties::GetCurrentBulletConfigs() const
+//std::vector<const int> Tool::UI::UIBulletProperties::GetAvailableBulletIDs() const
+//{
+//	
+//
+//	return a;
+//}
+
+std::vector<const char*> Tool::UI::UIBulletProperties::GetAvailableBulletConfig() const
 {
 	std::vector<const char*> validBulletsIngame;
 
-	for (auto& bulletID : m_currentBulletIDs) {
-		validBulletsIngame.push_back(bulletID.c_str());
-	}
-
-	return validBulletsIngame;
-}
-
-std::vector<const char*> Tool::UI::UIBulletProperties::GetValidBullet() const
-{
-	std::vector<const char*> validBulletsIngame;
-
-	for (auto& [name,texture] : BulletTextureMap) {
+	for (auto& [name, texture] : BulletTextureMap) {
 		validBulletsIngame.push_back(name.c_str());
 	}
 

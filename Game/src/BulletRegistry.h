@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <unordered_map>
 #include <string>
 #include <memory>
@@ -30,7 +30,8 @@ public:
     const std::unordered_map<std::string, std::unique_ptr<BulletDefinition>>& GetBulletTypeMap() const;
     void UpdateBulletConfig(const std::string& id, const BulletConfig& config);
     int GetNextBulletId();
+    int GetCurrentBulletID() const;
     std::vector<BulletDefinition*> GetAllBulletTypes();
     void RegisterBulletTypeFromData(const std::vector<BulletDefinition>& data);
-    std::vector<std::string> GetBulletTypeIds();
+    std::vector<std::string> GetBulletTypeNames();
 };

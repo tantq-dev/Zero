@@ -14,21 +14,20 @@ namespace Tool {
             UIBulletProperties();
             ~UIBulletProperties();
             
-            void ShowUIBulletProperties(bool* p_open);
+            void ShowUIBulletProperties(bool* p_open, std::vector<std::string> currentBulletIDs);
             void SetCurrentBullet(BulletDefinition* bullet);
             
         private:
             BulletDefinition* m_pCurrentBullet = nullptr;
             bool m_hasValidSelection = false;
-            std::vector<std::string> m_currentBulletIDs;
+            
             // UI state
             bool m_dataChanged = false;
             
             void SaveCurrentBullet();
-            bool RenderBulletConfigFields(BulletConfig* bulletConfig);
-            bool RenderBulletSpawnerConfigField(SpawnerBulletConfig* bulletSpawnerConfig);
-            std::vector<const char*> GetCurrentBulletConfigs() const;
-            std::vector<const char*> GetValidBullet() const;
+            bool RenderBulletConfigFields(BulletConfig* bulletConfig, std::vector<std::string> currentBulletIDs);
+            bool RenderBulletSpawnerConfigField(SpawnerBulletConfig* bulletSpawnerConfig, std::vector<std::string> currentBulletIDs);
+            std::vector<const char*> GetAvailableBulletConfig() const;
         };
     }
 }

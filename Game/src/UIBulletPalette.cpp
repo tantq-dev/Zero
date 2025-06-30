@@ -1,4 +1,4 @@
-#include "UIBulletPalette.h"
+﻿#include "UIBulletPalette.h"
 #include <imgui.h>
 #include "utilities/Logger.h"
 #include "EventKey.h"
@@ -139,7 +139,7 @@ void Tool::UI::UIBulletPalette::ShowAddBulletPopup()
                 config.aliveTime = m_bulletAliveTime;
                 config.bounce = m_bulletBounce;
                 config.validBulletIngame = m_selectedValidBullet;
-                
+                config.ID = m_bulletRegistry.GetCurrentBulletID();
                 // Add to registry
                 AddItem(m_selectedValidBullet, m_newBulletName, m_selectedTextureName, config);
                 
