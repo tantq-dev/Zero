@@ -1,7 +1,7 @@
 #pragma once
 namespace ApplicationConfig
 {
-	constexpr auto APP_NAME = "Zero";
+	constexpr auto APP_NAME = "Zer1";
 	constexpr auto APP_VERSION = "1.0.0";
 	constexpr auto APP_AUTHOR = "QT";
 

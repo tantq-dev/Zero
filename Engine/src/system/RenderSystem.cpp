@@ -4,12 +4,12 @@ namespace System
 {
 	void RenderSystem::RenderAnimation(entt::registry& registry, SDL_Renderer& renderer)
 	{
-		const auto view = registry.group<>(entt::get<Components::Transform, Components::Animator>);
+		const auto view = registry.group<>(entt::get<Components::Transform2D, Components::Animator>);
 
 		const SDL_FRect* srcRect = nullptr;
 		for (const auto entity : view)
 		{
-			const auto& transform = view.get<Components::Transform>(entity);
+			const auto& transform = view.get<Components::Transform2D>(entity);
 
 			if (registry.all_of<Components::Animator>(entity))
 			{
@@ -37,11 +37,11 @@ namespace System
 
 	void RenderSystem::RenderSprite(entt::registry& registry, SDL_Renderer& renderer, System::CameraSystem& cam)
 	{
-		const auto view = registry.group<>(entt::get<Components::Transform, Components::Sprite>);
+		const auto view = registry.group<>(entt::get<Components::Transform2D, Components::Sprite>);
 
 		for (const auto entity : view)
 		{
-			const auto& transform = view.get<Components::Transform>(entity);
+			const auto& transform = view.get<Components::Transform2D>(entity);
 
 			if (registry.all_of<Components::Sprite>(entity))
 			{
