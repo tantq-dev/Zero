@@ -32,5 +32,5 @@ public:
     int GetNextBulletId();
     std::vector<BulletDefinition*> GetAllBulletTypes();
     void RegisterBulletTypeFromData(const std::vector<BulletDefinition>& data);
-    std::vector<std::string> GetBulletTypeNames();
+    std::vector<std::string> GetBulletTypeIds();
 };

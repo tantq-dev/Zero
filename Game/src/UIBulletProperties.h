@@ -20,13 +20,15 @@ namespace Tool {
         private:
             BulletDefinition* m_pCurrentBullet = nullptr;
             bool m_hasValidSelection = false;
-            
+            std::vector<std::string> m_currentBulletIDs;
             // UI state
             bool m_dataChanged = false;
             
             void SaveCurrentBullet();
             bool RenderBulletConfigFields(BulletConfig* bulletConfig);
-            std::vector<const char*> GetAvailableBullets() const;
+            bool RenderBulletSpawnerConfigField(SpawnerBulletConfig* bulletSpawnerConfig);
+            std::vector<const char*> GetCurrentBulletConfigs() const;
+            std::vector<const char*> GetValidBullet() const;
         };
     }
 }

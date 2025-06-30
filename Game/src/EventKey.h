@@ -34,6 +34,8 @@ namespace Tool {
 
 		static constexpr std::string_view ImportJson = "import";
 		static constexpr std::string_view SendMonsterData = "send_monster_data";
+		static constexpr std::string_view SendBulletData = "send_bullet_data";
+
 		static constexpr std::string_view ImportMonsterWaveData = "import_monster_wave_data";
 		static constexpr std::string_view ImportWaveStructure = "import_wave_structure";
 

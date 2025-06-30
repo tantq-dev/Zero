@@ -1,22 +1,63 @@
 #include "MonsterModel.h"
 #include <string>
 #include <functional>
+#include "utilities/Logger.h"  
 
-std::string BulletConfig::GetBulletID(const BulletConfig& bulletConfig)
+BulletConfig::BulletConfig(const BulletConfig& bulletConfig)
 {
+	this->name = bulletConfig.name;
+	this->speed = bulletConfig.speed;
+	this->aliveTime = bulletConfig.aliveTime;
+	this->bulletType = bulletConfig.bulletType;
+	this->validBulletIngame = bulletConfig.validBulletIngame;
+	this->damage = bulletConfig.damage;
+	this->bounce = bulletConfig.bounce;
+	if (bulletConfig.spawnerBullet)
+		this->spawnerBullet = std::make_unique<SpawnerBulletConfig>(*bulletConfig.spawnerBullet);
+	else
+		this->spawnerBullet = nullptr;
+}
 
-	// If no ID specified, generate one based on the bullet properties
-	// This ensures the same bullet config gets the same ID across exports
-	std::string properties =
-		std::to_string(static_cast<int>(bulletConfig.bulletType)) + "_" +
-		std::to_string(bulletConfig.speed) + "_" +
-		std::to_string(bulletConfig.damage) + "_" +
-		std::to_string(bulletConfig.aliveTime) + "_" +
-		std::to_string(bulletConfig.bounce);
+BulletConfig& BulletConfig::operator=(const BulletConfig& bulletConfig)
+{
+	// Debug: Log what we're receiving
+    LOG_INFO("Assignment operator called:");
+    LOG_INFO("  Source Name: '" + bulletConfig.name + "'");
+    LOG_INFO("  Source Speed: " + std::to_string(bulletConfig.speed));
+    LOG_INFO("  Source AliveTime: " + std::to_string(bulletConfig.aliveTime));
+    LOG_INFO("  Source Damage: " + std::to_string(bulletConfig.damage));
+    
+    // Check for self-assignment
+    if (this == &bulletConfig) {
+        return *this;
+    }
+    
+    // Assign to THIS object
+    this->name = bulletConfig.name;
+    this->speed = bulletConfig.speed;
+    this->aliveTime = bulletConfig.aliveTime;
+    this->bulletType = bulletConfig.bulletType;
+    this->validBulletIngame = bulletConfig.validBulletIngame;
+    this->damage = bulletConfig.damage;
+    this->bounce = bulletConfig.bounce;
+    
+    if (bulletConfig.spawnerBullet)
+        this->spawnerBullet = std::make_unique<SpawnerBulletConfig>(*bulletConfig.spawnerBullet);
+    else
+        this->spawnerBullet = nullptr;
+    
+    // Debug: Log what we assigned
+    LOG_INFO("After assignment:");
+    LOG_INFO("  This Name: '" + this->name + "'");
+    LOG_INFO("  This Speed: " + std::to_string(this->speed));
+    LOG_INFO("  This AliveTime: " + std::to_string(this->aliveTime));
+    LOG_INFO("  This Damage: " + std::to_string(this->damage));
+    
+    return *this;
+}
 
-	// Generate a hash of the properties to create a consistent ID
-	size_t hash = std::hash<std::string>{}(properties);
 
-	// Create a bullet ID format that matches the example
-	return "bullet_" + BulletTypeToString(bulletConfig.bulletType) + "_" + std::to_string(hash % 1000);
+BulletConfig BulletConfig::clone()
+{
+	return BulletConfig();
 }

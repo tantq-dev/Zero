@@ -3,6 +3,8 @@
 #include "EventKey.h"
 #include "MonsterModel.h"
 #include "BulletRegistry.h"
+#include "utilities/Logger.h"
+#include "DataHandler.h"
 
 Tool::UI::UIManager::UIManager()
 {
@@ -49,6 +51,51 @@ void Tool::UI::UIManager::Initialize()
 			M_UIBulletProperties->SetCurrentBullet(bullet);
 			m_isShowBulletProperty = true;
 		});
+
+	Core::EventSystem::getInstance().subscribe(EventKeys::SendBulletData,
+		[this](const Core::EventData& data) {
+			// Import bullets directly from DataHandler instead of using event data
+			ImportBulletsFromDataHandler();
+		});
+}
+
+void Tool::UI::UIManager::SetBulletConfig(std::vector<BulletDefinition> data) {
+	M_UIBulletPalette->ImportBulletData(data);
+}
+
+void Tool::UI::UIManager::ImportBulletsFromDataHandler() {
+	if (!m_dataHandler) {
+		LOG_ERROR("UIManager: DataHandler not set, cannot import bullets");
+		return;
+	}
+
+	try {
+		// Get imported bullet configs directly from DataHandler
+		const auto& bulletConfigs = m_dataHandler->GetImportedBulletConfigs();
+		
+		if (bulletConfigs.empty()) {
+			LOG_INFO("UIManager: No bullets to import from DataHandler");
+			return;
+		}
+
+		// Convert to BulletDefinition vector for the palette
+		std::vector<BulletDefinition> bulletDefinitions;
+		for (const auto& [bulletId, bulletConfig] : bulletConfigs) {
+			BulletDefinition bulletDef;
+			bulletDef.config = bulletConfig;
+			bulletDef.name = bulletConfig.name.empty() ? bulletId : bulletConfig.name;
+			bulletDef.textureName = bulletConfig.validBulletIngame;
+			bulletDef.id = std::stoi(bulletId);
+			bulletDefinitions.push_back(bulletDef);
+		}
+		
+		// Import into bullet palette (this will update the UI)
+		M_UIBulletPalette->ImportBulletData(bulletDefinitions);
+		LOG_INFO("UIManager: Successfully updated bullet palette with " + std::to_string(bulletDefinitions.size()) + " imported bullets");
+		
+	} catch (const std::exception& e) {
+		LOG_ERROR("UIManager: Error importing bullets from DataHandler: " + std::string(e.what()));
+	}
 }
 
 void Tool::UI::UIManager::Render() {
@@ -103,7 +150,7 @@ void Tool::UI::UIManager::Render() {
 	}
 	if (m_isShowMonsterProperty)
 	{
-		M_UIMonsterProperties->ShowUIMonsterProperties(&m_isShowMonsterProperty, M_UIBulletPalette->GetBulletRegistry().GetBulletTypeNames());
+		M_UIMonsterProperties->ShowUIMonsterProperties(&m_isShowMonsterProperty, M_UIBulletPalette->GetBulletRegistry().GetBulletTypeIds());
 	}
 	if (m_isShowBulletPalette)
 	{

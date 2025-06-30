@@ -340,6 +340,9 @@ bool Tool::UI::UIMonsterProperties::RenderConfigFields(const std::vector<ConfigF
 				}
 			}
 
+			*bulletId = availableBullets[currentBulletIndex];
+			changed = true;
+
 			if (ImGui::Combo(field.name.c_str(), &currentBulletIndex, bulletOptions.data(), static_cast<int>(bulletOptions.size()))) {
 				if (currentBulletIndex < availableBullets.size()) {
 					*bulletId = availableBullets[currentBulletIndex];

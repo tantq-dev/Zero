@@ -205,7 +205,6 @@ void Tool::UI::UIMonsterPalette::ImportMonsterData(std::vector<MonsterTypeDefini
 {
 	m_monsterTypeRegistry.RegisterMonsterTypeFromData(data);
 	UpdateCache();
-
 }
 
 void Tool::UI::UIMonsterPalette::ShowAddMonsterPopup()

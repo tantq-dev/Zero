@@ -45,15 +45,16 @@ void Tool::DataHandler::GetBulletPropertiesFromMultipleBehavior(BehaviorMultiCon
 }
 
 
-void Tool::DataHandler::ExportAllToSingleJson(const std::vector<MonsterTypeDefinition*>& monsterDefinitions, std::vector<MonsterWave*> waveInformations, entt::registry& registry, const std::string& mapId, const std::string& mapName)
+void Tool::DataHandler::ExportAllToSingleJson(const std::vector<MonsterTypeDefinition*>& monsterDefinitions, std::vector<MonsterWave*> waveInformations, entt::registry& registry, BulletRegistry& bulletRegistry,const std::string& mapId, const std::string& mapName)
 {
 	m_registry = &registry; // Store the registry pointer
 	LOG_INFO("Exporting all data to JSON file");
 
 	nlohmann::json rootJson;
 
-	// Process bullets
-	GetBulletsFromMonsters(monsterDefinitions);
+	//// Process bullets
+	//GetBulletsFromMonsters(monsterDefinitions);
+	m_bulletRegistry = &bulletRegistry;
 
 	// Enemies section (from ExportMonsterToJson)
 	nlohmann::json enemiesJson;
@@ -93,34 +94,33 @@ void Tool::DataHandler::ExportAllToSingleJson(const std::vector<MonsterTypeDefin
 
 	// Bullets section - Get actual bullet definitions for the IDs used in behaviors
 	nlohmann::json bulletsJson;
-	
-	for (const std::string& bulletId : m_bulletIds)
+	for (auto& bulletDef : m_bulletRegistry->GetBulletTypeMap())
 	{
-		if (bulletId.empty()) continue;
-		
 		nlohmann::json bulletJson;
-		bulletJson["ID"] = bulletId;
+		bulletJson["ID"] = bulletDef.first;  // Bullet ID
 		
-		// Try to get bullet data from bullet registry if available
-		BulletDefinition* bulletDef = nullptr;
-		if (m_bulletRegistry) {
-			bulletDef = m_bulletRegistry->GetBulletType(bulletId);
-		}
-		
-		if (bulletDef) {
-			// Use actual bullet data from registry
-			bulletJson["AssetID"] = bulletDef->config.validBulletIngame;
-			bulletJson["MoveSpeed"] = bulletDef->config.speed;
-			bulletJson["Damage"] = bulletDef->config.damage;
-			bulletJson["AliveTime"] = bulletDef->config.aliveTime;
+		if (bulletDef.second) {
+			// Use actual bullet data from registry - access BulletConfig directly
+			const BulletConfig& bulletConfig = bulletDef.second->config;
+			
+			bulletJson["Name"] = bulletConfig.name.empty() ? bulletDef.first : bulletConfig.name;
+			bulletJson["AssetID"] = bulletConfig.validBulletIngame;
+			bulletJson["MoveSpeed"] = bulletConfig.speed;
+			bulletJson["Damage"] = bulletConfig.damage;
+			bulletJson["AliveTime"] = bulletConfig.aliveTime;
 			bulletJson["Elemental"] = "";
-			bulletJson["Bounce"] = bulletDef->config.bounce;
+			bulletJson["Bounce"] = bulletConfig.bounce;
 
 			nlohmann::json moveBehavior;
-			moveBehavior["type"] = BulletTypeToString(bulletDef->config.bulletType);
+			moveBehavior["type"] = BulletTypeToString(bulletConfig.bulletType);
 			bulletJson["MoveBehavior"] = moveBehavior;
+			
+			if (bulletConfig.spawnerBullet) {
+				bulletJson["SpawnerBullet"] = bulletConfig.spawnerBullet.get()->SerializeSpecific("");
+			}
 		} else {
 			// Fallback to default values if bullet not found in registry
+			bulletJson["Name"] = bulletDef.first;  // Use ID as name fallback
 			bulletJson["AssetID"] = "bullet_01";
 			bulletJson["MoveSpeed"] = 100;
 			bulletJson["Damage"] = 10;
@@ -130,23 +130,23 @@ void Tool::DataHandler::ExportAllToSingleJson(const std::vector<MonsterTypeDefin
 
 			nlohmann::json moveBehavior;
 			// Try to determine bullet type from ID
-			if (bulletId.find("straight") != std::string::npos) {
+			if (bulletDef.first.find("straight") != std::string::npos) {
 				moveBehavior["type"] = "Straight";
-			} else if (bulletId.find("parabol") != std::string::npos) {
+			} else if (bulletDef.first.find("parabol") != std::string::npos) {
 				moveBehavior["type"] = "Parabol";
-			} else if (bulletId.find("mortal") != std::string::npos) {
+			} else if (bulletDef.first.find("mortal") != std::string::npos) {
 				moveBehavior["type"] = "Mortal";
-			} else if (bulletId.find("boss") != std::string::npos) {
+			} else if (bulletDef.first.find("boss") != std::string::npos) {
 				moveBehavior["type"] = "Boss";
 			} else {
 				moveBehavior["type"] = "Straight";
 			}
 			bulletJson["MoveBehavior"] = moveBehavior;
 			
-			LOG_INFO("Warning: Bullet definition not found for ID: " + bulletId + ", using defaults");
+			LOG_INFO("Warning: Bullet definition not found for ID: " + bulletDef.first + ", using defaults");
 		}
 
-		bulletsJson[bulletId] = bulletJson;
+		bulletsJson[bulletDef.first] = bulletJson;
 	}
 
 	rootJson["bullets"] = bulletsJson;
@@ -368,6 +368,9 @@ void Tool::DataHandler::ImportBulletsFromJson(const nlohmann::json& bulletsJson)
 			// Create a new bullet config
 			BulletConfig bulletConfig;
 
+			// Set the name (use Name field if available, otherwise use ID)
+			bulletConfig.name = bulletJson.value("Name", bulletId);
+
 			// Set the valid bullet ingame identifier
 			bulletConfig.validBulletIngame = bulletJson.value("AssetID", BulletTextureMap.begin()->first);
 
@@ -385,13 +388,25 @@ void Tool::DataHandler::ImportBulletsFromJson(const nlohmann::json& bulletsJson)
 			}
 			else {
 				bulletConfig.bulletType = BulletType::Straight; //default
-
 			}
-			// Add to imported bullet configs
+
+			// Handle spawner bullet if present
+			if (bulletJson.contains("SpawnerBullet")) {
+				LOG_INFO("Found spawner bullet for ID: " + bulletId);
+				bulletConfig.spawnerBullet = std::make_unique<SpawnerBulletConfig>();
+				bulletConfig.spawnerBullet->DeserializeSpecific(bulletJson["SpawnerBullet"], "");
+			}
+
+			// Add to imported bullet configs for backwards compatibility
 			m_importedBulletConfigs[bulletId] = bulletConfig;
 		}
 
-		LOG_INFO("Successfully imported " + std::to_string(m_importedBulletConfigs.size()) + " bullets");
+		// Notify other systems of the imported data
+		Core::EventData evData;
+		// Just send a notification, UIManager will get data directly
+		Core::EventSystem::getInstance().publish(EventKeys::SendBulletData, evData);
+
+		LOG_INFO("Successfully imported " + std::to_string(m_importedBulletConfigs.size()) + " bullets and registered them in bullet registry");
 	}
 	catch (const std::exception& e) {
 		LOG_ERROR("Error parsing bullets: " + std::string(e.what()));

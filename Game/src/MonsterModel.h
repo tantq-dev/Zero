@@ -18,7 +18,14 @@ enum class BehaviorType {
 	ShootStrategyBase,
 	SpreadShot,
 	MultiConfig,
+	SpawnerBullet,
 	COUNT // to count member of enum; please add member above this count
+};
+
+enum class SpawnerType {
+	Barrage,
+	Spread,
+	COUNT,
 };
 
 
@@ -32,6 +39,7 @@ inline std::string BehaviorTypeToString(BehaviorType type) {
 	case BehaviorType::ShootStrategyBase: return "ShootStrategyBase";
 	case BehaviorType::SpreadShot: return "SpreadShot";
 	case BehaviorType::MultiConfig: return "MultiConfig";
+	case BehaviorType::SpawnerBullet: return "SpawnerBullet";
 	default: return "Unknown";
 	}
 }
@@ -46,6 +54,7 @@ inline BehaviorType StringToBehaviorType(const std::string& typeStr) {
 	if (typeStr == "ShootStrategyBase") return BehaviorType::ShootStrategyBase;
 	if (typeStr == "SpreadShot") return BehaviorType::SpreadShot;
 	if (typeStr == "MultiConfig") return BehaviorType::MultiConfig;
+	if (typeStr == "SpawnerBullet") return BehaviorType::SpawnerBullet;
 	return BehaviorType::Chase; // Default
 }
 
@@ -78,23 +87,23 @@ enum class BulletType {
 inline std::string BulletTypeToString(BulletType type) {
 	switch (type) {
 	case BulletType::Straight:
-		return "Straight";
+		return "Bullet_Straight";
 	case BulletType::Mortal:
-		return "Mortal";
+		return "Bullet_Mortal";
 	case BulletType::Parabol:
-		return "Parabol";
+		return "Bullet_Parabol";
 	case BulletType::Boss:
-		return "Boss";
+		return "Bullet_Boss";
 	default:
 		return "Unknow";
 	}
 }
 
 inline BulletType StringToBulletType(const std::string& str) {
-	if (str == "Straight") return BulletType::Straight;
-	if (str == "Parabol") return BulletType::Parabol;
-	if (str == "Mortal")  return BulletType::Mortal;
-	if (str == "Boss")    return BulletType::Boss;
+	if (str == "Bullet_Straight") return BulletType::Straight;
+	if (str == "Bullet_Parabol") return BulletType::Parabol;
+	if (str == "Bullet_Mortal")  return BulletType::Mortal;
+	if (str == "Bullet_Boss")    return BulletType::Boss;
 	return BulletType::COUNT;
 }
 
@@ -106,23 +115,51 @@ inline std::vector<std::string> GetBulletsTypeString() {
 	return bulletString;
 }
 
+inline std::string SpawnTypeToString(SpawnerType type) {
+	switch (type) {
+	case SpawnerType::Barrage:
+		return "Barrage";
+	case SpawnerType::Spread:
+		return "Spread";
+	default:
+		return "Unknow";
+	}
+}
+
+inline SpawnerType StringToSpawnerType(const std::string& str) {
+	if (str == "Barrage") return SpawnerType::Barrage;
+	if (str == "Spread") return SpawnerType::Spread;
+	return SpawnerType::COUNT;
+}
+
+inline std::vector<std::string> GetSpawnerTypeString() {
+	std::vector<std::string> bulletString;
+	for (int i = 0; i < static_cast<int>(SpawnerType::COUNT); ++i) {
+		bulletString.push_back(SpawnTypeToString(static_cast<SpawnerType>(i)));
+	}
+	return bulletString;
+}
+
 static std::unordered_map<std::string, const char*> BulletTextureMap = {
 	{"bullet_01", ""},
 };
 
+struct SpawnerBulletConfig;
 struct BulletConfig {
+	std::string name = "";  // Display name for the bullet
 	BulletType bulletType = BulletType::Parabol;
 	std::string validBulletIngame = BulletTextureMap.begin()->first;
 	int speed = 0;
 	int aliveTime = 0;
 	int damage = 0;
 	int bounce = 0;
+	std::unique_ptr<SpawnerBulletConfig> spawnerBullet;
 
 	// Copy constructor and assignment operator for BulletConfig
 	BulletConfig() = default;
-	BulletConfig(const BulletConfig&) = default;
-	BulletConfig& operator=(const BulletConfig&) = default;
-	static std::string GetBulletID(const BulletConfig& bulletConfig);
+	BulletConfig(const BulletConfig& bulletConfig);
+	BulletConfig& operator=(const BulletConfig&);
+	BulletConfig clone();
 
 };
 
@@ -277,8 +314,7 @@ class BehaviorConfigBase : public BehaviorConfig {
 public:
 	// Helper methods that derived classes can override
 	virtual nlohmann::json SerializeSpecific(const std::string& monsterId) const = 0;
-	virtual bool DeserializeSpecific(const nlohmann::json& json, const std::string& monsterId,
-		const std::unordered_map<std::string, BulletConfig>& bulletConfigs) = 0;
+	virtual bool DeserializeSpecific(const nlohmann::json& json, const std::string& monsterId) = 0;
 
 public:
 	// Auto-generated methods
@@ -296,12 +332,84 @@ public:
 		const std::string& monsterId,
 		const std::unordered_map<std::string, BulletConfig>& bulletConfigs) {
 		auto instance = std::make_unique<Derived>();
-		if (instance->DeserializeSpecific(json, monsterId, bulletConfigs)) {
+		if (instance->DeserializeSpecific(json, monsterId)) {
 			return instance;
 		}
 		return nullptr;
 	}
 
+};
+
+
+// BehaviorSpawnerBulletConfig
+struct SpawnerBulletConfig : public BehaviorConfigBase<SpawnerBulletConfig> {
+	std::string bulletId = "";
+	SpawnerType spawnerType;
+	int timeActivate = 10000;
+	int numOfBullet = 10000;
+	int spreadAngle = 0;
+
+	SpawnerBulletConfig() {
+		behaviorType = BehaviorTypeToString(BehaviorType::SpawnerBullet);
+	}
+
+	std::unique_ptr<BehaviorConfig> clone() const override {
+		auto copy = std::make_unique<SpawnerBulletConfig>();
+		copy->timeActivate = this->timeActivate;
+		copy->bulletId = this->bulletId;
+		return copy;
+	}
+
+
+	nlohmann::json SerializeSpecific(const std::string& monsterId) const override {
+		nlohmann::json behaviorJson;
+		behaviorJson["spawnerType"] = SpawnTypeToString(spawnerType); // Convert to float
+		behaviorJson["timeActivate"] = timeActivate; // Convert to float
+		behaviorJson["numOfBullet"] = numOfBullet; // Convert to float
+		behaviorJson["spreadAngle"] = spreadAngle; // Convert to float
+
+		// Use the bullet ID directly
+		if (!bulletId.empty()) {
+			behaviorJson["bulletID"] = bulletId;
+		}
+		else {
+			behaviorJson["bulletID"] = "bullet_straight_01"; // Default bullet ID
+		}
+		return behaviorJson;
+	}
+
+	bool DeserializeSpecific(const nlohmann::json& json, const std::string& monsterId) override {
+		if (json.contains("timeActivate")) {
+			float timeActivateKey = json["timeActivate"];
+			timeActivate = static_cast<int>(timeActivateKey);
+		}
+		// Store bullet ID directly
+		if (json.contains("bulletID")) {
+			bulletId = json["bulletID"];
+		}
+
+		if (json.contains("spawnerType")) {
+			std::string spawnerTypeKey = json["spawnerType"];
+			spawnerType = StringToSpawnerType(spawnerTypeKey);
+		}
+		// Store bullet ID directly
+		if (json.contains("numOfBullet")) {
+			float numOfBulletKey = json["numOfBullet"];
+			numOfBullet = static_cast<int>(numOfBulletKey);
+		}
+
+		if (json.contains("spreadAngle")) {
+			float spreadAngleKey = json["spreadAngle"];
+			spreadAngle = static_cast<int>(spreadAngleKey);
+		}
+
+		return true;
+	}
+
+	std::vector<ConfigField> GetConfigFields() const override {
+		auto* nonConstThis = const_cast<SpawnerBulletConfig*>(this);
+		return {};
+	}
 };
 
 // BehaviorChaseConfig
@@ -325,8 +433,7 @@ struct BehaviorChaseConfig : public BehaviorConfigBase<BehaviorChaseConfig> {
 		return behaviorJson;
 	}
 
-	bool DeserializeSpecific(const nlohmann::json& json, const std::string& monsterId,
-		const std::unordered_map<std::string, BulletConfig>& bulletConfigs) override {
+	bool DeserializeSpecific(const nlohmann::json& json, const std::string& monsterId) override {
 		if (json.contains("speed")) {
 			float speed = json["speed"];
 			chaseSpeed = static_cast<int>(speed);
@@ -365,8 +472,7 @@ struct BehaviorDistanceConditionHelperConfig : public BehaviorConfigBase<Behavio
 		return behaviorJson;
 	}
 
-	bool DeserializeSpecific(const nlohmann::json& json, const std::string& monsterId,
-		const std::unordered_map<std::string, BulletConfig>& bulletConfigs) override {
+	bool DeserializeSpecific(const nlohmann::json& json, const std::string& monsterId) override {
 		if (json.contains("minDistance")) {
 			float minDist = json["minDistance"];
 			minDistance = static_cast<int>(minDist);
@@ -403,8 +509,7 @@ struct BehaviorMovementBounceConfig : public BehaviorConfigBase<BehaviorMovement
 		return behaviorJson;
 	}
 
-	bool DeserializeSpecific(const nlohmann::json& json, const std::string& monsterId,
-		const std::unordered_map<std::string, BulletConfig>& bulletConfigs) override {
+	bool DeserializeSpecific(const nlohmann::json& json, const std::string& monsterId) override {
 		// No specific fields to deserialize for this behavior
 		return true;
 	}
@@ -452,8 +557,7 @@ struct BehaviorShootBarrageConfig : public BehaviorConfigBase<BehaviorShootBarra
 		return behaviorJson;
 	}
 
-	bool DeserializeSpecific(const nlohmann::json& json, const std::string& monsterId,
-		const std::unordered_map<std::string, BulletConfig>& bulletConfigs) override {
+	bool DeserializeSpecific(const nlohmann::json& json, const std::string& monsterId) override {
 		if (json.contains("cooldown")) {
 			float cooldown = json["cooldown"];
 			coolDown = static_cast<int>(cooldown);
@@ -516,8 +620,7 @@ struct BehaviorShootProjectileConfig : public BehaviorConfigBase<BehaviorShootPr
 		return behaviorJson;
 	}
 
-	bool DeserializeSpecific(const nlohmann::json& json, const std::string& monsterId,
-		const std::unordered_map<std::string, BulletConfig>& bulletConfigs) override {
+	bool DeserializeSpecific(const nlohmann::json& json, const std::string& monsterId) override {
 		if (json.contains("cooldown")) {
 			float cooldown = json["cooldown"];
 			coolDown = static_cast<int>(cooldown);
@@ -557,8 +660,7 @@ struct BehaviorShootStrategyBaseConfig : public BehaviorConfigBase<BehaviorShoot
 		return behaviorJson;
 	}
 
-	bool DeserializeSpecific(const nlohmann::json& json, const std::string& monsterId,
-		const std::unordered_map<std::string, BulletConfig>& bulletConfigs) override {
+	bool DeserializeSpecific(const nlohmann::json& json, const std::string& monsterId) override {
 		// No specific fields to deserialize for this behavior
 		return true;
 	}
@@ -605,8 +707,7 @@ struct BehaviorSpreadShotConfig : public BehaviorConfigBase<BehaviorSpreadShotCo
 		return behaviorJson;
 	}
 
-	bool DeserializeSpecific(const nlohmann::json& json, const std::string& monsterId,
-		const std::unordered_map<std::string, BulletConfig>& bulletConfigs) override {
+	bool DeserializeSpecific(const nlohmann::json& json, const std::string& monsterId) override {
 		if (json.contains("cooldown")) {
 			float cooldown = json["cooldown"];
 			coolDown = static_cast<int>(cooldown);
@@ -677,8 +778,7 @@ struct BehaviorMultiConfig : public BehaviorConfigBase<BehaviorMultiConfig> {
 		return behaviorJson;
 	}
 
-	bool DeserializeSpecific(const nlohmann::json& json, const std::string& monsterId,
-		const std::unordered_map<std::string, BulletConfig>& bulletConfigs) override {
+	bool DeserializeSpecific(const nlohmann::json& json, const std::string& monsterId) override {
 
 		// Set container type based on behaviorType field
 		if (json.contains("behaviorType")) {
@@ -700,49 +800,55 @@ struct BehaviorMultiConfig : public BehaviorConfigBase<BehaviorMultiConfig> {
 
 					if (type == "Chase") {
 						auto chase = std::make_unique<BehaviorChaseConfig>();
-						if (chase->DeserializeSpecific(childJson, monsterId, bulletConfigs)) {
+						if (chase->DeserializeSpecific(childJson, monsterId)) {
 							childBehavior = std::move(chase);
 						}
 					}
 					else if (type == "DistanceConditionHelper") {
 						auto distance = std::make_unique<BehaviorDistanceConditionHelperConfig>();
-						if (distance->DeserializeSpecific(childJson, monsterId, bulletConfigs)) {
+						if (distance->DeserializeSpecific(childJson, monsterId)) {
 							childBehavior = std::move(distance);
 						}
 					}
 					else if (type == "MovementBounce") {
 						auto bounce = std::make_unique<BehaviorMovementBounceConfig>();
-						if (bounce->DeserializeSpecific(childJson, monsterId, bulletConfigs)) {
+						if (bounce->DeserializeSpecific(childJson, monsterId)) {
 							childBehavior = std::move(bounce);
 						}
 					}
 					else if (type == "ShootProjectile") {
 						auto projectile = std::make_unique<BehaviorShootProjectileConfig>();
-						if (projectile->DeserializeSpecific(childJson, monsterId, bulletConfigs)) {
+						if (projectile->DeserializeSpecific(childJson, monsterId)) {
 							childBehavior = std::move(projectile);
 						}
 					}
 					else if (type == "SpreadShot") {
 						auto spread = std::make_unique<BehaviorSpreadShotConfig>();
-						if (spread->DeserializeSpecific(childJson, monsterId, bulletConfigs)) {
+						if (spread->DeserializeSpecific(childJson, monsterId)) {
 							childBehavior = std::move(spread);
 						}
 					}
 					else if (type == "ShootBarrage") {
 						auto barrage = std::make_unique<BehaviorShootBarrageConfig>();
-						if (barrage->DeserializeSpecific(childJson, monsterId, bulletConfigs)) {
+						if (barrage->DeserializeSpecific(childJson, monsterId)) {
 							childBehavior = std::move(barrage);
 						}
 					}
 					else if (type == "ShootStrategyBase") {
 						auto strategy = std::make_unique<BehaviorShootStrategyBaseConfig>();
-						if (strategy->DeserializeSpecific(childJson, monsterId, bulletConfigs)) {
+						if (strategy->DeserializeSpecific(childJson, monsterId)) {
 							childBehavior = std::move(strategy);
 						}
 					}
 					else if (type == "MultiConfig") {
 						auto multi = std::make_unique<BehaviorMultiConfig>();
-						if (multi->DeserializeSpecific(childJson, monsterId, bulletConfigs)) {
+						if (multi->DeserializeSpecific(childJson, monsterId)) {
+							childBehavior = std::move(multi);
+						}
+					}
+					else if (type == "SpawnerBullet") {
+						auto multi = std::make_unique<SpawnerBulletConfig>();
+						if (multi->DeserializeSpecific(childJson, monsterId)) {
 							childBehavior = std::move(multi);
 						}
 					}
@@ -867,6 +973,8 @@ inline std::unique_ptr<BehaviorConfig> CreateBehaviorConfig(BehaviorType type) {
 		return std::make_unique<BehaviorSpreadShotConfig>();
 	case BehaviorType::MultiConfig:
 		return std::make_unique<BehaviorMultiConfig>();
+	case BehaviorType::SpawnerBullet:
+		return std::make_unique<SpawnerBulletConfig>();
 	default:
 		return nullptr;
 	}

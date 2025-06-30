@@ -86,3 +86,4 @@ REGISTER_BEHAVIOR(BehaviorShootProjectileConfig, BehaviorTypeToString(BehaviorTy
 REGISTER_BEHAVIOR(BehaviorShootStrategyBaseConfig, BehaviorTypeToString(BehaviorType::ShootStrategyBase))
 REGISTER_BEHAVIOR(BehaviorSpreadShotConfig, BehaviorTypeToString(BehaviorType::SpreadShot))
 REGISTER_BEHAVIOR(BehaviorMultiConfig, BehaviorTypeToString(BehaviorType::MultiConfig))
+REGISTER_BEHAVIOR(SpawnerBulletConfig, BehaviorTypeToString(BehaviorType::SpawnerBullet))

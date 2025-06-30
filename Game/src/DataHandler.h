@@ -13,15 +13,18 @@ namespace Tool {
 	public:
 		DataHandler();
 		~DataHandler() = default;
+		std::vector<BulletDefinition> m_importedBulletConfigDefinitions;
 
 		void ExportAllToSingleJson(const std::vector<MonsterTypeDefinition*>& monsterDefinitions,
 			std::vector<MonsterWave*> waveInformations,
 			entt::registry& registry,
+			BulletRegistry& m_bulletRegistry,
 			const std::string& mapId = "Map_1",
 			const std::string& mapName = "Default Map");
 		void ImportAllData(System::GridSystem* gridSystem);
 		void ImportFromSingleJson(System::GridSystem* gridSystem);
 		void SetBulletRegistry( BulletRegistry* bulletRegistry) { m_bulletRegistry = bulletRegistry; }
+		const std::unordered_map<std::string, BulletConfig>& GetImportedBulletConfigs() const { return m_importedBulletConfigs; }
 	private:
 		void GetBulletsFromMonsters(const std::vector<MonsterTypeDefinition*>& monsterDefinitions);
 		void ImportBulletsFromJson(const nlohmann::json& bulletsJson);
@@ -31,6 +34,7 @@ namespace Tool {
 		std::vector<MonsterTypeDefinition> m_importedMonsterDefinitions;
 		std::vector<MonsterWave> m_importedMonsterWave;
 		std::unordered_map<std::string, BulletConfig> m_importedBulletConfigs;
+
 		entt::registry* m_registry = nullptr;
 		BulletRegistry* m_bulletRegistry = nullptr;
 		void GetBulletPropertiesFromMultipleBehavior(BehaviorMultiConfig* multipleBehavior);

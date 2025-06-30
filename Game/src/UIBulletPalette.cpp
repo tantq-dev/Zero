@@ -248,7 +248,7 @@ void Tool::UI::UIBulletPalette::ResetBulletConfigFields()
 void Tool::UI::UIBulletPalette::ImportBulletData(const std::vector<BulletDefinition>& data)
 {
     m_bulletRegistry.RegisterBulletTypeFromData(data);
-    InvalidateCache();
+    UpdateCache();
 }
 
 BulletDefinition* Tool::UI::UIBulletPalette::GetSelectedBullet()

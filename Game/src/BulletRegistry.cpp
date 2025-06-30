@@ -1,10 +1,17 @@
 #include "BulletRegistry.h"
 #include "utilities/Logger.h"
+#include "core/EventSystem.h"
+#include "EventKey.h"
 
 void BulletRegistry::RegisterBulletType(const std::string& name, const BulletConfig& config, const std::string& textureName)
 {
     int bulletId = GetNextBulletId();
     m_bulletTypes.insert_or_assign(std::to_string(bulletId), std::make_unique<BulletDefinition>(bulletId, name, config, textureName));
+    Core::EventData eventData;
+    eventData.data = GetBulletTypeIds();
+    Core::EventSystem::getInstance().publish(Tool::EventKeys::BulletCreated, eventData);
+
+
 }
 
 BulletDefinition* BulletRegistry::GetBulletType(const std::string& id)
@@ -57,21 +64,25 @@ void BulletRegistry::RegisterBulletTypeFromData(const std::vector<BulletDefiniti
 {
     for (const auto& bulletType : data)
     {
+		LOG_INFO("Registering bullet type: " + bulletType.name + " with id: "+ std::to_string(bulletType.id));
         if (bulletType.id >= m_nextBulletId)
         {
             m_nextBulletId = bulletType.id + 1;
         }
         m_bulletTypes.insert_or_assign(std::to_string(bulletType.id), std::make_unique<BulletDefinition>(bulletType));
     }
+    Core::EventData eventData;
+    eventData.data = GetBulletTypeIds();
+    Core::EventSystem::getInstance().publish(Tool::EventKeys::BulletCreated, eventData);
 }
 
- std::vector<std::string> BulletRegistry::GetBulletTypeNames()
+ std::vector<std::string> BulletRegistry::GetBulletTypeIds()
 {
     std::vector<std::string> names;
     names.reserve(m_bulletTypes.size());
     for (const auto& pair : m_bulletTypes)
     {
-        names.push_back(pair.second->name);
+        names.push_back(pair.first);
     }
     return names;
 }

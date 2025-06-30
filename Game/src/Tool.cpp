@@ -29,6 +29,9 @@ namespace Tool
 
 		// Connect bullet registry to data handler for export
 		m_dataHandler->SetBulletRegistry(m_uiManager->GetBulletRegistry());
+		
+		// Connect data handler to UI manager for direct bullet import
+		m_uiManager->SetDataHandler(m_dataHandler.get());
 
 
 		//m_uiManager->Initialize();
@@ -71,7 +74,7 @@ namespace Tool
 				auto* registry = data.get<MonsterTypeRegistry*>();
 				if (registry) {
 					auto monsters = registry->GetAllMonsterTypes();
-					m_dataHandler->ExportAllToSingleJson(monsters, m_mapEditor->GetWaves(), m_mapEditor->GetMonsterRegistry());
+					m_dataHandler->ExportAllToSingleJson(monsters, m_mapEditor->GetWaves(), m_mapEditor->GetMonsterRegistry(),*m_uiManager->GetBulletRegistry());
 				}
 
 			});
@@ -87,6 +90,13 @@ namespace Tool
 			[this](const Core::EventData& data) {
 
 				m_mapEditor->AddWaveWithMonster(data.get<std::vector<PlacedMonster>>());
+			});
+
+		Core::EventSystem::getInstance().subscribe(EventKeys::SendBulletData,
+			[this](const Core::EventData& data) {
+				//Fix me
+				/*m_dataHandler.get()->m_importedBulletConfigs;
+				m_uiManager->SetBulletConfig();*/
 			});
 	}
 
