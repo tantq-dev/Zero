@@ -168,6 +168,7 @@ namespace Core {
 		GLMesh() : VAO(0), VBO(0), EBO(0), indexCount(0) {}
 
 		void Load(const Mesh& mesh) {
+			vertexData = mesh.vertices;
 			// Generate buffers and VAO
 			glGenVertexArrays(1, &VAO);
 			glGenBuffers(1, &VBO);
@@ -222,10 +223,28 @@ namespace Core {
 				glDeleteBuffers(1, &EBO);
 			}
 		}
+		void UpdateVertexColors(const std::vector<glm::vec4>& newColors)
+		{
+			if (newColors.size() * sizeof(glm::vec4) > vertexData.size() * sizeof(Vertex)) {
+
+				return;
+			}
+
+			// Update color in CPU-side data
+			for (size_t i = 0; i < newColors.size() && i < vertexData.size(); ++i) {
+				vertexData[i].color = newColors[i];
+			}
+
+			// Update GPU VBO
+			glBindBuffer(GL_ARRAY_BUFFER, VBO);
+			glBufferSubData(GL_ARRAY_BUFFER, 0, vertexData.size() * sizeof(Vertex), vertexData.data());
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+		}
 
 	private:
 		GLuint VAO, VBO, EBO;
 		GLsizei indexCount;
+		std::vector<Vertex> vertexData;
 	};
 
 	class Renderer3D {
@@ -349,9 +368,18 @@ namespace Core {
 			defaultShader.SetMat4("view", view);
 			defaultShader.SetMat4("model", model);
 
+			std::vector<glm::vec4> colors;
+			colors.reserve(mesh.vertices.size());
+			for (auto& vertex : mesh.vertices) {
+				colors.push_back(vertex.color);
+			}
+
+			glMesh->UpdateVertexColors(colors);
+
 			// Draw the mesh
 			glMesh->Draw();
 		}
+
 
 		void Present() {
 			SDL_GL_SwapWindow(window);
