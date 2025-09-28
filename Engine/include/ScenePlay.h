@@ -1,12 +1,12 @@
 #pragma once
 #include "Scene.h"
 #include "Components.h"
-#include "system/PhysicSystem.h"
-#include "system/RenderSystem.h"
-#include "system/AnimationSystem.h"
-#include "system/InputSystem.h"
-#include "system/CameraSystem.h"
-#include "system/GridSystem.h"
+#include "PhysicSystem.h"
+#include "RenderSystem.h"
+#include "AnimationSystem.h"
+#include "InputSystem.h"
+#include "CameraSystem.h"
+#include "GridSystem.h"
 // <summary> This is the example scene for the game. </summary>
 namespace Core
 {

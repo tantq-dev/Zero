@@ -8,6 +8,11 @@ namespace Core
 		Initialize(title, width, height, flags);
 	}
 
+	Window::Window(const WindowConfig& config)
+	{
+		Initialize(config);
+	}
+
 	void Window::Initialize(const char* title, int width, int height, Uint32 flags)
 	{
 		auto window = SDL_CreateWindow(title, width, height, flags);
@@ -25,6 +30,11 @@ namespace Core
 			throw std::runtime_error(std::string("SDL_CreateRenderer Error: ") + error);
 		}
 		m_renderer = std::shared_ptr<SDL_Renderer>(render, SDL_DestroyRenderer);
+	}
+
+	void Window::Resize(int width, int height)
+	{
+
 	}
 
 	void Window::Clear(Uint8 r, Uint8 g, Uint8 b, Uint8 a)

@@ -1,5 +1,5 @@
-#include "system/InputSystem.h"
-#include "utilities/Logger.h"
+#include "InputSystem.h"
+#include "Logger.h"
 #include <string>
 namespace System
 {

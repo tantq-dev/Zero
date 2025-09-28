@@ -1,5 +1,4 @@
 #include "RenderSystem.h"
-#include "config/ApplicationConfig.h"
 namespace System
 {
 	void RenderSystem::RenderAnimation(entt::registry& registry, SDL_Renderer& renderer)

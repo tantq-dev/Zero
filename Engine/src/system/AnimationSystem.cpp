@@ -1,4 +1,4 @@
-#include "core/Components.h"
+#include "Components.h"
 #include "AnimationSystem.h"
 
 namespace System

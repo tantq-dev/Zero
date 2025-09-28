@@ -1,6 +1,6 @@
 #pragma once
-#include "core/Components.h"
-#include "utilities/Vec2.h"
+#include "Components.h"
+#include "Vec2.h"
 namespace System
 {
 	class GridSystem
@@ -16,7 +16,7 @@ namespace System
 		const float& GetGridWidth();
 		Vec2 CellIndexInGridToWorldPosition(Vec2 gridPosition);
 	private:
-		Components::Grid grid = Components::Grid(0, 0, 0, 0);;
+		Components::Grid grid = Components::Grid(0, 0, 0);;
 		void InitializeGrid();
 	};
 } // namespace System

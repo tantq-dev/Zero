@@ -1,7 +1,6 @@
 #include "PhysicSystem.h"
-#include <config/ApplicationConfig.h>
 namespace System {
-	void PhysicSystem::Update(float deltaTime, entt::registry& registry)
+	void PhysicSystem::Update(const float& deltaTime , entt::registry& registry)
 	{
 		CollisionDetect(registry);
 	}
@@ -17,15 +16,6 @@ namespace System {
 			auto& transform = group.get<Components::Transform2D>(entity);
 			auto& velocity = group.get<Components::Velocity>(entity);
 			collider.isColliding = false;
-
-			if (collider.type == Components::ColliderType::Box)
-			{
-				collider.isColliding = CheckBoxCollisionEdge(transform, *collider.AsBox(), velocity);
-			}
-			else if (collider.type == Components::ColliderType::Circle)
-			{
-				collider.isColliding = CheckCircleCollisionEdge(transform, *collider.AsCircle(), velocity);
-			}
 		}
 
 		// Check collisions - only check each pair once
@@ -101,19 +91,6 @@ namespace System {
 			circleTransform.position.y + circleCollider.radius > rectTransform.position.y - rectCollider.size.y / 2 &&
 			circleTransform.position.y - circleCollider.radius < rectTransform.position.y + rectCollider.size.y / 2;;
 	}
-	bool PhysicSystem::CheckCircleCollisionEdge(const Components::Transform2D& circleTransform, const Components::CircleCollider& circleCollider, const Components::Velocity& vel)
-	{
-		return circleTransform.position.x + circleCollider.radius > ApplicationConfig::DEFAULT_WINDOW_WIDTH && vel.velocity.x > 0 ||
-			circleTransform.position.x - circleCollider.radius < 0 && vel.velocity.x < 0 ||
-			circleTransform.position.y + circleCollider.radius > ApplicationConfig::DEFAULT_WINDOW_HEIGHT && vel.velocity.y > 0 ||
-			circleTransform.position.y - circleCollider.radius < 0 && vel.velocity.y < 0;
-	}
-	bool PhysicSystem::CheckBoxCollisionEdge(const Components::Transform2D& boxTransform, const Components::BoxCollider& boxCollider, const Components::Velocity& vel)
-	{
-		return boxTransform.position.x + boxCollider.size.x > ApplicationConfig::DEFAULT_WINDOW_WIDTH && vel.velocity.x > 0 ||
-			boxTransform.position.x - boxCollider.size.x < 0 && vel.velocity.x < 0 ||
-			boxTransform.position.y + boxCollider.size.y > ApplicationConfig::DEFAULT_WINDOW_HEIGHT && vel.velocity.y > 0 ||
-			boxTransform.position.y - boxCollider.size.y < 0 && vel.velocity.y < 0;
-	}
+
 }
 

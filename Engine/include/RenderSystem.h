@@ -1,6 +1,6 @@
 #pragma once
 #include "entt.hpp"
-#include "core/Components.h"
+#include "Components.h"
 #include "CameraSystem.h"
 
 namespace System

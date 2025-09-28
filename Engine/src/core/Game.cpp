@@ -1,12 +1,12 @@
-#include "Game.h"
+
 #include "ScenePlay.h"
 #include <stdexcept>
 #include <SDL3/SDL.h>
-#include "utilities/Logger.h"
-#include "config/ApplicationConfig.h"
+#include "Logger.h"
 #include "../vendored/imgui/imgui.h"
 #include "../vendored/imgui/backends/imgui_impl_sdl3.h"
 #include "../vendored/imgui/backends/imgui_impl_sdlrenderer3.h"
+#include "Game.h"
 
 
 
@@ -20,6 +20,8 @@ namespace Core
 		}
 
 		m_window = std::make_shared<Window>();
+		m_scenes.clear();
+		m_activeScene = nullptr;
 	}
 
 	Game::~Game()
@@ -29,16 +31,11 @@ namespace Core
 
 	void Game::Initialize()
 	{
-
+		WindowConfig windowConfig;
 		try
 		{
 			// Initialize window
-			m_window->Initialize(
-				ApplicationConfig::APP_NAME,
-				ApplicationConfig::DEFAULT_WINDOW_WIDTH,
-				ApplicationConfig::DEFAULT_WINDOW_HEIGHT,
-				SDL_WINDOW_OPENGL
-			);
+			m_window->Initialize(windowConfig);
 
 			SDL_GLContext gl_context = SDL_GL_CreateContext(m_window->GetWindow().get());
 			if (gl_context == nullptr)
@@ -69,6 +66,7 @@ namespace Core
 		catch (const std::exception& e)
 		{
 			// Log and rethrow
+			LOG_ERROR("Failed to initialize Game: " + std::string(e.what()));
 			throw;
 		}
 
@@ -82,22 +80,36 @@ namespace Core
 			throw std::runtime_error("No active scene set. Call SetActiveScene() before Run().");
 		}
 
+		
 		m_activeScene->Initialize(*m_window->GetRenderer().get());
 		m_isRunning = true;
-		SDL_Event event;
-		Uint32 previousTicks = SDL_GetTicks();
-		float deltaTime = 0.0f;
 
-		const int FRAME_DELAY = 1000 / ApplicationConfig::DEFAULT_MAX_FPS;
+		constexpr double FIXED_HZ = 60.0;
+		constexpr double FIXED_DT = 1.0 / FIXED_HZ;        // seconds
+		constexpr double MAX_FRAME = 0.25;                  // clamp 250 ms after hitches
+		constexpr int    MAX_STEPS = 5;                     // avoid spiral of death
+
+
+		Uint64 perfFreq = SDL_GetPerformanceFrequency();
+		auto   toSec = [perfFreq](Uint64 ticks) { return static_cast<double>(ticks) / static_cast<double>(perfFreq); };
+
+		Uint64 prev = SDL_GetPerformanceCounter();
+		double accumulator = 0.0;
+
+		SDL_Event event;
+		
 
 		while (m_isRunning)
 		{
 
-			Uint32 frameStart = SDL_GetTicks();
+			Uint64 now = SDL_GetPerformanceCounter();
+			
+			double frameDt = toSec(now - prev);
+			prev = now;
 
-			Uint32 currentTicks = SDL_GetTicks();
-			deltaTime = (currentTicks - previousTicks) / 1000.0f;
-			previousTicks = currentTicks;
+			if (frameDt > MAX_FRAME) frameDt = MAX_FRAME;
+			accumulator += frameDt;
+			m_deltaTime = static_cast<float>(frameDt);
 
 			// Start the Dear ImGui frame
 			ImGui_ImplSDLRenderer3_NewFrame();
@@ -122,9 +134,25 @@ namespace Core
 				}
 			}
 
-			m_activeScene->Update(deltaTime);
-			m_activeScene->Render(*m_window->GetRenderer().get());
+			// --- fixed updates ---
+			int steps = 0;
+			while (accumulator >= FIXED_DT && steps < MAX_STEPS) {
+				m_activeScene->FixedUpdate(FIXED_DT);
+				accumulator -= FIXED_DT;
+				++steps;
+			}
 
+			// if we hit the max number of steps, we are probably in a spiral of death, so we just clamp the accumulator
+			if (steps == MAX_STEPS && accumulator >= FIXED_DT) {
+				accumulator = fmod(accumulator, FIXED_DT);
+			}
+
+		
+			m_activeScene->Update(m_deltaTime);
+			
+
+			double alpha = accumulator / FIXED_DT;
+			m_activeScene->Render(*m_window->GetRenderer().get(),alpha);
 			m_activeScene->HandleUI(event);
 			ImGui::Render();
 			SDL_SetRenderScale(m_window->GetRenderer().get(), pio->DisplayFramebufferScale.x, pio->DisplayFramebufferScale.y);
@@ -134,22 +162,21 @@ namespace Core
 			// Update active scene
 
 			SDL_RenderPresent(m_window->GetRenderer().get());
-			SDL_SetRenderDrawColorFloat(m_window->GetRenderer().get(), clear_color.x, clear_color.y, clear_color.z, clear_color.w);
+			//SDL_SetRenderDrawColorFloat(m_window->GetRenderer().get(), clear_color.x, clear_color.y, clear_color.z, clear_color.w);
 			SDL_RenderClear(m_window->GetRenderer().get());
-
-
-			// Frame rate capping
-			Uint32 frameTime = SDL_GetTicks() - frameStart;
-			if (frameTime < FRAME_DELAY)
-			{
-				SDL_Delay(FRAME_DELAY - frameTime);
-			}
 		}
 	}
 
 	void Game::AddScene(const std::string& name, std::shared_ptr<Scene> scene)
 	{
-		m_scenes[name] = scene;
+		if (m_scenes.find(name) != m_scenes.end())
+		{
+			throw std::runtime_error("Scene with name " + name + " already exists.");
+		}
+
+		
+		scene->SetGame(weak_from_this());
+		m_scenes[name] = std::move(scene);
 	}
 
 	void Game::SetActiveScene(const std::string& name)
@@ -164,6 +191,9 @@ namespace Core
 		{
 			throw std::runtime_error("Scene not found: " + name);
 		}
+	}
+	const float Game::GetDeltaTime() {
+		return m_deltaTime;
 	}
 }
 

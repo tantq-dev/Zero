@@ -1,14 +1,13 @@
 #pragma once
-#include "utilities/Vec2.h"
+#include "Vec2.h"
 #include "SDL3/SDL.h"
 #include <utility>
 #include <variant>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include "utilities/Logger.h"
+#include "Logger.h"
 #include <stdexcept>
-#include "config/ApplicationConfig.h"
 
 
 #define MATRIX_2D_INT std::vector<std::vector<int>>
@@ -103,7 +102,7 @@ namespace Components
 		float rotation = 0.0f; // Rotation in radians
 		Sprite() = default;
 		explicit Sprite(SDL_Texture* tex, float rot = 0.0f)
-			: texture(tex)
+			: texture(tex), rotation(rot)
 		{
 		}
 	};
@@ -338,7 +337,7 @@ namespace Components
 		int cellSize = 0;
 		int numberCellCol = 0;
 		int numberCellRow = 0;
-		Grid(int ts, int th, int nc, int nr)
+		Grid(int ts, int nc, int nr)
 			: cellSize(ts), numberCellCol(nc), numberCellRow(nr)
 		{
 			for (int i = 0; i < numberCellCol * numberCellRow; i++)
@@ -383,8 +382,8 @@ namespace Components
 	{
 		Vec2 position = { 0,0 };
 		float zoom = 1.0f;
-		int width = ApplicationConfig::DEFAULT_WINDOW_WIDTH; // Default width
-		int height = ApplicationConfig::DEFAULT_WINDOW_HEIGHT; // Default height
+		int width = 0; // Default width
+		int height = 0; // Default height
 
 		[[nodiscard]] Vec2 GetPosition() const {
 			return position;
@@ -402,7 +401,7 @@ namespace Components
 			return zoom;
 		}
 
-		void SetZoom(const int z) {
+		void SetZoom(const float z) {
 			zoom = z;
 		}
 

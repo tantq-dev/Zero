@@ -1,6 +1,7 @@
 #pragma once
 #include "entt.hpp"
-#include "core/Components.h"
+#include "Components.h"
+#include <Window.h>
 
 namespace System
 {
@@ -9,9 +10,9 @@ namespace System
 	public:
 		PhysicSystem() = default;
 		~PhysicSystem() = default;
-		void Update(float deltaTime, entt::registry& registry);
+		void Update(const float& deltaTime,  entt::registry& registry);
 	private:
-		void CollisionDetect(entt::registry& registry);
+		void CollisionDetect( entt::registry& registry);
 		bool CheckAABBCollision(
 			const Components::Transform2D& t1, const Components::BoxCollider& b1,
 			const Components::Transform2D& t2, const Components::BoxCollider& b2);
@@ -23,14 +24,6 @@ namespace System
 			const Components::CircleCollider& circleCollider,
 			const Components::Transform2D& rectTransform,
 			const Components::BoxCollider& rectCollider);
-		bool CheckCircleCollisionEdge(
-			const Components::Transform2D& circleTransform,
-			const Components::CircleCollider& circleCollider,
-			const Components::Velocity& vel);
-		bool CheckBoxCollisionEdge(
-			const Components::Transform2D& boxTransform,
-			const Components::BoxCollider& boxCollider,
-			const Components::Velocity& vel);
 	};
 
 

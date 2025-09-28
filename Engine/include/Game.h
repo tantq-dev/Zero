@@ -6,9 +6,11 @@
 #include "Scene.h"  
 #include "imgui.h" // Include the header file where ImGuiIO is defined  
 
+#define DEFAULT_FIXED_UPDATE_FRAME 60
+
 namespace Core
 {
-	class Game
+	class Game : public std::enable_shared_from_this<Game>
 	{
 	private:
 		std::shared_ptr<Window> m_window;
@@ -17,10 +19,12 @@ namespace Core
 		std::shared_ptr<Scene> m_activeScene;
 		std::string m_activeSceneName;
 		ImGuiIO* pio = nullptr; // Ensure ImGuiIO is properly declared and included  
+		float m_deltaTime;
 
 	public:
 		Game();
 		~Game();
+	
 
 		void Initialize();
 		void Run();
@@ -32,5 +36,6 @@ namespace Core
 		void SetActiveScene(const std::string& name);
 		std::shared_ptr<Scene> GetActiveScene() const { return m_activeScene; }
 		std::string GetActiveSceneName() const { return m_activeSceneName; }
+		const float GetDeltaTime();
 	};
 }

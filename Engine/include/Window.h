@@ -2,6 +2,7 @@
 #include <SDL3/SDL.h>
 #include <memory>
 #include <string>
+#include "DefaultConfig.h"
 
 namespace Core
 {
@@ -14,13 +15,16 @@ namespace Core
 	public:
 		Window() = default;
 		Window(const char* title, int width, int height, Uint32 flags);
+		Window(const WindowConfig&);
 		~Window() = default;
 
 		void Initialize(const char* title, int width, int height, Uint32 flags = NULL);
-
+		void Initialize(const WindowConfig& config) {
+			Initialize(config.title, config.width, config.height, config.flags);
+		}
 		std::shared_ptr<SDL_Window> GetWindow() const { return m_window; }
 		std::shared_ptr<SDL_Renderer> GetRenderer() const { return m_renderer; }
-
+		void Resize(int width, int height);
 		void Clear(Uint8 r = 30, Uint8 g = 30, Uint8 b = 30, Uint8 a = 255);
 		void Present();
 		void Close();
