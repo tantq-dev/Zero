@@ -2,21 +2,25 @@
 #include "entt.hpp"
 #include "Components.h"
 #include "CameraSystem.h"
-
+#include "IRenderer2D.h"
 namespace System
 {
 	class RenderSystem
 	{
 	public:
 		RenderSystem() = default;
+		RenderSystem(std::shared_ptr<IRenderer2D> renderer) : m_renderer(renderer) {}
 		~RenderSystem() = default;
-		void RenderAnimation(entt::registry& registry, SDL_Renderer& renderer);
-		void RenderSprite(entt::registry& registry, SDL_Renderer& renderer, System::CameraSystem& cam);
-		void RenderGrid(const Components::Grid& tileMap, SDL_Renderer& renderer, System::CameraSystem& cam);
 
+		void Update(entt::registry& registry);
+		Components::Texture LoadTexture(const std::string& path) {
+			if (m_renderer) {
+				return m_renderer->GetTextureFromFile(path);
+			}
+			return {};
+		}
 	private:
-		SDL_FRect m_dstRect{ 0, 0, 0, 0 };
-
+		std::shared_ptr<IRenderer2D> m_renderer;
 	};
 }
 

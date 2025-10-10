@@ -1,19 +1,19 @@
 #pragma once
 #include <string>
-#include <SDL3/SDL.h>
 #include <unordered_map> // Use unordered_map for better performance on lookups
+#include "Components.h"
+
 class ResourcesManager
 {
 public:
 	~ResourcesManager() = default;
-	// Get resource by name
-	SDL_Texture* GetTexture(const std::string& name);
-	void LoadTexture(const std::string& name, const char* path, SDL_Renderer* renderer);
-	void LoadTextures(const std::unordered_map<std::string, const char*>& textures, SDL_Renderer* renderer);
-	static ResourcesManager& GetInstance();
-private:
 	ResourcesManager();
+	// Get resource by name
+	static ResourcesManager& GetInstance();
+	void StoreSpriteSheet(uint32_t id, const Components::SpriteSheet& spriteSheet);
+	Components::SpriteSheet* GetSpriteSheet(uint32_t id);
+private:
 	static ResourcesManager* m_instance;
-	std::unordered_map<std::string, SDL_Texture*> m_textures; // Vector to hold loaded textures
+	std::unordered_map <uint32_t, Components::SpriteSheet> m_spriteSheet; 
 };
 

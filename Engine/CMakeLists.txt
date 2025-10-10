@@ -4,7 +4,7 @@ file(GLOB_RECURSE ENGINE_SRC CONFIGURE_DEPENDS
   ${CMAKE_CURRENT_SOURCE_DIR}/src/*.h
 )
 
-add_library(Engine STATIC ${ENGINE_SRC} "include/DefaultConfig.h")
+add_library(Engine STATIC ${ENGINE_SRC})
 
 # Public headers during build; change INSTALL_INTERFACE if you later add install rules
 target_include_directories(Engine PUBLIC

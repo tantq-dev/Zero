@@ -69,7 +69,9 @@ namespace System
 			{
 				if (event.key.scancode == binding.scancode)
 				{
+					action.second.isJustPressed = action.second.isHeld ? false : true;
 					action.second.isPressed = true;
+					action.second.isHeld = true;
 				}
 			}
 		}
@@ -84,6 +86,8 @@ namespace System
 				if (event.key.scancode == binding.scancode)
 				{
 					action.second.isHeld = false; // Reset held state on key release
+					action.second.isPressed = false;
+					action.second.isJustPressed = false;
 				}
 			}
 		}

@@ -2,8 +2,29 @@
 #include "imgui.h"
 #include "Game.h"
 
-void MainMenuScene::Initialize(SDL_Renderer& renderer)  {
-	// Initialization code here
+void MainMenuScene::Initialize()  {
+	m_resources = std::make_unique<ResourcesManager>();
+	Components::Texture pirateTexture = m_game.lock()->GetRenderSystem()->LoadTexture("assets//textures//pirate.bmp");
+	Components::SpriteSheet pirateSpriteSheet;
+	pirateSpriteSheet.texture = pirateTexture;
+	pirateSpriteSheet.frames = {
+		{0, 0, 40, 40},
+		{64, 0, 40, 40},
+		{128, 0, 40, 40},
+		{192, 0, 40, 40},
+	};
+	m_resources->StoreSpriteSheet(1, pirateSpriteSheet);
+
+	entt::entity entity = m_Registry.create();
+	m_Registry.emplace<Components::Transform2D>(entity, Components::Transform2D{ {50.0f,50.0f}, {1.0f,1.0f}, 0.0f });
+	Components::Sprite pirateSprite(pirateTexture);
+	Components::AnimationClip testClip(pirateSpriteSheet,true,0.1);
+	Components::Animation testAnim(testClip);
+	pirateSprite.source = pirateSpriteSheet.frames[0];
+	m_Registry.emplace<Components::Sprite>(entity, Components::Sprite{ pirateSprite });
+	m_Registry.emplace<Components::Animation>(entity, testAnim);
+
+
 }
 void MainMenuScene::Update(const double& deltaTime)  {
 	// Update logic here
@@ -11,9 +32,7 @@ void MainMenuScene::Update(const double& deltaTime)  {
 void MainMenuScene::FixedUpdate(const double& deltaTime)  {
 	// Fixed update logic here
 }
-void MainMenuScene::Render(SDL_Renderer& renderer, const double& alpha)  {
-	SDL_SetRenderDrawColorFloat(&renderer, 1,0,0,1);
-}
+
 void MainMenuScene::HandleInput(SDL_Event& event)  {
 	// Input handling code here
 }

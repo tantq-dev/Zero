@@ -7,8 +7,9 @@
 #include "../vendored/imgui/backends/imgui_impl_sdl3.h"
 #include "../vendored/imgui/backends/imgui_impl_sdlrenderer3.h"
 #include "Game.h"
+#include <SDLRenderer2D.h>
 
-
+//todo: decoupling Game from Backends (SDL, OpenGL, Vulkan, DirectX, Metal, etc)
 
 namespace Core
 {
@@ -36,6 +37,9 @@ namespace Core
 		{
 			// Initialize window
 			m_window->Initialize(windowConfig);
+
+			m_renderSystem = std::make_shared<System::RenderSystem>(std::make_shared<SDLRenderer>(m_window->GetRenderer()));
+			m_animationSystem = std::make_shared<System::AnimationSystem>();
 
 			SDL_GLContext gl_context = SDL_GL_CreateContext(m_window->GetWindow().get());
 			if (gl_context == nullptr)
@@ -81,7 +85,7 @@ namespace Core
 		}
 
 		
-		m_activeScene->Initialize(*m_window->GetRenderer().get());
+		
 		m_isRunning = true;
 
 		constexpr double FIXED_HZ = 60.0;
@@ -149,10 +153,10 @@ namespace Core
 
 		
 			m_activeScene->Update(m_deltaTime);
-			
+			m_animationSystem->Update(m_activeScene->GetRegistry(), m_deltaTime);
 
 			double alpha = accumulator / FIXED_DT;
-			m_activeScene->Render(*m_window->GetRenderer().get(),alpha);
+			m_renderSystem->Update(m_activeScene->GetRegistry());
 			m_activeScene->HandleUI(event);
 			ImGui::Render();
 			SDL_SetRenderScale(m_window->GetRenderer().get(), pio->DisplayFramebufferScale.x, pio->DisplayFramebufferScale.y);
@@ -186,6 +190,7 @@ namespace Core
 		{
 			m_activeScene = it->second;
 			m_activeSceneName = name;
+			m_activeScene->Initialize();
 		}
 		else
 		{

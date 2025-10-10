@@ -26,6 +26,7 @@ namespace Components
 	// [Tile]
 	// [Grid]
 	// [Camera]
+	// [Drawable]
 
 	struct Transform2D
 	{
@@ -94,58 +95,75 @@ namespace Components
 		}
 	};
 
+	struct Size
+	{
+		float width = 0.0f;
+		float height = 0.0f;
+		Size() = default;
+		Size(float w, float h)
+			: width(w), height(h)
+		{
+		}
+	};
+
+	struct Rect {
+		float x = 0.0f;
+		float y = 0.0f;
+		float w = 0.0f;
+		float h = 0.0f;
+		Rect() = default;
+		Rect(float x, float y, float w, float h)
+			: x(x), y(y), w(w), h(h)
+		{
+		}
+	};
+
+	struct Texture
+	{
+		uint32_t id = 0;
+		Size size = { 0.0f, 0.0f };
+		Texture() = default;
+		Texture(uint32_t texID, const Size& sz)
+			: id(texID), size(sz)
+		{
+		}
+	};
+
 	struct Sprite
 	{
-		SDL_Texture* texture = nullptr;
+		Texture texture = {};
 		bool flipHorizontal = false;
-		bool isVisible = true;
-		float rotation = 0.0f; // Rotation in radians
+		bool visible = true;
+		int layer = 0;
+		float opacity = 1;
+		Vec2 pivot = { 0.5f, 0.5f }; // Normalized (0 to 1)
+		Rect source = { 0, 0, 0, 0 }; //
+		SDL_Color tint = { 255, 255, 255, 255 }; // Default white (no tint)
+
 		Sprite() = default;
-		explicit Sprite(SDL_Texture* tex, float rot = 0.0f)
-			: texture(tex), rotation(rot)
+		explicit Sprite(Texture texture)
+			: texture(texture)
 		{
 		}
 	};
-	struct Animation
-	{
-		SDL_Texture* texture = nullptr;
-		int frameCount = 0;
-		int currentFrame = 0;
-		float frameWidth = 0;
-		float frameHeight = 0;
-		float currentTime = 0.0f;
-		bool loop = true;
-		float speed = 1.0f; // Frames per second
+	
 
-		Animation() = default;
-		Animation(SDL_Texture* tex, const float frameW, const float frameH, const float spd, const int frame) :
-			texture(tex), frameCount(frame), currentFrame(0), frameWidth(frameW), frameHeight(frameH), currentTime(0.0f), loop(true), speed(spd)
-		{
-
-		}
-
+	// Optional: asset describing a sprite sheet (kept in a DB, not a component)
+	struct SpriteSheet {
+		Texture texture = {};
+		std::vector<Rect> frames;      // rectangles per frame
 	};
 
-	struct Animator
-	{
-		std::string currentAnimation;
-		std::unordered_map<std::string, Animation> animations;
-		void AddAnimation(const std::string& name, const Animation& anim)
-		{
-			animations[name] = anim;
-		}
-		void SetCurrentAnimation(const std::string& name)
-		{
-			if (animations.contains(name))
-			{
-				currentAnimation = name;
-			}
-		}
-		Animation* GetCurrentAnimation()
-		{
-			const auto it = animations.find(currentAnimation);
-			return it != animations.end() ? &it->second : nullptr;
-		}
+	struct AnimationClip {
+		SpriteSheet spriteSheet{};
+		bool isLoop = true;
+		float frameTime = 0;
+	};
+
+	struct Animation {
+		AnimationClip currentClip = {};
+		size_t currentFrame;
+		float currentFrameTime = 0;
 	};
 
 	struct InputBinding
@@ -216,6 +234,7 @@ namespace Components
 		std::vector<InputBinding> bindings;
 		bool isPressed = false;
 		bool isHeld = false;
+		bool isJustPressed = false; // True only on the frame the action is pressed
 
 		Vec2 mousePosition = { 0.0f, 0.0f };
 		float mouseWheelDelta = 0.0f; // For mouse wheel input
@@ -256,6 +275,8 @@ namespace Components
 		Vec2 size;
 		Vec2 gridIndex = { 0,0 };
 		bool isColor = false; // If true, the tile is colored
+		SDL_Texture* texture = nullptr;
+
 
 		// Default constructor
 		Cell() = default;
@@ -281,7 +302,7 @@ namespace Components
 		// Setters
 		void SetPosition(const Vec2& pos) { position = pos; }
 		void SetSize(const Vec2& sz) { size = sz; }
-		void SetColored(bool colored) { isColor = colored; }
+		void SetBorderColored(bool colored) { isColor = colored; }
 		void ToggleColor() { isColor = !isColor; }
 
 		// Utility methods
@@ -413,6 +434,5 @@ namespace Components
 			zoom += z;
 		}
 	};
-
 
 }

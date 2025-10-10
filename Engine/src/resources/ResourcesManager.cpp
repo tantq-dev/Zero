@@ -1,59 +1,27 @@
 #include "ResourcesManager.h"
 
-SDL_Texture* ResourcesManager::GetTexture(const std::string& name)
-{
-	return m_textures[name];
-}
-
-ResourcesManager* ResourcesManager::m_instance = nullptr;
-
 ResourcesManager::ResourcesManager()
 {
 
 
 }
 
-ResourcesManager& ResourcesManager::GetInstance()
+
+void ResourcesManager::StoreSpriteSheet(uint32_t id, const Components::SpriteSheet& spriteSheet)
 {
-	if (m_instance == nullptr)
-	{
-		m_instance = new ResourcesManager();
-	}
-	return *m_instance;
+	m_spriteSheet.insert_or_assign(id, spriteSheet);
 }
 
-void ResourcesManager::LoadTexture(const std::string& name, const char* path, SDL_Renderer* renderer)
+Components::SpriteSheet* ResourcesManager::GetSpriteSheet(uint32_t id)
 {
-	SDL_Surface* surface = NULL;
-	char* bmp_path = NULL;
-	SDL_Texture* texture = NULL;
-	SDL_asprintf(&bmp_path, path, SDL_GetBasePath());
-
-	// Load BMP into surface
-	surface = SDL_LoadBMP(bmp_path);
-	if (!surface)
-	{
-		SDL_free(bmp_path);
-		return;
+	auto it = m_spriteSheet.find(id);
+	if (it != m_spriteSheet.end()) {
+		return &it->second;
 	}
-	texture = SDL_CreateTextureFromSurface(renderer, surface);
-	if (!texture)
-	{
-		SDL_Log("Texture creation failed: %s", SDL_GetError());
-		SDL_DestroySurface(surface);
-
-	}
-	SDL_DestroySurface(surface);
-	SDL_free(bmp_path);
-
-	m_textures[name] = texture;
-}
-
-void ResourcesManager::LoadTextures(const std::unordered_map<std::string, const char*>& textures, SDL_Renderer* renderer) {
-
-	for (const auto& texture : textures) {
-		LoadTexture(texture.first, texture.second, renderer);
+	else {
+		return nullptr;
 	}
 }
+
 
 

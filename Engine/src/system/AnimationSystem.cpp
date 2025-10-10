@@ -5,18 +5,20 @@ namespace System
 {
 	void AnimationSystem::Update(entt::registry& registry, const float& dt)
 	{
-		auto group = registry.group<>(entt::get<Components::Animator>);
-
-		for (auto& entity : group)
+		auto animGroup = registry.group<>(entt::get<Components::Animation,Components::Sprite>);
+		for (auto& anim : animGroup)
 		{
-			auto& animator = group.get<Components::Animator>(entity);
-			Components::Animation* animation = animator.GetCurrentAnimation();
-			animation->currentTime += dt;
-			animation->currentTime = fmod(animation->currentTime, animation->frameCount * animation->speed);
-			animation->currentFrame = round(animation->currentTime / animation->speed);
-			if (animation->currentFrame * animation->frameWidth >= animation->texture->w)
+			auto& animClip = registry.get<Components::Animation>(anim);
+			auto& sprite = registry.get<Components::Sprite>(anim);
+			animClip.currentFrameTime += dt;
+			if (animClip.currentFrameTime > animClip.currentClip.frameTime)
 			{
-				animation->currentFrame = 0;
+				animClip.currentFrameTime = 0;
+				animClip.currentFrame += 1;
+				animClip.currentFrame %= animClip.currentClip.spriteSheet.frames.size();
+				sprite.texture = animClip.currentClip.spriteSheet.texture;
+				sprite.source = animClip.currentClip.spriteSheet.frames[animClip.currentFrame];
+
 			}
 		}
 	}
