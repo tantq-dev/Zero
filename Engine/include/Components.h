@@ -9,8 +9,8 @@
 #include "Logger.h"
 #include <stdexcept>
 
-
 #define MATRIX_2D_INT std::vector<std::vector<int>>
+
 namespace Components
 {
 
@@ -139,6 +139,10 @@ namespace Components
 		Vec2 pivot = { 0.5f, 0.5f }; // Normalized (0 to 1)
 		Rect source = { 0, 0, 0, 0 }; //
 		SDL_Color tint = { 255, 255, 255, 255 }; // Default white (no tint)
+		
+		// Spritesheet support
+		uint32_t spriteSheetId = 0;
+		size_t frameIndex = 0;
 
 		Sprite() = default;
 		explicit Sprite(Texture texture)
@@ -155,14 +159,15 @@ namespace Components
 	};
 
 	struct AnimationClip {
-		SpriteSheet spriteSheet{};
+		uint32_t spriteSheetId = 0;
+		size_t numberOfFrames = 0;
 		bool isLoop = true;
 		float frameTime = 0;
 	};
 
 	struct Animation {
 		AnimationClip currentClip = {};
-		size_t currentFrame;
+		size_t currentFrame = 0;
 		float currentFrameTime = 0;
 	};
 

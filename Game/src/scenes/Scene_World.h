@@ -1,5 +1,6 @@
 #pragma once
 #include "Scene.h"
+#include "core/Grid.h"
 class WorldScene : public Core::Scene
 {
 public:
@@ -10,4 +11,6 @@ public:
 	void FixedUpdate(const double& deltaTime) override;
 	void HandleInput(SDL_Event& event) override;
 	void HandleUI(SDL_Event& event) override;
+private:
+	Grid m_grid;
 };

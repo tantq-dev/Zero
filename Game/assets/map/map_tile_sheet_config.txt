@@ -1,0 +1,2 @@
+400 400
+assets//textures/map_tiles/Wall_Tiles.bmp

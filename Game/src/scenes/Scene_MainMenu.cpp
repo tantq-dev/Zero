@@ -4,6 +4,12 @@
 
 void MainMenuScene::Initialize()  {
 	m_resources = std::make_unique<ResourcesManager>();
+	
+	if (auto game = m_game.lock())
+	{
+		game->GetRenderSystem()->SetResourcesManager(m_resources.get());
+	}
+	
 	Components::Texture pirateTexture = m_game.lock()->GetRenderSystem()->LoadTexture("assets//textures//pirate.bmp");
 	Components::SpriteSheet pirateSpriteSheet;
 	pirateSpriteSheet.texture = pirateTexture;
@@ -18,8 +24,10 @@ void MainMenuScene::Initialize()  {
 	entt::entity entity = m_Registry.create();
 	m_Registry.emplace<Components::Transform2D>(entity, Components::Transform2D{ {50.0f,50.0f}, {1.0f,1.0f}, 0.0f });
 	Components::Sprite pirateSprite(pirateTexture);
-	Components::AnimationClip testClip(pirateSpriteSheet,true,0.1);
+	Components::AnimationClip testClip(1,4,true,0.1);
 	Components::Animation testAnim(testClip);
+	testAnim.currentFrame = 0;
+
 	pirateSprite.source = pirateSpriteSheet.frames[0];
 	m_Registry.emplace<Components::Sprite>(entity, Components::Sprite{ pirateSprite });
 	m_Registry.emplace<Components::Animation>(entity, testAnim);

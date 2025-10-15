@@ -11,14 +11,14 @@ namespace System
 			auto& animClip = registry.get<Components::Animation>(anim);
 			auto& sprite = registry.get<Components::Sprite>(anim);
 			animClip.currentFrameTime += dt;
-			if (animClip.currentFrameTime > animClip.currentClip.frameTime)
+			if (animClip.currentFrameTime >= animClip.currentClip.frameTime)
 			{
 				animClip.currentFrameTime = 0;
 				animClip.currentFrame += 1;
-				animClip.currentFrame %= animClip.currentClip.spriteSheet.frames.size();
-				sprite.texture = animClip.currentClip.spriteSheet.texture;
-				sprite.source = animClip.currentClip.spriteSheet.frames[animClip.currentFrame];
-
+				animClip.currentFrame %= animClip.currentClip.numberOfFrames;
+				sprite.frameIndex = animClip.currentFrame;
+				sprite.spriteSheetId = animClip.currentClip.spriteSheetId;
+				
 			}
 		}
 	}
