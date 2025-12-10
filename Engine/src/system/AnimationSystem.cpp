@@ -18,7 +18,8 @@ namespace System
 				animClip.currentFrame %= animClip.currentClip.numberOfFrames;
 				sprite.frameIndex = animClip.currentFrame;
 				sprite.spriteSheetId = animClip.currentClip.spriteSheetId;
-				
+				LOG_INFO("Play anim at current frame: " + std::to_string(animClip.currentFrame));
+
 			}
 		}
 	}

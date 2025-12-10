@@ -24,7 +24,13 @@ void MainMenuScene::Initialize()  {
 	entt::entity entity = m_Registry.create();
 	m_Registry.emplace<Components::Transform2D>(entity, Components::Transform2D{ {50.0f,50.0f}, {1.0f,1.0f}, 0.0f });
 	Components::Sprite pirateSprite(pirateTexture);
-	Components::AnimationClip testClip(1,4,true,0.1);
+	Components::AnimationClip testClip{
+		.spriteSheetId = 1,
+		.frameIndexStart = 0,
+		.numberOfFrames = 4,
+		.isLoop = true,
+		.frameTime = 0.1f
+	};
 	Components::Animation testAnim(testClip);
 	testAnim.currentFrame = 0;
 

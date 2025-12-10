@@ -7,7 +7,7 @@ int main() {
 	std::shared_ptr<Core::Game> game = std::make_shared<Core::Game>();
 	game->Initialize();
 	game->AddScene("MainScene", std::make_shared<MainMenuScene>());
-	game->AddScene("WorldScene", std::make_shared<WorldScene>());
+	game->AddScene("WorldScene", std::make_shared<Game::WorldScene>());
 	game->SetActiveScene("MainScene");
 	game->Run();
 
