@@ -1,4 +1,9 @@
 # ImGui CMake configuration
+
+if(NOT ZERO_USE_IMGUI)
+  return()
+endif()
+
 project(imgui LANGUAGES CXX)
 
 set(IMGUI_SOURCES
@@ -25,4 +30,3 @@ target_link_libraries(imgui PUBLIC
     SDL3::SDL3
     OpenGL::GL  # Add OpenGL library linkage
 )
-
