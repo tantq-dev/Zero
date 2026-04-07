@@ -1,15 +1,20 @@
-# Build directories
+# ==========================================
+# Build and Output Directories
+# ==========================================
 build/
 bin/
 lib/
 out/
+_deps/                  # CMake FetchContent downloads
 cmake-build-*/
 Debug/
 Release/
 x64/
 x86/
 
-# CMake generated files
+# ==========================================
+# CMake Generated Files
+# ==========================================
 CMakeCache.txt
 CMakeFiles/
 CMakeScripts/
@@ -19,13 +24,48 @@ cmake_install.cmake
 install_manifest.txt
 compile_commands.json
 CTestTestfile.cmake
-_deps/
 *.cmake
 !CMakeLists.txt
 
-# Visual Studio / VSCode specific files
+# ==========================================
+# Compiled Binaries and Libraries
+# ==========================================
+# Executables
+*.exe
+*.out
+*.app
+*.com
+*.bin
+
+# Dynamic Libraries
+*.so
+*.dylib
+*.dll
+*.pdb                   # Debug symbols
+*.exp                   # Export files
+*.map                   # Linker maps
+
+# Static Libraries
+*.lib
+*.a
+*.la
+*.lai
+
+# Object Files
+*.o
+*.obj
+*.slo
+*.lo
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# ==========================================
+# IDE Specific Files
+# ==========================================
+# Visual Studio
 .vs/
-.vscode/
 *.sln
 *.vcxproj
 *.vcxproj.filters
@@ -38,72 +78,52 @@ _deps/
 *.VC.db
 *.VC.opendb
 ipch/
-.settings/
-*.code-workspace
-.localhistory/
-.history/
 
-# CLion specific files
+# VS Code
+.vscode/
+*.code-workspace
+.history/
+.localhistory/
+
+# CLion / JetBrains
 .idea/
 *.iml
 *.iws
 *.ipr
-*.kdev4
-.kdev4/
 
-# Qt Creator specific files
+# Qt Creator
 CMakeLists.txt.user
 *.pro.user
 *.pro.user.*
 *.qbs.user
 *.qbs.user.*
 *.qmake.stash
-moc_*.cpp
-qrc_*.cpp
-ui_*.h
-*.autosave
 
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
-*.exe
-*.out
-*.app
-
-# Dependency directories
+# ==========================================
+# Dependency Management
+# ==========================================
 vendor/*
 !vendor/imgui/
 !vendor/entt/
 
-# SDL specific
-*.log
+vcpkg_installed/
+conan_imports/
+conan_output/
+conanbuildinfo.*
+conaninfo.*
+graph_info.json
 
-# Debug logs and databases
+# ==========================================
+# Logs and Databases
+# ==========================================
 *.log
 *.sqlite
 *.sqlite3
 *.db
 
-# OS generated files
+# ==========================================
+# OS Generated Files
+# ==========================================
 .DS_Store
 .DS_Store?
 ._*
@@ -113,37 +133,28 @@ ehthumbs.db
 Thumbs.db
 desktop.ini
 
-# Game specific
+# ==========================================
+# Game / Project Specific
+# ==========================================
 *.save
 *.sav
 *.bak
 saves/
-
-# Project specific temporary files
 temp/
 tmp/
 cache/
 
-# Generated documentation
+# Generated Documentation
 docs/html/
 docs/latex/
 docs/xml/
 docs/man/
 
-# User-specific configuration files
+# User-specific configuration
 config.user.json
 *.user.ini
 
-# Package management
-vcpkg_installed/
-conan_imports/
-conan_output/
-conanbuildinfo.*
-conaninfo.*
-graph_info.json
-
-# Testing
-Testing/
+# Code Coverage
 *.gcda
 *.gcno
 coverage/
