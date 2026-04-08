@@ -1,5 +1,7 @@
 #include "Scene_World.h"
+#ifdef ZERO_USE_IMGUI
 #include "imgui.h"
+#endif
 #include "Game.h"
 #include <fstream>	
 #include "player/Player.h"
@@ -13,8 +15,8 @@ void WorldScene::Initialize()
 {
 
 	std::string sceneName = "WorldScene";
-	std::string mapFile = "assets//map//map1.txt";
-	std::string tilesetFile = "assets//textures//Wall_Tiles.bmp";
+	std::string mapFile = "game_assets//map//map1.txt";
+	std::string tilesetFile = "game_assets//textures//Wall_Tiles.bmp";
 	Vec2 tileSize = { 32,32 };
 	Vec2 tileSheetSize = { 400,400 };
 
@@ -24,11 +26,11 @@ void WorldScene::Initialize()
 	// Set ResourcesManager in RenderSystem so it can access spritesheets
 	if (auto game = m_game.lock())
 	{
-		game->GetRenderSystem()->SetResourcesManager(m_resources.get());
+		game->GetRenderSystem().SetResourcesManager(m_resources.get());
 	}
 	
 	// Load tileset texture and create spritesheet
-	Components::Texture tilesetTexture = m_game.lock()->GetRenderSystem()->LoadTexture(tilesetFile);
+	Components::Texture tilesetTexture = m_game.lock()->GetRenderSystem().LoadTexture(tilesetFile);
 	Components::SpriteSheet tileSpriteSheet;
 	tileSpriteSheet.texture = tilesetTexture;
 
@@ -50,7 +52,7 @@ void WorldScene::Initialize()
 	m_resources->StoreSpriteSheet(1, tileSpriteSheet);
 
 
-	Components::Texture runSpriteSheet = m_game.lock()->GetRenderSystem()->LoadTexture("assets/textures/Sword_Run_full.bmp");
+	Components::Texture runSpriteSheet = m_game.lock()->GetRenderSystem().LoadTexture("game_assets/textures/Sword_Run_full.bmp");
 	Components::SpriteSheet runSheet;
 	runSheet.texture = runSpriteSheet;
 	// Assume each frame is 64x64 and the sheet is 512x256 (8 columns, 4 rows)
@@ -318,6 +320,7 @@ void WorldScene::HandleInput(SDL_Event& event)
 
 void WorldScene::HandleUI(SDL_Event& event)
 {
+#ifdef ZERO_USE_IMGUI
 	ImGui::Begin("World Scene");
 	ImGui::Text("Welcome to the World Scene");
 	ImGui::Text("Tiles: %d", m_grid.GetTileCount());
@@ -329,5 +332,6 @@ void WorldScene::HandleUI(SDL_Event& event)
 	}
 
 	ImGui::End();
+#endif
 
 }

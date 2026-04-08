@@ -33,6 +33,51 @@ namespace System
 			}
 		}
 		
+		// Handle text rendering
+		auto textView = registry.view<Components::Text, Components::Transform2D>();
+		for (auto entity : textView)
+		{
+			auto& text = textView.get<Components::Text>(entity);
+			auto& transform = textView.get<Components::Transform2D>(entity);
+
+			if (!text.visible) continue;
+
+			// Load font if needed
+			if (text._cachedFontId == 0 && !text.fontPath.empty())
+			{
+				text._cachedFontId = m_renderer->LoadFont(text.fontPath, text.fontSize);
+			}
+
+			if (text._cachedFontId == 0) continue;
+
+			// Dirty check for texture regeneration
+			bool isDirty = (text.text != text._cachedText) ||
+						   (text.fontSize != text._cachedFontSize) ||
+						   (text.color.r != text._cachedColor.r || text.color.g != text._cachedColor.g || text.color.b != text._cachedColor.b || text.color.a != text._cachedColor.a);
+
+			if (isDirty || text._cachedTextureId == 0)
+			{
+				float w, h;
+				text._cachedTextureId = m_renderer->RenderTextToTexture(
+					text._cachedFontId, text.text, text.color,
+					text.wordWrap, text.wrapWidth, w, h
+				);
+				text._cachedText = text.text;
+				text._cachedFontSize = text.fontSize;
+				text._cachedColor = text.color;
+				text._cachedWidth = w;
+				text._cachedHeight = h;
+			}
+
+			if (text._cachedTextureId != 0)
+			{
+				m_renderer->PushTextToRenderQueue(
+					text._cachedTextureId, text._cachedWidth, text._cachedHeight,
+					transform, text.layer, text.align
+				);
+			}
+		}
+		
 		m_renderer->CallRender();
 	}
 

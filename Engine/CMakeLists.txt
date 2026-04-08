@@ -15,25 +15,47 @@ target_include_directories(Engine PUBLIC
   $<INSTALL_INTERFACE:include>
 )
 
+# ---- ImGui option (auto-disabled for Emscripten) ----
+option(ZERO_USE_IMGUI "Enable Dear ImGui integration" ON)
+if(EMSCRIPTEN)
+  set(ZERO_USE_IMGUI OFF CACHE BOOL "" FORCE)
+endif()
+
+# ImGui (vendored)
+if(ZERO_USE_IMGUI)
+  add_subdirectory(vendored/imgui)
+endif()
+
 # Dependencies
 target_link_libraries(Engine PUBLIC
-  SDL3::SDL3
-  imgui           # assumes vendored/imgui defines target "imgui"
-  assimp
-  OpenGL::GL
-  glm
-  glad
+    SDL3::SDL3
+    SDL3_ttf::SDL3_ttf
 )
+
+if(ZERO_USE_IMGUI)
+  target_link_libraries(Engine PUBLIC imgui)
+  target_compile_definitions(Engine PUBLIC ZERO_USE_IMGUI)
+endif()
+
+if(NOT EMSCRIPTEN)
+  target_link_libraries(Engine PUBLIC
+    OpenGL::GL
+  )
+endif()
 
 # Warnings & common flags
 if(MSVC)
   target_compile_options(Engine PRIVATE /W4 /permissive- /MP)
+elseif(EMSCRIPTEN)
+  target_compile_options(Engine PRIVATE -Wall -Wextra -Wpedantic)
+  target_link_options(Engine PUBLIC
+    -sUSE_SDL=3
+    -sWASM=1
+    -sALLOW_MEMORY_GROWTH=1
+  )
 else()
   target_compile_options(Engine PRIVATE -Wall -Wextra -Wpedantic)
 endif()
-
-# ImGui (vendored)
-add_subdirectory(vendored/imgui)
 
 target_compile_definitions(Engine PRIVATE
   $<$<CONFIG:Debug>:ZERO_DEBUG>

@@ -38,6 +38,8 @@ struct SDLRendererData
     {}
 };
 
+#include <SDL3_ttf/SDL_ttf.h>
+
 class SDLRenderer : public IRenderer2D 
 {
 public:
@@ -53,9 +55,27 @@ public:
     Components::Texture GetTextureFromFile(const std::string& path) override;
     void CallRender() override;
 
+    // Text rendering implementation
+    uint32_t LoadFont(const std::string& path, float size) override;
+    void UnloadFont(uint32_t fontId) override;
+    uint32_t RenderTextToTexture(uint32_t fontId,
+                                 const std::string& text,
+                                 SDL_Color color,
+                                 bool wordWrap, int wrapWidth,
+                                 float& outWidth, float& outHeight) override;
+    void PushTextToRenderQueue(uint32_t textureId,
+                                float width, float height,
+                                const Components::Transform2D& transform,
+                                int layer,
+                                Components::TextAlign align) override;
+
 private:
     std::shared_ptr<SDL_Renderer> m_renderer;
     uint32_t m_nextId = 0;
     std::unordered_map<uint32_t, SDLTextureEntry> m_textures;
     std::map<uint32_t, std::vector<SDLRendererData>> m_RenderQueue;
+
+    // Font storage
+    uint32_t m_nextFontId = 0;
+    std::unordered_map<uint32_t, TTF_Font*> m_fonts;
 };
