@@ -26,11 +26,11 @@ void WorldScene::Initialize()
 	// Set ResourcesManager in RenderSystem so it can access spritesheets
 	if (auto game = m_game.lock())
 	{
-		game->GetRenderSystem()->SetResourcesManager(m_resources.get());
+		game->GetRenderSystem().SetResourcesManager(m_resources.get());
 	}
 	
 	// Load tileset texture and create spritesheet
-	Components::Texture tilesetTexture = m_game.lock()->GetRenderSystem()->LoadTexture(tilesetFile);
+	Components::Texture tilesetTexture = m_game.lock()->GetRenderSystem().LoadTexture(tilesetFile);
 	Components::SpriteSheet tileSpriteSheet;
 	tileSpriteSheet.texture = tilesetTexture;
 
@@ -52,7 +52,7 @@ void WorldScene::Initialize()
 	m_resources->StoreSpriteSheet(1, tileSpriteSheet);
 
 
-	Components::Texture runSpriteSheet = m_game.lock()->GetRenderSystem()->LoadTexture("game_assets/textures/Sword_Run_full.bmp");
+	Components::Texture runSpriteSheet = m_game.lock()->GetRenderSystem().LoadTexture("game_assets/textures/Sword_Run_full.bmp");
 	Components::SpriteSheet runSheet;
 	runSheet.texture = runSpriteSheet;
 	// Assume each frame is 64x64 and the sheet is 512x256 (8 columns, 4 rows)

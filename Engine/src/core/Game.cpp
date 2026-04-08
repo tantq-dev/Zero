@@ -20,7 +20,7 @@ namespace Core
 {
 	Game::Game()
 	{
-		if (SDL_Init(SDL_INIT_VIDEO) == 0)
+		if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) == 0)
 		{
 			throw std::runtime_error(std::string("SDL_Init Error: ") + SDL_GetError());
 		}
@@ -32,6 +32,8 @@ namespace Core
 
 	Game::~Game()
 	{
+		m_audioSystem.Shutdown();
+		TTF_Quit();
 		SDL_Quit();
 	}
 
@@ -42,9 +44,16 @@ namespace Core
 		{
 			// Initialize window
 			m_window->Initialize(windowConfig);
+			m_audioSystem.Initialize();
 
-			m_renderSystem = std::make_shared<System::RenderSystem>(std::make_shared<SDLRenderer>(m_window->GetRenderer()));
-			m_animationSystem = std::make_shared<System::AnimationSystem>();
+			if (!TTF_Init())
+			{
+				LOG_ERROR("Failed to initialize SDL_ttf: " + std::string(SDL_GetError()));
+			}
+			
+			m_renderSystem.SetRenderer(std::make_shared<SDLRenderer>(m_window->GetRenderer()));
+
+
 
 #ifndef __EMSCRIPTEN__
 			SDL_GLContext gl_context = SDL_GL_CreateContext(m_window->GetWindow().get());
@@ -153,11 +162,12 @@ namespace Core
 
 	
 		m_activeScene->Update(m_deltaTime);
-		m_animationSystem->Update(m_activeScene->GetRegistry(), m_deltaTime);
+		m_animationSystem.Update(m_activeScene->GetRegistry(), m_deltaTime);
+		m_audioSystem.Update(m_activeScene->GetRegistry());
 
 		double alpha = m_accumulator / FIXED_DT;
 		(void)alpha; // Suppress unused variable warning
-		m_renderSystem->Update(m_activeScene->GetRegistry());
+		m_renderSystem.Update(m_activeScene->GetRegistry());
 		m_activeScene->HandleUI(event);
 
 #ifdef ZERO_USE_IMGUI

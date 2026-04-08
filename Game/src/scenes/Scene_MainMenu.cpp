@@ -3,6 +3,7 @@
 #include "imgui.h"
 #endif
 #include "Game.h"
+#include "AudioComponents.h"
 
 
 void MainMenuScene::Initialize()  {
@@ -10,10 +11,15 @@ void MainMenuScene::Initialize()  {
 	
 	if (auto game = m_game.lock())
 	{
-		game->GetRenderSystem()->SetResourcesManager(m_resources.get());
+		game->GetRenderSystem().SetResourcesManager(m_resources.get());
+		uint32_t srcId = game->GetAudioSystem().LoadWAV("game_assets//audio//test.wav");
+		entt::entity background = m_Registry.create();
+		m_Registry.emplace<Components::AudioSource>(background,srcId);
+		auto& audioSrc = m_Registry.get<Components::AudioSource>(background);
+		audioSrc.requestPlay = true;
 	}
 	
-	Components::Texture pirateTexture = m_game.lock()->GetRenderSystem()->LoadTexture("engine_assets//textures//pirate.bmp");
+	Components::Texture pirateTexture = m_game.lock()->GetRenderSystem().LoadTexture("engine_assets//textures//pirate.bmp");
 	Components::SpriteSheet pirateSpriteSheet;
 	pirateSpriteSheet.texture = pirateTexture;
 	pirateSpriteSheet.frames = {
@@ -40,6 +46,14 @@ void MainMenuScene::Initialize()  {
 	pirateSprite.source = pirateSpriteSheet.frames[0];
 	m_Registry.emplace<Components::Sprite>(entity, Components::Sprite{ pirateSprite });
 	m_Registry.emplace<Components::Animation>(entity, testAnim);
+
+	// Add "Menu" Text
+	entt::entity menuText = m_Registry.create();
+	m_Registry.emplace<Components::Transform2D>(menuText, Components::Transform2D{ {400.0f, 100.0f}, {1.0f, 1.0f}, 0.0f });
+	Components::Text textComp("Menu", "engine_assets//fonts//default.ttf", 48.0f);
+	textComp.color = { 255, 255, 255, 255 }; // White
+	textComp.align = Components::TextAlign::Center;
+	m_Registry.emplace<Components::Text>(menuText, textComp);
 
 	Components::InputAction enterLevel("EnterLevel");
 	enterLevel.AddBinding(SDL_SCANCODE_W);

@@ -9,6 +9,8 @@
 #endif
 #include "RenderSystem.h"
 #include <AnimationSystem.h>
+#include "AudioSystem.h"
+#include <SDL3_ttf/SDL_ttf.h>
 
 #define DEFAULT_FIXED_UPDATE_FRAME 60
 
@@ -26,8 +28,9 @@ namespace Core
 		ImGuiIO* pio = nullptr;
 #endif
 		float m_deltaTime = 0.0f;
-		std::shared_ptr<System::RenderSystem> m_renderSystem;
-		std::shared_ptr<System::AnimationSystem> m_animationSystem;
+		System::RenderSystem m_renderSystem;
+		System::AnimationSystem m_animationSystem;
+		System::AudioSystem m_audioSystem;
 
 		// Timing state — must be members so Tick() can persist across Emscripten callbacks
 		Uint64 m_perfFreq = 0;
@@ -57,6 +60,7 @@ namespace Core
 		std::shared_ptr<Scene> GetActiveScene() const { return m_activeScene; }
 		std::string GetActiveSceneName() const { return m_activeSceneName; }
 		const float GetDeltaTime();
-		std::shared_ptr<System::RenderSystem> GetRenderSystem() const { return m_renderSystem; }
+		System::RenderSystem& GetRenderSystem()  { return m_renderSystem; }
+		System::AudioSystem& GetAudioSystem()  { return m_audioSystem; }
 	};
 }

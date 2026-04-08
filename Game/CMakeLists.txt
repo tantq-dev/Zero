@@ -12,7 +12,6 @@ target_include_directories(ZeroGame PRIVATE
 target_link_libraries(ZeroGame PRIVATE
   Engine
   SDL3::SDL3
-  glm
 )
 
 target_compile_definitions(ZeroGame PRIVATE
@@ -46,13 +45,4 @@ else()
     COMMENT "Copying Engine and Game assets"
   )
 
-  # ---- Assimp runtime (Windows) ----
-  if(WIN32)
-    add_custom_command(TARGET ZeroGame POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different
-              $<TARGET_FILE:assimp>
-              $<TARGET_FILE_DIR:ZeroGame>
-      COMMENT "Copying assimp runtime"
-    )
-  endif()
 endif()

@@ -3,6 +3,8 @@
 #include "RenderComponents.h"
 #include "PhysicsComponents.h"
 #include "InputComponents.h"
+#include "AudioComponents.h"
+#include "TextComponents.h"
 #include "Logger.h"
 #include <stdexcept>
 

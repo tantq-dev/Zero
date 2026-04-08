@@ -28,8 +28,8 @@ endif()
 
 # Dependencies
 target_link_libraries(Engine PUBLIC
-  SDL3::SDL3
-  glm
+    SDL3::SDL3
+    SDL3_ttf::SDL3_ttf
 )
 
 if(ZERO_USE_IMGUI)
@@ -40,8 +40,6 @@ endif()
 if(NOT EMSCRIPTEN)
   target_link_libraries(Engine PUBLIC
     OpenGL::GL
-    glad
-    assimp
   )
 endif()
 
