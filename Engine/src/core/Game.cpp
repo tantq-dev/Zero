@@ -43,9 +43,6 @@ namespace Core
 
 			m_renderSystem.SetRenderer(System::RendererFactory::CreateRenderer(m_window));
 			m_renderSystem.SetResourcesManager(m_resources.get());
-
-
-
 #ifndef __EMSCRIPTEN__
 			SDL_GLContext gl_context = SDL_GL_CreateContext(m_window->GetWindow().get());
 			if (gl_context == nullptr)
@@ -71,6 +68,7 @@ namespace Core
 			// Setup Dear ImGui style
 			ImGui::StyleColorsDark();
 			//ImGui::StyleColorsLight();
+			//todo: remove dependency
 			ImGui_ImplSDL3_InitForSDLRenderer(m_window->GetWindow().get(), m_window->GetRenderer().get());
 			ImGui_ImplSDLRenderer3_Init(m_window->GetRenderer().get());
 #endif
@@ -131,7 +129,7 @@ namespace Core
 		m_renderSystem.GetRenderer().BeginFrame();
 		
 		// Render entities from the registry
-		m_renderSystem.Update(m_activeScene->GetRegistry());
+		m_renderSystem.Update(m_activeScene->GetWorld().Registry);
 
 		// Render scene-specific UI and overlays
 		m_activeScene->Render(m_renderSystem.GetRenderer());

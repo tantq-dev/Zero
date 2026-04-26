@@ -3,7 +3,7 @@ file(GLOB_RECURSE GAME_SRC CONFIGURE_DEPENDS
   ${CMAKE_CURRENT_SOURCE_DIR}/src/*.h
 )
 
-add_executable(ZeroGame ${GAME_SRC})
+add_executable(ZeroGame ${GAME_SRC} "src/Player/Player.h" "src/Player/PlayerFactory.h")
 
 target_include_directories(ZeroGame PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/src

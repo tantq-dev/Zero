@@ -6,8 +6,8 @@
 class WindowConfig {
 	public:
 	const char* title = "Default Title";
-	int width = 640;
-	int height = 360;
+	int width = 1280;
+	int height = 720;
 #ifdef __EMSCRIPTEN__
 	Uint32 flags = SDL_WINDOW_RESIZABLE;
 #else

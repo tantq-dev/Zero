@@ -105,6 +105,6 @@ private:
     { 0, {1.0f, 1.0f} },
     m_whiteTexture
     };
-    int m_virtualWidth = 640;
-    int m_virtualHeight = 360;
+    int m_virtualWidth = 320;
+    int m_virtualHeight = 180;
 };

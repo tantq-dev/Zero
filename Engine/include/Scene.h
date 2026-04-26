@@ -2,6 +2,7 @@
 #include "entt.hpp"
 #include <memory>
 #include <ResourcesManager.h>
+#include <World.h>
 
 class IRenderer2D;
 
@@ -25,11 +26,11 @@ namespace Core
 		virtual void HandleUI() = 0;
 
 		void SetGame(std::weak_ptr<Game> game) { m_game = std::move(game); }
-		entt::registry& GetRegistry() { return m_Registry; }
+		World& GetWorld() { return m_world; }
 
 	protected:
 		
 		std::weak_ptr<Game> m_game;
-		entt::registry m_Registry; // Entity-Component System registry
+		World m_world;
 	};
 }
