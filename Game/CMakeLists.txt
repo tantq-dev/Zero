@@ -35,14 +35,25 @@ if(EMSCRIPTEN)
 
 else()
   # ---- Desktop: copy assets ----
-  add_custom_command(TARGET ZeroGame POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-            ${CMAKE_SOURCE_DIR}/Engine/assets
-            $<TARGET_FILE_DIR:ZeroGame>/engine_assets
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-            ${CMAKE_CURRENT_SOURCE_DIR}/assets
-            $<TARGET_FILE_DIR:ZeroGame>/game_assets
+   add_custom_command(TARGET ZeroGame POST_BUILD
     COMMENT "Copying Engine and Game assets"
+    COMMAND ${CMAKE_COMMAND} -E echo "Checking asset folders..."
   )
+
+  if(EXISTS "${CMAKE_SOURCE_DIR}/Engine/assets")
+    add_custom_command(TARGET ZeroGame POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy_directory
+              ${CMAKE_SOURCE_DIR}/Engine/assets
+              $<TARGET_FILE_DIR:ZeroGame>/engine_assets
+    )
+  endif()
+
+  if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/assets")
+    add_custom_command(TARGET ZeroGame POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy_directory
+              ${CMAKE_CURRENT_SOURCE_DIR}/assets
+              $<TARGET_FILE_DIR:ZeroGame>/game_assets
+    )
+  endif()
 
 endif()
