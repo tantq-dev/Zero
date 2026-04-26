@@ -1,16 +1,50 @@
-# 2D Game Engine (SDL3 + EnTT)
+# Vertical Slice – Top-Down Roguelite
 
-A custom lightweight 2D game engine built from scratch using modern C++.  
-Designed for learning, experimentation, and building small to mid-scale 2D games.
+After failing to submit a game jam project, this project is a focused restart.
+
+This is a small vertical slice of a top-down roguelite game, built to evaluate and improve the **Zero Engine** in a practical, gameplay-driven way.
+
+---
+
+## Goal
+
+* Build a **fully playable core loop** (movement → combat → enemy → progression)
+* Identify missing or weak engine features through real usage
 
 ---
 
-## Features
+## Scope (Initial)
 
-- ⚙️ **Entity Component System (ECS)** using EnTT
-- 🎮 **SDL3-based rendering and input handling**
-- 🧱 Modular architecture for easy extension
-- 🛠️ CMake-based build system (cross-platform ready)
-- 🚀 Focus on performance and simplicity
+* Player movement (top-down)
+* Basic combat system (1 weapon)
+* 1–2 enemy types with simple AI
+* Small arena/map
+* Basic progression (e.g., damage or speed upgrade)
+* Minimal UI and feedback (hit effects, sound)
 
 ---
+
+## Engine Focus (Zero Engine)
+
+This project will help validate and improve:
+
+* ECS workflow and iteration patterns
+* Rendering (sprite batching, layering)
+* Input handling
+* Collision and physics basics
+* Game loop structure and system organization
+
+---
+
+## Target
+
+* A **playable and polished vertical slice** within a short timeframe
+* Clear direction for expanding into a full game
+* A stable foundation for future projects using Zero Engine
+
+---
+
+## Notes
+
+This is not a full game.
+The focus is on **clarity, iteration speed, and finishing a small, complete experience**.
