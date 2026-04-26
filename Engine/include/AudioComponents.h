@@ -17,7 +17,7 @@ namespace Components
 	// ECS component — attach to any entity to give it a sound
 	struct AudioSource
 	{
-		uint32_t clipId       = 0;       // ID returned by AudioSystem::LoadWAV()
+		uint32_t clipId       = 0;       // ID returned by AudioSystem::LoadAudio/LoadWAV/LoadMP3
 		float    volume       = 1.0f;    // 0.0 – 1.0
 		bool     loop         = false;
 		bool     playOnAwake  = false;   // auto-play first time the system sees it

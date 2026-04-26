@@ -14,12 +14,28 @@ namespace System
 			if (animClip.currentFrameTime >= animClip.currentClip.frameTime)
 			{
 				animClip.currentFrameTime = 0;
-				animClip.currentFrame += 1;
-				animClip.currentFrame %= animClip.currentClip.numberOfFrames;
-				sprite.frameIndex = animClip.currentFrame;
-				sprite.spriteSheetId = animClip.currentClip.spriteSheetId;
-				LOG_INFO("Play anim at current frame: " + std::to_string(animClip.currentFrame));
+				size_t nextFrame = animClip.currentFrame + 1;
+				
+				if (nextFrame >= animClip.currentClip.numberOfFrames)
+				{
+					if (animClip.currentClip.isLoop)
+					{
+						animClip.currentFrame = 0;
+					}
+					else
+					{
+						animClip.isFinished = true;
+						// Stay on last frame if not looping
+						animClip.currentFrame = animClip.currentClip.numberOfFrames - 1;
+					}
+				}
+				else
+				{
+					animClip.currentFrame = nextFrame;
+				}
 
+				sprite.frameIndex = animClip.currentClip.frameIndexStart + animClip.currentFrame;
+				sprite.spriteSheetId = animClip.currentClip.spriteSheetId;
 			}
 		}
 	}

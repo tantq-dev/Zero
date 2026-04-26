@@ -1,7 +1,6 @@
 
 #include "ScenePlay.h"
 #include <stdexcept>
-#include <SDL3/SDL.h>
 #include "Logger.h"
 #ifdef ZERO_USE_IMGUI
 #include "../vendored/imgui/imgui.h"
@@ -9,7 +8,8 @@
 #include "../vendored/imgui/backends/imgui_impl_sdlrenderer3.h"
 #endif
 #include "Game.h"
-#include <SDLRenderer2D.h>
+#include "RendererFactory.h"
+#include "IRenderer2D.h"
 #ifdef __EMSCRIPTEN__
 #include <emscripten/emscripten.h>
 #endif
@@ -20,11 +20,6 @@ namespace Core
 {
 	Game::Game()
 	{
-		if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) == 0)
-		{
-			throw std::runtime_error(std::string("SDL_Init Error: ") + SDL_GetError());
-		}
-
 		m_window = std::make_shared<Window>();
 		m_scenes.clear();
 		m_activeScene = nullptr;
@@ -33,8 +28,7 @@ namespace Core
 	Game::~Game()
 	{
 		m_audioSystem.Shutdown();
-		TTF_Quit();
-		SDL_Quit();
+		if (m_window) m_window->Close();
 	}
 
 	void Game::Initialize()
@@ -45,13 +39,10 @@ namespace Core
 			// Initialize window
 			m_window->Initialize(windowConfig);
 			m_audioSystem.Initialize();
+			m_resources = std::make_unique<ResourcesManager>();
 
-			if (!TTF_Init())
-			{
-				LOG_ERROR("Failed to initialize SDL_ttf: " + std::string(SDL_GetError()));
-			}
-			
-			m_renderSystem.SetRenderer(std::make_shared<SDLRenderer>(m_window->GetRenderer()));
+			m_renderSystem.SetRenderer(System::RendererFactory::CreateRenderer(m_window));
+			m_renderSystem.SetResourcesManager(m_resources.get());
 
 
 
@@ -97,8 +88,8 @@ namespace Core
 	void Game::StartLoop()
 	{
 		m_isRunning = true;
-		m_perfFreq = SDL_GetPerformanceFrequency();
-		m_prevCounter = SDL_GetPerformanceCounter();
+		m_perfFreq = m_window->GetPerformanceFrequency();
+		m_prevCounter = m_window->GetPerformanceCounter();
 		m_accumulator = 0.0;
 	}
 
@@ -106,81 +97,63 @@ namespace Core
 	{
 		if (!m_isRunning) return;
 
-		auto toSec = [this](Uint64 ticks) { return static_cast<double>(ticks) / static_cast<double>(m_perfFreq); };
+		uint64_t currentCounter = m_window->GetPerformanceCounter();
+		double frameTime = (double)(currentCounter - m_prevCounter) / m_perfFreq;
+		m_prevCounter = currentCounter;
 
-		Uint64 now = SDL_GetPerformanceCounter();
-		
-		double frameDt = toSec(now - m_prevCounter);
-		m_prevCounter = now;
-
-		if (frameDt > MAX_FRAME) frameDt = MAX_FRAME;
-		m_accumulator += frameDt;
-		m_deltaTime = static_cast<float>(frameDt);
-
-		SDL_Event event{};
+		if (frameTime > MAX_FRAME) frameTime = MAX_FRAME;
+		m_accumulator += frameTime;
 
 #ifdef ZERO_USE_IMGUI
-		// Start the Dear ImGui frame
-		ImGui_ImplSDLRenderer3_NewFrame();
-		ImGui_ImplSDL3_NewFrame();
-		ImGui::NewFrame();
+		// TODO: Implement ImGui abstraction if needed
 #endif
 
-		while (SDL_PollEvent(&event))
-		{
+		m_isRunning = m_window->ProcessEvents([this](SDL_Event& event) {
+			m_inputSystem.HandleInput(event);
+		});
 
-#ifdef ZERO_USE_IMGUI
-			ImGui_ImplSDL3_ProcessEvent(&event);
-			if (pio->WantCaptureMouse || pio->WantCaptureKeyboard) {
-				continue;
-			}
-#endif
-
-			m_activeScene->HandleInput(event);
-			if (event.type == SDL_EVENT_QUIT)
-			{
-				m_isRunning = false;
-				m_window->Close();
-#ifdef __EMSCRIPTEN__
-				emscripten_cancel_main_loop();
-#endif
-			}
+		if (m_activeScene) {
+			m_activeScene->HandleInput();
 		}
 
-		// --- fixed updates ---
 		int steps = 0;
-		while (m_accumulator >= FIXED_DT && steps < MAX_STEPS) {
-			m_activeScene->FixedUpdate(FIXED_DT);
+		while (m_accumulator >= FIXED_DT && steps < MAX_STEPS)
+		{
+			m_deltaTime = (float)FIXED_DT;
+			m_activeScene->Update(m_deltaTime);
 			m_accumulator -= FIXED_DT;
-			++steps;
+			steps++;
 		}
 
-		// if we hit the max number of steps, we are probably in a spiral of death, so we just clamp the accumulator
-		if (steps == MAX_STEPS && m_accumulator >= FIXED_DT) {
-			m_accumulator = fmod(m_accumulator, FIXED_DT);
-		}
+		// ===== RENDER PIPELINE =====
+		auto renderer = m_window->GetRenderer();
 
-	
-		m_activeScene->Update(m_deltaTime);
-		m_animationSystem.Update(m_activeScene->GetRegistry(), m_deltaTime);
-		m_audioSystem.Update(m_activeScene->GetRegistry());
-
-		double alpha = m_accumulator / FIXED_DT;
-		(void)alpha; // Suppress unused variable warning
+		m_renderSystem.GetRenderer().BeginFrame();
+		
+		// Render entities from the registry
 		m_renderSystem.Update(m_activeScene->GetRegistry());
-		m_activeScene->HandleUI(event);
+
+		// Render scene-specific UI and overlays
+		m_activeScene->Render(m_renderSystem.GetRenderer());
+
+		m_renderSystem.GetRenderer().CallRender();
 
 #ifdef ZERO_USE_IMGUI
-		ImGui::Render();
-		SDL_SetRenderScale(m_window->GetRenderer().get(), pio->DisplayFramebufferScale.x, pio->DisplayFramebufferScale.y);
-		ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), m_window->GetRenderer().get());
+		// TODO: Implement ImGui abstraction if needed
 #endif
 
-		// Update active scene
+		// Use a generic way to get window size if possible, or just skip it if logical size is fixed
+		// For now we'll keep it simple as we already handle logical presentation inside the renderer.
+		m_renderSystem.GetRenderer().EndFrame(0, 0); 
 
-		SDL_RenderPresent(m_window->GetRenderer().get());
-		//SDL_SetRenderDrawColorFloat(m_window->GetRenderer().get(), clear_color.x, clear_color.y, clear_color.z, clear_color.w);
-		SDL_RenderClear(m_window->GetRenderer().get());
+#ifndef __EMSCRIPTEN__
+		uint64_t endCounter = m_window->GetPerformanceCounter();
+		double elapsed = (double)(endCounter - currentCounter) / m_perfFreq;
+		if (elapsed < FIXED_DT)
+		{
+			m_window->Delay((uint32_t)((FIXED_DT - elapsed) * 1000.0));
+		}
+#endif
 	}
 
 	void Game::Run()

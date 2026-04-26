@@ -24,8 +24,15 @@ namespace System
 
 		// ---- Resource management ----
 
-		/// Load a WAV file. Returns a clipId (>0) on success, 0 on failure.
+		/// Load an audio file, auto-detecting format from extension (.wav or .mp3).
+		/// Returns a clipId (>0) on success, 0 on failure.
+		uint32_t LoadAudio(const std::string& path);
+
+		/// Load a WAV file (decoded via dr_wav, SDL IO-safe for Emscripten).
 		uint32_t LoadWAV(const std::string& path);
+
+		/// Load an MP3 file (decoded via dr_mp3, SDL IO-safe for Emscripten).
+		uint32_t LoadMP3(const std::string& path);
 
 		/// Free a previously loaded clip.
 		void UnloadClip(uint32_t clipId);

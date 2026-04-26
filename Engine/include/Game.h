@@ -8,9 +8,11 @@
 #include "imgui.h"
 #endif
 #include "RenderSystem.h"
+#include "InputSystem.h"
 #include <AnimationSystem.h>
 #include "AudioSystem.h"
-#include <SDL3_ttf/SDL_ttf.h>
+#include <cstdint>
+#include "ResourcesManager.h"
 
 #define DEFAULT_FIXED_UPDATE_FRAME 60
 
@@ -22,6 +24,7 @@ namespace Core
 		std::shared_ptr<Window> m_window;
 		bool m_isRunning = false;
 		std::unordered_map<std::string, std::shared_ptr<Scene>> m_scenes;
+		std::unique_ptr<ResourcesManager> m_resources;
 		std::shared_ptr<Scene> m_activeScene;
 		std::string m_activeSceneName;
 #ifdef ZERO_USE_IMGUI
@@ -29,12 +32,13 @@ namespace Core
 #endif
 		float m_deltaTime = 0.0f;
 		System::RenderSystem m_renderSystem;
+		System::InputSystem m_inputSystem;
 		System::AnimationSystem m_animationSystem;
 		System::AudioSystem m_audioSystem;
 
 		// Timing state — must be members so Tick() can persist across Emscripten callbacks
-		Uint64 m_perfFreq = 0;
-		Uint64 m_prevCounter = 0;
+		uint64_t m_perfFreq = 0;
+		uint64_t m_prevCounter = 0;
 		double m_accumulator = 0.0;
 
 		static constexpr double FIXED_HZ  = 60.0;
@@ -61,6 +65,12 @@ namespace Core
 		std::string GetActiveSceneName() const { return m_activeSceneName; }
 		const float GetDeltaTime();
 		System::RenderSystem& GetRenderSystem()  { return m_renderSystem; }
+		System::InputSystem& GetInputSystem() { return m_inputSystem; }
 		System::AudioSystem& GetAudioSystem()  { return m_audioSystem; }
+		System::AnimationSystem& GetAnimationSystem() { return m_animationSystem; }
+		ResourcesManager& GetResources()
+		{
+			return *m_resources;
+		}
 	};
 }

@@ -1,5 +1,5 @@
 #pragma once
-#include "SDL3/SDL.h"
+union SDL_Event;
 #include <unordered_map>
 #include <string>
 #include "Components.h"

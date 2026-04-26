@@ -18,4 +18,12 @@ namespace Components
 
 		}
 	};
+
+	struct CameraComponent
+	{
+		Vec2 position;
+		float width;
+		float height;
+		float zoom = 1.0f;
+	};
 }

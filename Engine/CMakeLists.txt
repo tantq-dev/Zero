@@ -4,15 +4,16 @@ file(GLOB_RECURSE ENGINE_SRC CONFIGURE_DEPENDS
   ${CMAKE_CURRENT_SOURCE_DIR}/src/*.h
 )
 
-add_library(Engine STATIC ${ENGINE_SRC})
+add_library(Engine STATIC ${ENGINE_SRC} "include/ParticalSystem.h")
 
 # Public headers during build; change INSTALL_INTERFACE if you later add install rules
 target_include_directories(Engine PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/vendored>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-
   $<INSTALL_INTERFACE:include>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/vendored/stb>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/vendored/dr_libs>
 )
 
 # ---- ImGui option (auto-disabled for Emscripten) ----
