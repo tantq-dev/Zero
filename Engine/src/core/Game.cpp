@@ -115,11 +115,15 @@ namespace Core
 		}
 
 		int steps = 0;
+		m_activeScene->Update(frameTime);
+		m_actorSystem.Update(frameTime, m_activeScene->GetWorld()->Registry);
 		while (m_accumulator >= FIXED_DT && steps < MAX_STEPS)
 		{
 			m_deltaTime = (float)FIXED_DT;
-			m_activeScene->Update(m_deltaTime);
 			m_accumulator -= FIXED_DT;
+			m_activeScene->FixedUpdate(m_deltaTime);
+			m_actorSystem.FixedUpdate(frameTime, m_activeScene->GetWorld()->Registry);
+
 			steps++;
 		}
 
@@ -129,7 +133,7 @@ namespace Core
 		m_renderSystem.GetRenderer().BeginFrame();
 		
 		// Render entities from the registry
-		m_renderSystem.Update(m_activeScene->GetWorld().Registry);
+		m_renderSystem.Update(m_activeScene->GetWorld()->Registry);
 
 		// Render scene-specific UI and overlays
 		m_activeScene->Render(m_renderSystem.GetRenderer());

@@ -11,6 +11,7 @@
 #include "InputSystem.h"
 #include <AnimationSystem.h>
 #include "AudioSystem.h"
+#include "ActorComponentSystem.h"
 #include <cstdint>
 #include "ResourcesManager.h"
 
@@ -35,6 +36,7 @@ namespace Core
 		System::InputSystem m_inputSystem;
 		System::AnimationSystem m_animationSystem;
 		System::AudioSystem m_audioSystem;
+		System::ActorComponentSystem m_actorSystem;
 
 		// Timing state — must be members so Tick() can persist across Emscripten callbacks
 		uint64_t m_perfFreq = 0;
