@@ -71,6 +71,12 @@ public:
 
     void DrawRect(Components::Rect rect, Components::Color color, bool fill, int layer) override;
     void DrawLine(float x1, float y1, float x2, float y2, Components::Color color, int layer) override;
+
+    // Screen-space UI draw (no camera transform)
+    void DrawRectScreen(Components::Rect rect, Components::Color color, bool fill) override;
+    void PushTextScreen(uint32_t textureId, float width, float height,
+                        float x, float y, Components::TextAlign align) override;
+    void PushSpriteScreen(const Components::Texture& texture, Components::Rect destRect) override;
     Vec2 ScreenToWorld(Vec2 screenPos) override;
 
     Components::Texture GetTextureFromFile(const std::string& path) override;
@@ -107,4 +113,14 @@ private:
     };
     int m_virtualWidth = 320;
     int m_virtualHeight = 180;
+
+    // ---- UI screen-space queues (flushed after world render in EndFrame) ----
+    struct UIRectEntry   { SDL_FRect rect; SDL_Color color; bool fill; };
+    struct UITextEntry   { SDL_Texture* tex; float x, y, w, h; };
+    struct UISpriteEntry { SDL_Texture* tex; SDL_FRect dst; };
+
+    std::vector<UIRectEntry>   m_uiRects;
+    std::vector<UITextEntry>   m_uiTexts;
+    std::vector<UISpriteEntry> m_uiSprites;
+    GeometryBatch              m_uiWhiteBatch; // batched rects, flushed each EndFrame
 };

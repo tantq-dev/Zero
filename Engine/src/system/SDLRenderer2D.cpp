@@ -48,6 +48,75 @@ void SDLRenderer2D::BeginFrame()
 
 void SDLRenderer2D::EndFrame(int /*windowW*/, int /*windowH*/)
 {
+    // ---- Flush UI screen-space queues (drawn on top of world) ----
+
+    // Disable logical presentation temporarily so we can draw in virtual coords directly.
+    // (SDL3 logical presentation keeps virtual coords active, so we can just draw normally.)
+
+    // 1. UI filled/outline rects
+    for (const auto& entry : m_uiRects)
+    {
+        SDL_FColor c = {
+            entry.color.r / 255.0f,
+            entry.color.g / 255.0f,
+            entry.color.b / 255.0f,
+            entry.color.a / 255.0f
+        };
+        if (entry.fill)
+        {
+            AddColoredQuad(m_uiWhiteBatch, entry.rect, c);
+        }
+        else
+        {
+            // Outline: four thin quads
+            float t = 1.0f;
+            SDL_FRect top    = { entry.rect.x, entry.rect.y,                  entry.rect.w, t };
+            SDL_FRect bottom = { entry.rect.x, entry.rect.y + entry.rect.h - t, entry.rect.w, t };
+            SDL_FRect left   = { entry.rect.x, entry.rect.y,                  t, entry.rect.h };
+            SDL_FRect right  = { entry.rect.x + entry.rect.w - t, entry.rect.y, t, entry.rect.h };
+            AddColoredQuad(m_uiWhiteBatch, top,    c);
+            AddColoredQuad(m_uiWhiteBatch, bottom, c);
+            AddColoredQuad(m_uiWhiteBatch, left,   c);
+            AddColoredQuad(m_uiWhiteBatch, right,  c);
+        }
+    }
+
+    // Flush the white-texture batch for UI rects.
+    if (!m_uiWhiteBatch.vertices.empty())
+    {
+        m_uiWhiteBatch.texture = m_whiteTexture;
+        SDL_RenderGeometry(
+            m_renderer.get(),
+            m_whiteTexture,
+            m_uiWhiteBatch.vertices.data(), (int)m_uiWhiteBatch.vertices.size(),
+            m_uiWhiteBatch.indices.data(),  (int)m_uiWhiteBatch.indices.size()
+        );
+        m_uiWhiteBatch.vertices.clear();
+        m_uiWhiteBatch.indices.clear();
+    }
+
+    // 2. UI sprite images
+    for (const auto& entry : m_uiSprites)
+    {
+        if (!entry.tex) continue;
+        SDL_FRect src = { 0, 0, entry.dst.w, entry.dst.h };
+        SDL_RenderTexture(m_renderer.get(), entry.tex, &src, &entry.dst);
+    }
+
+    // 3. UI text glyphs
+    for (const auto& entry : m_uiTexts)
+    {
+        if (!entry.tex) continue;
+        SDL_FRect src = { 0, 0, entry.w, entry.h };
+        SDL_FRect dst = { entry.x, entry.y, entry.w, entry.h };
+        SDL_RenderTexture(m_renderer.get(), entry.tex, &src, &dst);
+    }
+
+    // Clear UI queues for next frame.
+    m_uiRects.clear();
+    m_uiSprites.clear();
+    m_uiTexts.clear();
+
     SDL_RenderPresent(m_renderer.get());
 }
 
@@ -535,4 +604,38 @@ void SDLRenderer2D::AddColoredQuad(
     batch.indices.push_back(start + 0);
     batch.indices.push_back(start + 2);
     batch.indices.push_back(start + 3);
+}
+
+// -----------------------------------------------------------------------------
+// Screen-space UI draw methods (no camera transform)
+// -----------------------------------------------------------------------------
+
+void SDLRenderer2D::DrawRectScreen(Components::Rect rect, Components::Color color, bool fill)
+{
+    SDL_FRect sdlRect = { rect.x, rect.y, rect.w, rect.h };
+    SDL_Color sdlColor = {
+        static_cast<Uint8>(color.r),
+        static_cast<Uint8>(color.g),
+        static_cast<Uint8>(color.b),
+        static_cast<Uint8>(color.a)
+    };
+    m_uiRects.push_back({ sdlRect, sdlColor, fill });
+}
+
+void SDLRenderer2D::PushTextScreen(uint32_t textureId, float width, float height,
+                                    float x, float y, Components::TextAlign /*align*/)
+{
+    auto it = m_textures.find(textureId);
+    if (it == m_textures.end() || !it->second.ptr) return;
+
+    m_uiTexts.push_back({ it->second.ptr, x, y, width, height });
+}
+
+void SDLRenderer2D::PushSpriteScreen(const Components::Texture& texture, Components::Rect destRect)
+{
+    auto it = m_textures.find(texture.id);
+    if (it == m_textures.end() || !it->second.ptr) return;
+
+    SDL_FRect dst = { destRect.x, destRect.y, destRect.w, destRect.h };
+    m_uiSprites.push_back({ it->second.ptr, dst });
 }

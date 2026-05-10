@@ -6,6 +6,7 @@
 #include <Actor.h>
 
 class IRenderer2D;
+namespace System { class UISystem; }
 
 namespace Core
 {
@@ -26,7 +27,7 @@ namespace Core
 		virtual void FixedUpdate(const double& deltaTime) = 0;
 		virtual void Render(::IRenderer2D& renderer) = 0;
 		virtual void HandleInput() = 0;
-		virtual void HandleUI() = 0;
+		virtual void HandleUI(System::UISystem& ui) = 0;
 
 		void SetGame(std::weak_ptr<Game> game) { m_game = std::move(game); }
 		std::shared_ptr<World> GetWorld()

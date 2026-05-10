@@ -10,19 +10,31 @@ namespace System
 	public:
 		InputSystem() = default;
 		~InputSystem() = default;
+
+		// Call once at the end of each frame to clear one-frame states
+		void PostUpdate();
+
 		void HandleInput(SDL_Event& event);
 		void RegisterAction(Components::InputAction action);
+
+		// Returns true only on the exact frame the action was pressed
+		bool IsActionJustPressed(const std::string& actionName) const;
+		// Returns true on the frame the button/key went down (and stays true while held)
 		bool IsActionPressed(const std::string& actionName) const;
+		// Returns true as long as the button/key is held down
 		bool IsActionHeld(const std::string& actionName) const;
-		int GetMouseWheelDelta(const std::string& actionName) const;
+
+		// Returns false instead of throwing if the action is not registered
+		bool HasAction(const std::string& actionName) const;
+
+		float GetMouseWheelDelta(const std::string& actionName) const;
+
 		bool IsWindowCloseRequested() const
 		{
 			return m_isWindowCloseRequested;
 		}
-		const Vec2& GetMousePosition(const std::string& actionName) const
-		{
-			return m_registeredActions.at(actionName).mousePosition;
-		}
+
+		const Vec2& GetMousePosition(const std::string& actionName) const;
 
 		void ResetMouseWheelDelta(const std::string& actionName);
 		void ResetMousePress(const std::string& actionName);
@@ -35,7 +47,14 @@ namespace System
 		void HandleMouseMotion(SDL_Event& event);
 		void HandleMouseWheel(SDL_Event& event);
 		void HandleWindowCloseRequest(SDL_Event& event);
+
+		// Safe helper — returns nullptr if not found
+		const Components::InputAction* FindAction(const std::string& actionName) const;
+		Components::InputAction* FindAction(const std::string& actionName);
+
 		std::unordered_map<std::string, Components::InputAction> m_registeredActions;
 		bool m_isWindowCloseRequested = false;
+
+		static const Vec2 s_zeroVec;
 	};
 }

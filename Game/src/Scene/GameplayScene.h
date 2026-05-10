@@ -1,5 +1,6 @@
 #pragma once
 #include "Scene.h"
+namespace System { class UISystem; }
 struct Tile
 {
 	Vec2 position;
@@ -12,7 +13,7 @@ class GameplayScene : public Core::Scene {
 	 void FixedUpdate(const double& deltaTime) override;
 	 void Render(::IRenderer2D& renderer) override;
 	 void HandleInput() override;
-	 void HandleUI() override;
+	 void HandleUI(System::UISystem& ui) override;
 
 	 std::vector<Tile> m_tiles;
 };
