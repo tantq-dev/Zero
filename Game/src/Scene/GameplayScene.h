@@ -1,11 +1,7 @@
 #pragma once
 #include "Scene.h"
 namespace System { class UISystem; }
-struct Tile
-{
-	Vec2 position;
-	bool isWhite;
-};
+
 
 class GameplayScene : public Core::Scene {
 	 void Initialize() override;
@@ -14,6 +10,9 @@ class GameplayScene : public Core::Scene {
 	 void Render(::IRenderer2D& renderer) override;
 	 void HandleInput() override;
 	 void HandleUI(System::UISystem& ui) override;
-
-	 std::vector<Tile> m_tiles;
+private:
+	 uint32_t m_Font = 0;
+	 double m_current = 0;
+	 std::shared_ptr<Core::Actor> m_backgroundActor;
+	 std::string GetCurrentTimeString(double& time);
 };

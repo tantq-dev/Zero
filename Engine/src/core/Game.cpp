@@ -10,6 +10,7 @@
 #include "Game.h"
 #include "RendererFactory.h"
 #include "IRenderer2D.h"
+#include "DefaultConfig.h"
 #ifdef __EMSCRIPTEN__
 #include <emscripten/emscripten.h>
 #endif
@@ -43,6 +44,9 @@ namespace Core
 
 			m_renderSystem.SetRenderer(System::RendererFactory::CreateRenderer(m_window));
 			m_renderSystem.SetResourcesManager(m_resources.get());
+
+			//initial default resouce
+			m_resources->GetOrLoadFont(EngieResources::DEFAULT_FONT, 24,m_renderSystem.GetRenderer());
 #ifndef __EMSCRIPTEN__
 			SDL_GLContext gl_context = SDL_GL_CreateContext(m_window->GetWindow().get());
 			if (gl_context == nullptr)
@@ -111,7 +115,7 @@ namespace Core
 		});
 
 		// Snapshot UI mouse state before any scene logic runs.
-		m_uiSystem.BeginFrame(m_inputSystem);
+		m_uiSystem.BeginFrame(m_inputSystem, m_renderSystem.GetRenderer());
 
 		if (m_activeScene) {
 			m_activeScene->HandleInput();

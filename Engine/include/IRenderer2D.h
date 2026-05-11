@@ -15,6 +15,7 @@ public:
 	virtual Components::CameraBounds GetCameraBounds() const = 0;
 
 	virtual Vec2 ScreenToWorld(Vec2 screenPos) = 0;
+	virtual Vec2 ScreenToLogical(Vec2 screenPos) = 0;
 
 	// Text rendering
 	virtual uint32_t LoadFont(const std::string& path, float size) = 0;
@@ -47,4 +48,7 @@ public:
 
 	virtual void BeginFrame() = 0;
 	virtual void EndFrame(int windowW, int windowH) = 0;
+
+	/// Scale factor from virtual coords to real output pixels (e.g. 6.0 for 320→1920).
+	virtual float GetUIScale() const { return 1.0f; }
 };

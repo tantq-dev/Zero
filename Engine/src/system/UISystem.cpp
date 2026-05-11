@@ -13,7 +13,7 @@ namespace System
     // -------------------------------------------------------------------------
     // BeginFrame — snapshot input, clear draw lists
     // -------------------------------------------------------------------------
-    void UISystem::BeginFrame(System::InputSystem& input)
+    void UISystem::BeginFrame(System::InputSystem& input, IRenderer2D& renderer)
     {
         // Register internal actions once at startup.
         if (!m_actionRegistered)
@@ -29,7 +29,7 @@ namespace System
             m_actionRegistered = true;
         }
 
-        m_mousePos     = input.GetMousePosition(k_uiMouseMotion);
+        m_mousePos     = renderer.ScreenToLogical(input.GetMousePosition(k_uiMouseMotion));
         m_mouseHeld    = input.IsActionHeld(k_uiMouseBtn);
         m_mousePressed = input.IsActionJustPressed(k_uiMouseBtn);
 
@@ -50,7 +50,9 @@ namespace System
                 return c.id;
         }
 
-        uint32_t id = renderer.LoadFont(path, size);
+        // Load at real output resolution for crisp UI text.
+        float realSize = size * renderer.GetUIScale();
+        uint32_t id = renderer.LoadFont(path, realSize);
         m_fontCache.push_back({ path, size, id });
         return id;
     }
@@ -107,6 +109,29 @@ namespace System
         return clicked;
     }
 
+    bool UISystem::Button(Components::Texture tex,
+                          Components::Rect rect,
+                          UI::UIStyle style)
+    {
+        bool hovered = ContainsPoint(rect, m_mousePos);
+        bool clicked = hovered && m_mousePressed;
+
+        // Background color based on interaction state.
+        Components::Color bgColor = style.buttonNormal;
+        if (hovered && m_mouseHeld)
+            bgColor = style.buttonPressed;
+        else if (hovered)
+            bgColor = style.buttonHover;
+
+        // Background panel.
+        m_rects.push_back({ rect, bgColor, true });
+
+        // Image.
+        m_sprites.push_back({ tex, rect });
+
+        return clicked;
+    }
+
     void UISystem::Image(Components::Texture tex, Components::Rect rect)
     {
         m_sprites.push_back({ tex, rect });
@@ -129,7 +154,9 @@ namespace System
             renderer.PushSpriteScreen(cmd.texture, cmd.destRect);
         }
 
-        // 3. Text labels — rasterise on-the-fly and push screen-space draw.
+        // 3. Text labels — rasterised at native resolution, positioned in virtual coords.
+        float uiScale = renderer.GetUIScale();
+
         for (const auto& lbl : m_labels)
         {
             float w = 0.0f, h = 0.0f;
@@ -137,17 +164,21 @@ namespace System
                 lbl.fontId, lbl.text, lbl.color,
                 false, 0, w, h);
 
+            // w, h are in real pixels — convert to virtual coords for layout.
+            float vw = w / uiScale;
+            float vh = h / uiScale;
+
             // Resolve pixel x based on alignment.
             float drawX = lbl.x;
             if (lbl.align == Components::TextAlign::Center)
-                drawX = lbl.x - w * 0.5f;
+                drawX = lbl.x - vw * 0.5f;
             else if (lbl.align == Components::TextAlign::Right)
-                drawX = lbl.x - w;
+                drawX = lbl.x - vw;
 
             // Vertically center on the given y.
-            float drawY = lbl.y - h * 0.5f;
+            float drawY = lbl.y - vh * 0.5f;
 
-            renderer.PushTextScreen(texId, w, h, drawX, drawY, lbl.align);
+            renderer.PushTextScreen(texId, vw, vh, drawX, drawY, lbl.align);
         }
     }
 

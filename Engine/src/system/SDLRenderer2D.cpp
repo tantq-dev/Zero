@@ -27,6 +27,16 @@ SDLRenderer2D::SDLRenderer2D(std::shared_ptr<SDL_Renderer> renderer)
 {
     SDL_SetRenderLogicalPresentation(m_renderer.get(), m_virtualWidth, m_virtualHeight, SDL_LOGICAL_PRESENTATION_LETTERBOX);
     m_whiteTexture = CreateWhiteTexture();
+
+    // Compute UI scale: ratio of real output pixels to virtual resolution.
+    int outW = 0, outH = 0;
+    SDL_GetRenderOutputSize(m_renderer.get(), &outW, &outH);
+    if (outW > 0 && outH > 0)
+    {
+        float sx = static_cast<float>(outW) / static_cast<float>(m_virtualWidth);
+        float sy = static_cast<float>(outH) / static_cast<float>(m_virtualHeight);
+        m_uiScale = std::min(sx, sy);
+    }
 }
 
 SDLRenderer2D::~SDLRenderer2D()
@@ -103,13 +113,43 @@ void SDLRenderer2D::EndFrame(int /*windowW*/, int /*windowH*/)
         SDL_RenderTexture(m_renderer.get(), entry.tex, &src, &entry.dst);
     }
 
-    // 3. UI text glyphs
-    for (const auto& entry : m_uiTexts)
+    // 3. UI text glyphs — render at native resolution for crisp text.
+    //    Temporarily disable logical presentation so we draw in real pixels.
+    if (!m_uiTexts.empty())
     {
-        if (!entry.tex) continue;
-        SDL_FRect src = { 0, 0, entry.w, entry.h };
-        SDL_FRect dst = { entry.x, entry.y, entry.w, entry.h };
-        SDL_RenderTexture(m_renderer.get(), entry.tex, &src, &dst);
+        SDL_SetRenderLogicalPresentation(m_renderer.get(), 0, 0, SDL_LOGICAL_PRESENTATION_DISABLED);
+
+        int outW = 0, outH = 0;
+        SDL_GetRenderOutputSize(m_renderer.get(), &outW, &outH);
+
+        float sx = static_cast<float>(outW) / static_cast<float>(m_virtualWidth);
+        float sy = static_cast<float>(outH) / static_cast<float>(m_virtualHeight);
+        float scale = std::min(sx, sy);
+
+        // Letterbox offset so text aligns with the virtual viewport.
+        float offsetX = (outW - m_virtualWidth * scale) * 0.5f;
+        float offsetY = (outH - m_virtualHeight * scale) * 0.5f;
+
+        for (const auto& entry : m_uiTexts)
+        {
+            if (!entry.tex) continue;
+
+            // Texture holds real-pixel glyph data — query its actual size.
+            float texW = 0.0f, texH = 0.0f;
+            SDL_GetTextureSize(entry.tex, &texW, &texH);
+
+            SDL_FRect src = { 0, 0, texW, texH };
+            SDL_FRect dst = {
+                entry.x * scale + offsetX,
+                entry.y * scale + offsetY,
+                texW,
+                texH
+            };
+            SDL_RenderTexture(m_renderer.get(), entry.tex, &src, &dst);
+        }
+
+        // Restore logical presentation.
+        SDL_SetRenderLogicalPresentation(m_renderer.get(), m_virtualWidth, m_virtualHeight, SDL_LOGICAL_PRESENTATION_LETTERBOX);
     }
 
     // Clear UI queues for next frame.
@@ -314,7 +354,7 @@ uint32_t SDLRenderer2D::RenderTextToTexture(uint32_t fontId, const std::string& 
         LOG_ERROR("Failed to create texture from text surface: " + std::string(SDL_GetError()));
         return 0;
     }
-    SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST);
+    SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_LINEAR);
 
     uint32_t textureId = ++m_nextId;
     m_textures[textureId] = SDLTextureEntry{
@@ -470,6 +510,14 @@ Vec2 SDLRenderer2D::ScreenToWorld(Vec2 screenPos)
 
     return v;
 }
+
+Vec2 SDLRenderer2D::ScreenToLogical(Vec2 screenPos)
+{
+    float lx, ly;
+    SDL_RenderCoordinatesFromWindow(m_renderer.get(), screenPos.x, screenPos.y, &lx, &ly);
+    return { lx, ly };
+}
+
 SDL_FRect SDLRenderer2D::ApplyCamera(const SDL_FRect& rect)
 {
     if (!m_Camera) return rect;

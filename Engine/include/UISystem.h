@@ -27,7 +27,9 @@ namespace System
 
         /// Snapshot mouse state from InputSystem.
         /// Must be called once per frame before HandleUI.
-        void BeginFrame(System::InputSystem& input);
+        /// Snapshot mouse state from InputSystem.
+        /// Must be called once per frame before HandleUI.
+        void BeginFrame(System::InputSystem& input, IRenderer2D& renderer);
 
         /// Flush all collected draw commands to the renderer in screen space.
         /// Must be called after HandleUI, before renderer EndFrame.
@@ -56,6 +58,11 @@ namespace System
         bool Button(const std::string& label,
                     Components::Rect rect,
                     uint32_t fontId,
+                    UI::UIStyle style = {});
+
+        /// Button with image — returns true on the frame the mouse button is pressed over it.
+        bool Button(Components::Texture tex,
+                    Components::Rect rect,
                     UI::UIStyle style = {});
 
         /// Image — render a texture in screen space.

@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <memory>
 #include <vector>
+#include <algorithm>
 #include "Components.h"
 #include "IRenderer2D.h"
 #include <SDL3_ttf/SDL_ttf.h>
@@ -78,6 +79,8 @@ public:
                         float x, float y, Components::TextAlign align) override;
     void PushSpriteScreen(const Components::Texture& texture, Components::Rect destRect) override;
     Vec2 ScreenToWorld(Vec2 screenPos) override;
+    Vec2 ScreenToLogical(Vec2 screenPos) override;
+    float GetUIScale() const override { return m_uiScale; }
 
     Components::Texture GetTextureFromFile(const std::string& path) override;
     uint32_t LoadFont(const std::string& path, float size) override;
@@ -113,6 +116,7 @@ private:
     };
     int m_virtualWidth = 320;
     int m_virtualHeight = 180;
+    float m_uiScale = 1.0f;
 
     // ---- UI screen-space queues (flushed after world render in EndFrame) ----
     struct UIRectEntry   { SDL_FRect rect; SDL_Color color; bool fill; };

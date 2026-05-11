@@ -18,3 +18,8 @@ class WindowConfig {
 		: title(t), width(w), height(h), flags(f) {
 	}
 };
+
+namespace EngieResources {
+	constexpr std::string_view ENGINE_ASSETS_PATH = "engine_assets";
+	constexpr std::string_view DEFAULT_FONT = "engine_assets/fonts/default.ttf";
+}
