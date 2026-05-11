@@ -21,7 +21,7 @@ void Background::OnStart()
 	shape.size = { 1280,720 };
 	shape.color = { 0,0,0,255 };
 	shape.type = Components::Shape::Type::Rect;
-	shape.layer = 100; //background
+	shape.layer = 0; //background
 }
 
 void Background::OnDestroy()

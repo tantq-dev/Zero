@@ -8,6 +8,10 @@
 #include "Background.h"
 #undef max
 
+#include "Seat.h"
+#include "Customer.h"
+
+
 void GameplayScene::Initialize()
 {
     auto game = m_game.lock();
@@ -16,7 +20,20 @@ void GameplayScene::Initialize()
         LOG_INFO("Game is empty");
     }
     m_Font = game->GetResources().GetFontId(EngieResources::DEFAULT_FONT, 24);
+    //add camera
+    entt::entity cam = m_world->Registry.create();
+    m_world->Registry.emplace<Components::CameraComponent>(cam,Vec2{0,0}, 1280.0f,720.0f);
+
     m_backgroundActor = m_world->SpawnActor<Background>();
+    
+    for (size_t i = 0; i < 2; i++)
+    {
+
+       m_seat.push_back(m_world->SpawnActor<Seat>());
+       auto& transform = m_seat.back()->GetComponent<Components::Transform2D>();
+       transform.position = { (int)( - 10 + i * 25),70};
+    }
+   
 }
 
 void GameplayScene::Update(const double& deltaTime)
@@ -39,7 +56,45 @@ void GameplayScene::Update(const double& deltaTime)
         shape.color = currentColor;
 
     }
-   
+
+    // Customer management logic
+    m_spawnTimer += deltaTime;
+    if (m_spawnTimer >= 3.0) {
+        m_spawnTimer = 0;
+        m_customers.push_back(m_world->SpawnActor<Customer>());
+    }
+
+    int waitingIndex = 0;
+    for (auto& actor : m_customers) {
+        auto customer = std::static_pointer_cast<Customer>(actor);
+        if (customer->m_state == Customer::State::Waiting) {
+            customer->m_queueIndex = waitingIndex++;
+            
+            // Try to assign seat
+            for (auto& seatActor : m_seat) {
+                auto seat = std::static_pointer_cast<Seat>(seatActor);
+                if (seat->isEmpty) {
+                    seat->isEmpty = false;
+                    seat->GetComponent<Components::Shape>().color = { 200, 200, 200, 255 }; // Taken visual
+                    customer->m_targetSeat = seat;
+                    customer->m_state = Customer::State::MovingToSeat;
+                    break;
+                }
+            }
+        }
+    }
+
+    // Cleanup finished customers and collect money
+    auto it = m_customers.begin();
+    while (it != m_customers.end()) {
+        auto customer = std::static_pointer_cast<Customer>(*it);
+        if (customer->m_state == Customer::State::Finished) {
+            m_currentMoney += 10;
+            it = m_customers.erase(it);
+        } else {
+            ++it;
+        }
+    }
 }
 
 void GameplayScene::FixedUpdate(const double& deltaTime)
@@ -57,6 +112,8 @@ void GameplayScene::HandleInput()
 void GameplayScene::HandleUI(System::UISystem& ui)
 {
     ui.Label(GetCurrentTimeString(m_current), 160, 10, m_Font, {255,255,255,255}, Components::TextAlign::Center);
+    ui.Label(std::to_string(m_currentMoney), 10, 10, m_Font, {255,255,0,255}, Components::TextAlign::Center);
+
 }
 
 std::string GameplayScene::GetCurrentTimeString(double& time)

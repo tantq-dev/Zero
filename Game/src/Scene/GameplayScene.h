@@ -13,6 +13,11 @@ class GameplayScene : public Core::Scene {
 private:
 	 uint32_t m_Font = 0;
 	 double m_current = 0;
+	 int m_currentMoney = 0;
 	 std::shared_ptr<Core::Actor> m_backgroundActor;
+	 std::vector<std::shared_ptr<Core::Actor>> m_seat;
+	 std::vector<std::shared_ptr<Core::Actor>> m_customers;
+	 double m_spawnTimer = 0;
 	 std::string GetCurrentTimeString(double& time);
+	 
 };
