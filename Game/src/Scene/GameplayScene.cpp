@@ -34,6 +34,12 @@ void GameplayScene::Initialize()
        transform.position = { (int)( - 10 + i * 25),70};
     }
    
+    // Load customer atlas
+    m_customerAtlasId = game->GetResources().GetOrLoadSpriteAtlas(
+        "game_assets/json/Customer1SpriteAtlas.json", 
+        "game_assets/images/Customer1.png", 
+        game->GetRenderSystem().GetRenderer()
+    );
 }
 
 void GameplayScene::Update(const double& deltaTime)
@@ -61,7 +67,7 @@ void GameplayScene::Update(const double& deltaTime)
     m_spawnTimer += deltaTime;
     if (m_spawnTimer >= 3.0) {
         m_spawnTimer = 0;
-        m_customers.push_back(m_world->SpawnActor<Customer>());
+        m_customers.push_back(m_world->SpawnActor<Customer>(m_customerAtlasId));
     }
 
     int waitingIndex = 0;

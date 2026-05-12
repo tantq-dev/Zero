@@ -73,6 +73,24 @@ public:
     void ClearSpriteSheets();
 
     // =========================================================================
+    // SPRITE ATLASES
+    //   Rich metadata with named animations. Loads from JSON.
+    // =========================================================================
+
+    /// Returns 0 on failure. Texture path and JSON path are required.
+    uint32_t GetOrLoadSpriteAtlas(std::string_view jsonPath, std::string_view texturePath, IRenderer2D& renderer);
+
+    void StoreSpriteAtlas(uint32_t id, Components::SpriteAtlas atlas);
+
+    [[nodiscard]] Components::SpriteAtlas*       GetSpriteAtlas(uint32_t id);
+    [[nodiscard]] const Components::SpriteAtlas* GetSpriteAtlas(uint32_t id) const;
+
+    bool HasSpriteAtlas(uint32_t id) const { return m_spriteAtlases.count(id) > 0; }
+
+    void RemoveSpriteAtlas(uint32_t id);
+    void ClearSpriteAtlases();
+
+    // =========================================================================
     // AUDIO CLIPS  (.wav / .mp3 — auto-detected from extension)
     //   AudioSystem owns the decoded buffer. ResourcesManager caches the clip ID
     //   and deduplicates by path so callers never double-load.
@@ -136,6 +154,10 @@ private:
 
     // ---- SpriteSheet cache ----
     std::unordered_map<uint32_t, Components::SpriteSheet> m_spriteSheets;
+
+    // ---- SpriteAtlas cache ----
+    std::unordered_map<uint32_t, Components::SpriteAtlas> m_spriteAtlases;
+    std::unordered_map<std::string, uint32_t>             m_atlasByPath; // jsonPath → id
 
     // ---- Audio cache ----
     std::unordered_map<std::string, uint32_t> m_audioByPath; // path → clipId

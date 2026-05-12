@@ -1,7 +1,8 @@
 #include "Customer.h"
 #include "Seat.h"
 
-Customer::Customer(std::shared_ptr<Core::World> world) : Actor(world) {
+Customer::Customer(std::shared_ptr<Core::World> world, uint32_t atlasId) 
+    : Actor(world), m_atlasId(atlasId) {
     OnStart();
 }
 
@@ -9,23 +10,46 @@ bool Customer::MoveTowards(Vec2 target, float dt) {
     auto& pos = GetComponent<Components::Transform2D>().position;
     Vec2 dir = target - pos;
     float d = dir.length();
+    
     if (d <= 2.0f) {
         pos = target;
+        UpdateAnimation(dir, false);
         return true;
     }
-    pos += dir.normalize() * (m_speed * dt);
+    
+    Vec2 velocity = dir.normalize();
+    pos += velocity * (m_speed * dt);
+    UpdateAnimation(velocity, true);
     return false;
+}
+
+void Customer::UpdateAnimation(const Vec2& dir, bool isMoving) {
+    auto& anim = GetComponent<Components::Animation>();
+    
+    std::string direction = m_lastDir;
+    if (std::abs(dir.x) > std::abs(dir.y)) {
+        direction = (dir.x > 0) ? "Right" : "Left";
+    } else if (std::abs(dir.y) > 0.1f) {
+        direction = (dir.y > 0) ? "Down" : "Up";
+    }
+    
+    m_lastDir = direction;
+    std::string animName = (isMoving ? "Move" : "Idle") + direction;
+    
+    if (anim.currentAnimationName != animName) {
+        anim.currentAnimationName = animName;
+        anim.currentFrameIndex = 0;
+        anim.currentFrameTime = 0;
+    }
 }
 
 void Customer::OnUpdate(float dt) {
     auto& transform = GetComponent<Components::Transform2D>();
-    auto& shape = GetComponent<Components::Shape>();
 
     switch (m_state) {
     case State::Waiting: {
         Vec2 queuePos = { 0, (int)(-50.0f - (m_queueIndex * 25.0f)) };
         MoveTowards(queuePos, dt);
-        shape.color = { 255, 255, 0, 255 }; // Yellow
         break;
     }
     case State::MovingToSeat: {
@@ -36,11 +60,11 @@ void Customer::OnUpdate(float dt) {
                 m_timer = 0;
             }
         }
-        shape.color = { 0, 255, 0, 255 }; // Green
         break;
     }
     case State::Sitting: {
         m_timer += dt;
+        UpdateAnimation(Vec2(0, 1), false); // IdleDown when sitting
         if (m_timer >= m_useTime) {
             m_state = State::Leaving;
             if (auto seat = m_targetSeat.lock()) {
@@ -48,7 +72,6 @@ void Customer::OnUpdate(float dt) {
                 seat->GetComponent<Components::Shape>().color = { 100, 100, 100, 255 };
             }
         }
-        shape.color = { 0, 0, 255, 255 }; // Blue
         break;
     }
     case State::Leaving: {
@@ -56,7 +79,6 @@ void Customer::OnUpdate(float dt) {
         if (MoveTowards(exitPos, dt)) {
             m_state = State::Finished;
         }
-        shape.color = { 255, 0, 255, 255 }; // Purple
         break;
     }
     }
@@ -68,11 +90,14 @@ void Customer::OnStart() {
     auto& transform = AddComponent<Components::Transform2D>();
     transform.position = { 0, -70 };
 
-    auto& shape = AddComponent<Components::Shape>();
-    shape.type = Components::Shape::Type::Rect;
-    shape.size = { 15, 15 };
-    shape.color = { 255, 0, 0, 255 };
-    shape.layer = 2;
+    auto& sprite = AddComponent<Components::Sprite>();
+    sprite.layer = 2;
+    sprite.pivot = { 0.5f, 1.0f }; // Bottom pivot for characters
+
+    auto& anim = AddComponent<Components::Animation>();
+    anim.atlasId = m_atlasId;
+    anim.currentAnimationName = "IdleDown";
+    anim.isPlaying = true;
 }
 
 void Customer::OnDestroy() {}

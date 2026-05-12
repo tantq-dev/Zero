@@ -123,6 +123,7 @@ namespace Core
 
 		int steps = 0;
 		m_activeScene->Update(frameTime);
+		m_animationSystem.Update(m_activeScene->GetWorld()->Registry, (float)frameTime, *m_resources);
 		m_actorSystem.Update(frameTime, m_activeScene->GetWorld()->Registry);
 		while (m_accumulator >= FIXED_DT && steps < MAX_STEPS)
 		{

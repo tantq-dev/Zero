@@ -9,7 +9,7 @@ namespace System
 		AnimationSystem() = default;
 		~AnimationSystem() = default;
 
-		void Update(entt::registry& registry, const float& dt);
+		void Update(entt::registry& registry, const float& dt, class ResourcesManager& resources);
 	};
 }
 

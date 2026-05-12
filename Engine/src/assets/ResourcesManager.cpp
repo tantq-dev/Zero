@@ -4,6 +4,7 @@
 #include "Logger.h"
 #include <fstream>
 #include <sstream>
+#include "SpriteAtlasLoader.h"
 
 // ============================================================================
 // Helpers
@@ -112,6 +113,78 @@ void ResourcesManager::RemoveSpriteSheet(uint32_t id)
 void ResourcesManager::ClearSpriteSheets()
 {
     m_spriteSheets.clear();
+}
+
+// ============================================================================
+// SPRITE ATLASES
+// ============================================================================
+uint32_t ResourcesManager::GetOrLoadSpriteAtlas(std::string_view jsonPath, std::string_view texturePath, IRenderer2D& renderer)
+{
+    const std::string key(jsonPath);
+    auto it = m_atlasByPath.find(key);
+    if (it != m_atlasByPath.end())
+        return it->second;
+
+    // Load texture first
+    uint32_t texId = GetOrLoadTexture(texturePath, renderer);
+    if (texId == 0) return 0;
+
+    const Components::Texture* tex = GetTexture(texId);
+    if (!tex) return 0;
+
+    // Load JSON content
+    const std::string* jsonContent = GetOrLoadText(jsonPath);
+    if (!jsonContent) return 0;
+
+    // Parse atlas
+    Components::SpriteAtlas atlas = Utilities::SpriteAtlasLoader::LoadFromJson(*jsonContent, *tex);
+    
+    // We need a unique ID for the atlas. Using the texture ID as a base or just an incrementing counter?
+    // Let's use a hash of the path for now to be consistent.
+    uint32_t atlasId = std::hash<std::string>{}(key);
+    
+    m_spriteAtlases[atlasId] = std::move(atlas);
+    m_atlasByPath[key] = atlasId;
+
+    return atlasId;
+}
+
+void ResourcesManager::StoreSpriteAtlas(uint32_t id, Components::SpriteAtlas atlas)
+{
+    m_spriteAtlases.insert_or_assign(id, std::move(atlas));
+}
+
+Components::SpriteAtlas* ResourcesManager::GetSpriteAtlas(uint32_t id)
+{
+    auto it = m_spriteAtlases.find(id);
+    return it != m_spriteAtlases.end() ? &it->second : nullptr;
+}
+
+const Components::SpriteAtlas* ResourcesManager::GetSpriteAtlas(uint32_t id) const
+{
+    auto it = m_spriteAtlases.find(id);
+    return it != m_spriteAtlases.end() ? &it->second : nullptr;
+}
+
+void ResourcesManager::RemoveSpriteAtlas(uint32_t id)
+{
+    auto it = m_spriteAtlases.find(id);
+    if (it == m_spriteAtlases.end()) return;
+
+    for (auto pit = m_atlasByPath.begin(); pit != m_atlasByPath.end(); )
+    {
+        if (pit->second == id)
+            pit = m_atlasByPath.erase(pit);
+        else
+            ++pit;
+    }
+    m_spriteAtlases.erase(it);
+}
+
+void ResourcesManager::ClearSpriteAtlases()
+{
+    m_spriteAtlases.clear();
+    m_atlasByPath.clear();
 }
 
 // ============================================================================
@@ -272,6 +345,7 @@ void ResourcesManager::ClearAll(IRenderer2D& renderer, System::AudioSystem& audi
 {
     ClearTextures();
     ClearSpriteSheets();
+    ClearSpriteAtlases();
     ClearAudioClips(audio);
     ClearFonts(renderer);
     ClearTexts();

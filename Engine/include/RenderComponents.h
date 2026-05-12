@@ -3,6 +3,7 @@
 #include "SDL3/SDL.h"
 #include <vector>
 #include <string>
+#include <unordered_map>
 #include <cmath>
 
 namespace Components
@@ -70,6 +71,18 @@ namespace Components
 		std::vector<Rect> frames;      // rectangles per frame
 	};
 
+	struct SpriteAtlasAnimation {
+		bool loop = true;
+		std::vector<size_t> frames; // Indices into the atlas frames array
+		float frameDuration = 0.1f;
+	};
+
+	struct SpriteAtlas {
+		Texture texture = {};
+		std::vector<Rect> frames;
+		std::unordered_map<std::string, SpriteAtlasAnimation> animations;
+	};
+
 	struct AnimationClip {
 		uint32_t spriteSheetId = 0;
 		size_t frameIndexStart = 0;
@@ -79,10 +92,16 @@ namespace Components
 	};
 
 	struct Animation {
-		AnimationClip currentClip = {};
-		size_t currentFrame = 0;
+		uint32_t atlasId = 0; // ID from ResourcesManager
+		std::string currentAnimationName;
+		size_t currentFrameIndex = 0; // Index into SpriteAtlasAnimation::frames
 		float currentFrameTime = 0;
 		bool isFinished = false;
+		bool isPlaying = true;
+
+		// Backward compatibility for AnimationClip
+		AnimationClip currentClip = {};
+		size_t currentFrame = 0; // Used for AnimationClip logic
 	};
 
 	struct Color {
