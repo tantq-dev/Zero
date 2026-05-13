@@ -48,7 +48,7 @@ void Customer::OnUpdate(float dt) {
 
     switch (m_state) {
     case State::Waiting: {
-        Vec2 queuePos = { 0, (int)(-50.0f - (m_queueIndex * 25.0f)) };
+        Vec2 queuePos = { 0, (int)(50.0f + (m_queueIndex * 25.0f)) };
         MoveTowards(queuePos, dt);
         break;
     }
@@ -64,18 +64,17 @@ void Customer::OnUpdate(float dt) {
     }
     case State::Sitting: {
         m_timer += dt;
-        UpdateAnimation(Vec2(0, 1), false); // IdleDown when sitting
+        UpdateAnimation(Vec2(0, -1), false); // IdleDown when sitting
         if (m_timer >= m_useTime) {
             m_state = State::Leaving;
             if (auto seat = m_targetSeat.lock()) {
                 seat->isEmpty = true;
-                seat->GetComponent<Components::Shape>().color = { 100, 100, 100, 255 };
             }
         }
         break;
     }
     case State::Leaving: {
-        Vec2 exitPos = { 0, -100 };
+        Vec2 exitPos = { 0, 140 };
         if (MoveTowards(exitPos, dt)) {
             m_state = State::Finished;
         }
@@ -88,7 +87,7 @@ void Customer::OnFixedUpdate(float dt) {}
 
 void Customer::OnStart() {
     auto& transform = AddComponent<Components::Transform2D>();
-    transform.position = { 0, -70 };
+    transform.position = { 0, 120 };
 
     auto& sprite = AddComponent<Components::Sprite>();
     sprite.layer = 2;

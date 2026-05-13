@@ -12,6 +12,8 @@
 #include "Customer.h"
 
 
+
+
 void GameplayScene::Initialize()
 {
     auto game = m_game.lock();
@@ -26,13 +28,7 @@ void GameplayScene::Initialize()
 
     m_backgroundActor = m_world->SpawnActor<Background>();
     
-    for (size_t i = 0; i < 2; i++)
-    {
-
-       m_seat.push_back(m_world->SpawnActor<Seat>());
-       auto& transform = m_seat.back()->GetComponent<Components::Transform2D>();
-       transform.position = { (int)( - 10 + i * 25),70};
-    }
+    
    
     // Load customer atlas
     m_customerAtlasId = game->GetResources().GetOrLoadSpriteAtlas(
@@ -40,6 +36,26 @@ void GameplayScene::Initialize()
         "game_assets/images/Customer1.png", 
         game->GetRenderSystem().GetRenderer()
     );
+    game->GetResources().GetOrLoadSpriteAtlas(
+        "game_assets/json/ChairSpriteAtlas.json",
+        "game_assets/images/Street_Food_Chair_1.png",
+        game->GetRenderSystem().GetRenderer()
+    );
+
+    const auto* chairTex = game->GetResources().GetTexture("game_assets/images/Street_Food_Chair_1.png");
+    if (!chairTex) {
+        LOG_ERROR("Failed to get chair texture");
+    }
+
+    for (size_t i = 0; i < 2; i++)
+    {
+        auto seat = m_world->SpawnActor<Seat>(chairTex ? *chairTex : Components::Texture{});
+        m_seat.push_back(seat);
+
+        auto& transform = seat->GetComponent<Components::Transform2D>();
+        float x = (i * 40);
+        transform.position = { x, -70.0f };
+    }
 }
 
 void GameplayScene::Update(const double& deltaTime)
@@ -81,7 +97,6 @@ void GameplayScene::Update(const double& deltaTime)
                 auto seat = std::static_pointer_cast<Seat>(seatActor);
                 if (seat->isEmpty) {
                     seat->isEmpty = false;
-                    seat->GetComponent<Components::Shape>().color = { 200, 200, 200, 255 }; // Taken visual
                     customer->m_targetSeat = seat;
                     customer->m_state = Customer::State::MovingToSeat;
                     break;

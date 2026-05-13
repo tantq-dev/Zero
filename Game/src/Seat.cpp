@@ -1,6 +1,8 @@
 #include "Seat.h"
+#include "Desk.h"
 
-Seat::Seat(std::shared_ptr<Core::World> world) : Actor(world) {
+Seat::Seat(std::shared_ptr<Core::World> world, Components::Texture texture) 
+    : Actor(world), m_texture(texture) {
     OnStart();
 }
 
@@ -10,11 +12,33 @@ void Seat::OnFixedUpdate(float dt) {}
 
 void Seat::OnStart() {
     AddComponent<Components::Transform2D>();
-    auto& shape = AddComponent<Components::Shape>();
-    shape.type = Components::Shape::Type::Rect;
-    shape.size = { 20, 20 };
-    shape.color = { 100, 100, 100, 255 }; // Gray for empty
-    shape.layer = 1;
+    auto& sprite = AddComponent<Components::Sprite>();
+    sprite.texture = m_texture;
+    sprite.source = { 0, 0, 32, 32 };
+    sprite.layer = 2; // Above background
 }
 
 void Seat::OnDestroy() {}
+
+void Seat::OnTakeSeat()
+{
+    auto desk = m_desk.lock();
+    if (desk)
+    {
+        desk->OnCustomerLeave();
+    }
+}
+
+void Seat::OnLeaveSeat()
+{
+    auto desk = m_desk.lock();
+    if (desk)
+    {
+        desk->OnCustomerEnter();
+    }
+}
+
+void Seat::SetDesk(std::shared_ptr<Desk> desk)
+{
+    m_desk = desk;
+}
