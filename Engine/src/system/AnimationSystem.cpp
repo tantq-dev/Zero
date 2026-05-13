@@ -19,6 +19,7 @@ namespace System
 				const auto* atlas = resources.GetSpriteAtlas(anim.atlasId);
 				if (atlas)
 				{
+					sprite.texture = atlas->texture;
 					auto it = atlas->animations.find(anim.currentAnimationName);
 					if (it != atlas->animations.end())
 					{
@@ -46,56 +47,15 @@ namespace System
 							{
 								anim.currentFrameIndex = nextFrameIdx;
 							}
-						}
-
-						// Update sprite
-						if (anim.currentFrameIndex < clip.frames.size())
-						{
-							sprite.spriteSheetId = 0; // Using atlas instead
-							sprite.frameIndex = clip.frames[anim.currentFrameIndex];
-							sprite.texture = atlas->texture;
-							
-							// If the sprite has a source rect, we might want to update it
-							if (sprite.frameIndex < atlas->frames.size())
-							{
-								sprite.source = atlas->frames[sprite.frameIndex];
-							}
+							size_t currentFrame = it->second.frames[anim.currentFrameIndex];
+							sprite.source = atlas->frames[currentFrame];
 						}
 						continue; // Done with this entity
 					}
 				}
 			}
 
-			// Fallback: Handle legacy AnimationClip logic
-			if (anim.currentClip.numberOfFrames > 0)
-			{
-				anim.currentFrameTime += dt;
-				if (anim.currentFrameTime >= anim.currentClip.frameTime)
-				{
-					anim.currentFrameTime = 0;
-					size_t nextFrame = anim.currentFrame + 1;
-
-					if (nextFrame >= anim.currentClip.numberOfFrames)
-					{
-						if (anim.currentClip.isLoop)
-						{
-							anim.currentFrame = 0;
-						}
-						else
-						{
-							anim.isFinished = true;
-							anim.currentFrame = anim.currentClip.numberOfFrames - 1;
-						}
-					}
-					else
-					{
-						anim.currentFrame = nextFrame;
-					}
-
-					sprite.frameIndex = anim.currentClip.frameIndexStart + anim.currentFrame;
-					sprite.spriteSheetId = anim.currentClip.spriteSheetId;
-				}
-			}
+			
 		}
 	}
 

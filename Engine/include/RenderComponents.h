@@ -53,9 +53,6 @@ namespace Components
 		Rect source = { 0, 0, 0, 0 }; //
 		SDL_Color tint = { 255, 255, 255, 255 }; // Default white (no tint)
 		
-		// Spritesheet support
-		uint32_t spriteSheetId = 0;
-		size_t frameIndex = 0;
 
 		Sprite() = default;
 		explicit Sprite(Texture texture)
@@ -65,11 +62,7 @@ namespace Components
 	};
 	
 
-	// Optional: asset describing a sprite sheet (kept in a DB, not a component)
-	struct SpriteSheet {
-		Texture texture = {};
-		std::vector<Rect> frames;      // rectangles per frame
-	};
+
 
 	struct SpriteAtlasAnimation {
 		bool loop = true;
@@ -83,13 +76,7 @@ namespace Components
 		std::unordered_map<std::string, SpriteAtlasAnimation> animations;
 	};
 
-	struct AnimationClip {
-		uint32_t spriteSheetId = 0;
-		size_t frameIndexStart = 0;
-		size_t numberOfFrames = 0;
-		bool isLoop = true;
-		float frameTime = 0;
-	};
+
 
 	struct Animation {
 		uint32_t atlasId = 0; // ID from ResourcesManager
@@ -99,9 +86,6 @@ namespace Components
 		bool isFinished = false;
 		bool isPlaying = true;
 
-		// Backward compatibility for AnimationClip
-		AnimationClip currentClip = {};
-		size_t currentFrame = 0; // Used for AnimationClip logic
 	};
 
 	struct Color {

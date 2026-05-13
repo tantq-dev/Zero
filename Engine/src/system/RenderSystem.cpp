@@ -42,25 +42,9 @@ namespace System
 
 			Components::Sprite finalSprite = sprite;
 
-			// Handle spritesheet
-			if (sprite.spriteSheetId != 0 && m_resources)
-			{
-				const auto* spriteSheet = m_resources->GetSpriteSheet(sprite.spriteSheetId);
-				if (!spriteSheet || sprite.frameIndex >= spriteSheet->frames.size())
-					continue;
-
-				finalSprite.texture = spriteSheet->texture;
-				finalSprite.source = spriteSheet->frames[sprite.frameIndex];
-
-				width = finalSprite.source.w * transform.scale.x;
-				height = finalSprite.source.h * transform.scale.y;
-			}
-			else
-			{
-				width = sprite.source.w * transform.scale.x;
-				height = sprite.source.h * transform.scale.y;
-			}
-
+			width = sprite.source.w * transform.scale.x;
+			height = sprite.source.h * transform.scale.y;
+			
 			if (!IsVisible(transform.position.x, transform.position.y, width, height, cam))
 				continue;
 

@@ -85,35 +85,6 @@ void ResourcesManager::ClearTextures()
     m_textureByPath.clear();
 }
 
-// ============================================================================
-// SPRITE SHEETS
-// ============================================================================
-void ResourcesManager::StoreSpriteSheet(uint32_t id, Components::SpriteSheet sheet)
-{
-    m_spriteSheets.insert_or_assign(id, std::move(sheet));
-}
-
-Components::SpriteSheet* ResourcesManager::GetSpriteSheet(uint32_t id)
-{
-    auto it = m_spriteSheets.find(id);
-    return it != m_spriteSheets.end() ? &it->second : nullptr;
-}
-
-const Components::SpriteSheet* ResourcesManager::GetSpriteSheet(uint32_t id) const
-{
-    auto it = m_spriteSheets.find(id);
-    return it != m_spriteSheets.end() ? &it->second : nullptr;
-}
-
-void ResourcesManager::RemoveSpriteSheet(uint32_t id)
-{
-    m_spriteSheets.erase(id);
-}
-
-void ResourcesManager::ClearSpriteSheets()
-{
-    m_spriteSheets.clear();
-}
 
 // ============================================================================
 // SPRITE ATLASES
@@ -344,7 +315,6 @@ void ResourcesManager::ClearTexts()
 void ResourcesManager::ClearAll(IRenderer2D& renderer, System::AudioSystem& audio)
 {
     ClearTextures();
-    ClearSpriteSheets();
     ClearSpriteAtlases();
     ClearAudioClips(audio);
     ClearFonts(renderer);

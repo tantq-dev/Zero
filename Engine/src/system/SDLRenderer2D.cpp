@@ -211,7 +211,7 @@ void SDLRenderer2D::PushSpriteToRenderQueue(const Components::Sprite& sprite,
 
     auto it = m_textures.find(sprite.texture.id);
     if (it == m_textures.end()) return;
-
+    
     SDL_FRect src{
         sprite.source.x,
         sprite.source.y,

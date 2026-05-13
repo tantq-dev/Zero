@@ -58,21 +58,6 @@ public:
     void ClearTextures();
 
     // =========================================================================
-    // SPRITE SHEETS
-    //   Metadata (texture handle + frame rects). Texture must already be loaded.
-    // =========================================================================
-
-    void StoreSpriteSheet(uint32_t id, Components::SpriteSheet sheet);
-
-    [[nodiscard]] Components::SpriteSheet*       GetSpriteSheet(uint32_t id);
-    [[nodiscard]] const Components::SpriteSheet* GetSpriteSheet(uint32_t id) const;
-
-    bool HasSpriteSheet(uint32_t id) const { return m_spriteSheets.count(id) > 0; }
-
-    void RemoveSpriteSheet(uint32_t id);
-    void ClearSpriteSheets();
-
-    // =========================================================================
     // SPRITE ATLASES
     //   Rich metadata with named animations. Loads from JSON.
     // =========================================================================
@@ -151,9 +136,6 @@ private:
     // ---- Texture cache ----
     std::unordered_map<uint32_t,    Components::Texture>  m_textureById;
     std::unordered_map<std::string, uint32_t>             m_textureByPath; // path → id
-
-    // ---- SpriteSheet cache ----
-    std::unordered_map<uint32_t, Components::SpriteSheet> m_spriteSheets;
 
     // ---- SpriteAtlas cache ----
     std::unordered_map<uint32_t, Components::SpriteAtlas> m_spriteAtlases;
