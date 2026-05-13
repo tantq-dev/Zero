@@ -3,6 +3,7 @@
 #include "SDL3/SDL.h"
 #include <vector>
 #include <string>
+#include <unordered_map>
 #include <cmath>
 
 namespace Components
@@ -52,9 +53,6 @@ namespace Components
 		Rect source = { 0, 0, 0, 0 }; //
 		SDL_Color tint = { 255, 255, 255, 255 }; // Default white (no tint)
 		
-		// Spritesheet support
-		uint32_t spriteSheetId = 0;
-		size_t frameIndex = 0;
 
 		Sprite() = default;
 		explicit Sprite(Texture texture)
@@ -64,25 +62,30 @@ namespace Components
 	};
 	
 
-	// Optional: asset describing a sprite sheet (kept in a DB, not a component)
-	struct SpriteSheet {
-		Texture texture = {};
-		std::vector<Rect> frames;      // rectangles per frame
+
+
+	struct SpriteAtlasAnimation {
+		bool loop = true;
+		std::vector<size_t> frames; // Indices into the atlas frames array
+		float frameDuration = 0.1f;
 	};
 
-	struct AnimationClip {
-		uint32_t spriteSheetId = 0;
-		size_t frameIndexStart = 0;
-		size_t numberOfFrames = 0;
-		bool isLoop = true;
-		float frameTime = 0;
+	struct SpriteAtlas {
+		Texture texture = {};
+		std::vector<Rect> frames;
+		std::unordered_map<std::string, SpriteAtlasAnimation> animations;
 	};
+
+
 
 	struct Animation {
-		AnimationClip currentClip = {};
-		size_t currentFrame = 0;
+		uint32_t atlasId = 0; // ID from ResourcesManager
+		std::string currentAnimationName;
+		size_t currentFrameIndex = 0; // Index into SpriteAtlasAnimation::frames
 		float currentFrameTime = 0;
 		bool isFinished = false;
+		bool isPlaying = true;
+
 	};
 
 	struct Color {

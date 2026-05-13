@@ -10,6 +10,7 @@
 #include "Game.h"
 #include "RendererFactory.h"
 #include "IRenderer2D.h"
+#include "DefaultConfig.h"
 #ifdef __EMSCRIPTEN__
 #include <emscripten/emscripten.h>
 #endif
@@ -44,8 +45,8 @@ namespace Core
 			m_renderSystem.SetRenderer(System::RendererFactory::CreateRenderer(m_window));
 			m_renderSystem.SetResourcesManager(m_resources.get());
 
-
-
+			//initial default resouce
+			m_resources->GetOrLoadFont(EngieResources::DEFAULT_FONT, 24,m_renderSystem.GetRenderer());
 #ifndef __EMSCRIPTEN__
 			SDL_GLContext gl_context = SDL_GL_CreateContext(m_window->GetWindow().get());
 			if (gl_context == nullptr)
@@ -71,6 +72,7 @@ namespace Core
 			// Setup Dear ImGui style
 			ImGui::StyleColorsDark();
 			//ImGui::StyleColorsLight();
+			//todo: remove dependency
 			ImGui_ImplSDL3_InitForSDLRenderer(m_window->GetWindow().get(), m_window->GetRenderer().get());
 			ImGui_ImplSDLRenderer3_Init(m_window->GetRenderer().get());
 #endif
@@ -112,16 +114,24 @@ namespace Core
 			m_inputSystem.HandleInput(event);
 		});
 
+		// Snapshot UI mouse state before any scene logic runs.
+		m_uiSystem.BeginFrame(m_inputSystem, m_renderSystem.GetRenderer());
+
 		if (m_activeScene) {
 			m_activeScene->HandleInput();
 		}
 
 		int steps = 0;
+		m_activeScene->Update(frameTime);
+		m_animationSystem.Update(m_activeScene->GetWorld()->Registry, (float)frameTime, *m_resources);
+		m_actorSystem.Update(frameTime, m_activeScene->GetWorld()->Registry);
 		while (m_accumulator >= FIXED_DT && steps < MAX_STEPS)
 		{
 			m_deltaTime = (float)FIXED_DT;
-			m_activeScene->Update(m_deltaTime);
 			m_accumulator -= FIXED_DT;
+			m_activeScene->FixedUpdate(m_deltaTime);
+			m_actorSystem.FixedUpdate(frameTime, m_activeScene->GetWorld()->Registry);
+
 			steps++;
 		}
 
@@ -131,20 +141,23 @@ namespace Core
 		m_renderSystem.GetRenderer().BeginFrame();
 		
 		// Render entities from the registry
-		m_renderSystem.Update(m_activeScene->GetRegistry());
+		m_renderSystem.Update(m_activeScene->GetWorld()->Registry);
 
 		// Render scene-specific UI and overlays
 		m_activeScene->Render(m_renderSystem.GetRenderer());
 
 		m_renderSystem.GetRenderer().CallRender();
 
+		// ---- UI pass (screen-space, on top of world) ----
+		m_activeScene->HandleUI(m_uiSystem);
+		m_uiSystem.Flush(m_renderSystem.GetRenderer());
+
 #ifdef ZERO_USE_IMGUI
 		// TODO: Implement ImGui abstraction if needed
 #endif
 
-		// Use a generic way to get window size if possible, or just skip it if logical size is fixed
-		// For now we'll keep it simple as we already handle logical presentation inside the renderer.
-		m_renderSystem.GetRenderer().EndFrame(0, 0); 
+		// EndFrame flushes UI queues then calls SDL_RenderPresent.
+		m_renderSystem.GetRenderer().EndFrame(0, 0);
 
 #ifndef __EMSCRIPTEN__
 		uint64_t endCounter = m_window->GetPerformanceCounter();
@@ -154,6 +167,7 @@ namespace Core
 			m_window->Delay((uint32_t)((FIXED_DT - elapsed) * 1000.0));
 		}
 #endif
+		m_inputSystem.PostUpdate();
 	}
 
 	void Game::Run()

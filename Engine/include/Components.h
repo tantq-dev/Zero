@@ -14,4 +14,12 @@ namespace Components
 {
 	// This file now aggregates all component types.
 	// Refer to individual headers for definitions.
+    inline Color LerpColor(const Color& a, const Color& b, float t) {
+        return {
+            a.r + (b.r - a.r) * t,
+            a.g + (b.g - a.g) * t,
+            a.b + (b.b - a.b) * t,
+            a.a + (b.a - a.a) * t
+        };
+    }
 }

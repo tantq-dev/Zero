@@ -1,42 +1,61 @@
-#include "Components.h"
+#include "ResourcesManager.h"
 #include "AnimationSystem.h"
 
 namespace System
 {
-	void AnimationSystem::Update(entt::registry& registry, const float& dt)
+	void AnimationSystem::Update(entt::registry& registry, const float& dt, class ResourcesManager& resources)
 	{
-		auto animGroup = registry.group<>(entt::get<Components::Animation,Components::Sprite>);
-		for (auto& anim : animGroup)
+		auto animGroup = registry.group<>(entt::get<Components::Animation, Components::Sprite>);
+		for (auto& entity : animGroup)
 		{
-			auto& animClip = registry.get<Components::Animation>(anim);
-			auto& sprite = registry.get<Components::Sprite>(anim);
-			animClip.currentFrameTime += dt;
-			if (animClip.currentFrameTime >= animClip.currentClip.frameTime)
-			{
-				animClip.currentFrameTime = 0;
-				size_t nextFrame = animClip.currentFrame + 1;
-				
-				if (nextFrame >= animClip.currentClip.numberOfFrames)
-				{
-					if (animClip.currentClip.isLoop)
-					{
-						animClip.currentFrame = 0;
-					}
-					else
-					{
-						animClip.isFinished = true;
-						// Stay on last frame if not looping
-						animClip.currentFrame = animClip.currentClip.numberOfFrames - 1;
-					}
-				}
-				else
-				{
-					animClip.currentFrame = nextFrame;
-				}
+			auto& anim = registry.get<Components::Animation>(entity);
+			auto& sprite = registry.get<Components::Sprite>(entity);
 
-				sprite.frameIndex = animClip.currentClip.frameIndexStart + animClip.currentFrame;
-				sprite.spriteSheetId = animClip.currentClip.spriteSheetId;
+			if (!anim.isPlaying) continue;
+
+			// Handle SpriteAtlas animation
+			if (anim.atlasId != 0 && !anim.currentAnimationName.empty())
+			{
+				const auto* atlas = resources.GetSpriteAtlas(anim.atlasId);
+				if (atlas)
+				{
+					sprite.texture = atlas->texture;
+					auto it = atlas->animations.find(anim.currentAnimationName);
+					if (it != atlas->animations.end())
+					{
+						const auto& clip = it->second;
+						anim.currentFrameTime += dt;
+
+						if (anim.currentFrameTime >= clip.frameDuration)
+						{
+							anim.currentFrameTime = 0;
+							size_t nextFrameIdx = anim.currentFrameIndex + 1;
+
+							if (nextFrameIdx >= clip.frames.size())
+							{
+								if (clip.loop)
+								{
+									anim.currentFrameIndex = 0;
+								}
+								else
+								{
+									anim.isFinished = true;
+									anim.currentFrameIndex = clip.frames.size() - 1;
+								}
+							}
+							else
+							{
+								anim.currentFrameIndex = nextFrameIdx;
+							}
+							size_t currentFrame = it->second.frames[anim.currentFrameIndex];
+							sprite.source = atlas->frames[currentFrame];
+						}
+						continue; // Done with this entity
+					}
+				}
 			}
+
+			
 		}
 	}
 

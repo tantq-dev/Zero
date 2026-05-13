@@ -15,6 +15,7 @@ public:
 	virtual Components::CameraBounds GetCameraBounds() const = 0;
 
 	virtual Vec2 ScreenToWorld(Vec2 screenPos) = 0;
+	virtual Vec2 ScreenToLogical(Vec2 screenPos) = 0;
 
 	// Text rendering
 	virtual uint32_t LoadFont(const std::string& path, float size) = 0;
@@ -35,10 +36,19 @@ public:
 		int layer,
 		Components::TextAlign align) = 0;
 
-	// Primitive rendering
+	// Primitive rendering (world-space, affected by camera)
 	virtual void DrawRect(Components::Rect rect, Components::Color color, bool fill, int layer) = 0;
 	virtual void DrawLine(float x1, float y1, float x2, float y2, Components::Color color, int layer) = 0;
 
+	// Screen-space rendering (UI) — bypasses camera transform, drawn after world render
+	virtual void DrawRectScreen(Components::Rect rect, Components::Color color, bool fill) = 0;
+	virtual void PushTextScreen(uint32_t textureId, float width, float height,
+		float x, float y, Components::TextAlign align) = 0;
+	virtual void PushSpriteScreen(const Components::Texture& texture, Components::Rect destRect) = 0;
+
 	virtual void BeginFrame() = 0;
 	virtual void EndFrame(int windowW, int windowH) = 0;
+
+	/// Scale factor from virtual coords to real output pixels (e.g. 6.0 for 320→1920).
+	virtual float GetUIScale() const { return 1.0f; }
 };

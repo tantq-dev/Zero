@@ -6,8 +6,8 @@
 class WindowConfig {
 	public:
 	const char* title = "Default Title";
-	int width = 640;
-	int height = 360;
+	int width = 1280;
+	int height = 720;
 #ifdef __EMSCRIPTEN__
 	Uint32 flags = SDL_WINDOW_RESIZABLE;
 #else
@@ -18,3 +18,8 @@ class WindowConfig {
 		: title(t), width(w), height(h), flags(f) {
 	}
 };
+
+namespace EngieResources {
+	constexpr std::string_view ENGINE_ASSETS_PATH = "engine_assets";
+	constexpr std::string_view DEFAULT_FONT = "engine_assets/fonts/default.ttf";
+}
