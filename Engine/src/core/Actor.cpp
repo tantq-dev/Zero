@@ -1,6 +1,7 @@
 #include "Actor.h"
 #include "World.h"
 #include <ActorComponent.h>
+#include <stdexcept>
 
 namespace Core
 {
@@ -23,6 +24,25 @@ namespace Core
         {
             world->Registry.destroy(entity);
         }
+    }
+    entt::registry& Actor::Registry()
+    {
+        auto world = m_world.lock();
+
+        if (!world)
+            throw std::runtime_error("World expired");
+
+        return world->Registry;
+    }
+
+    entt::registry* Actor::TryRegistry()
+    {
+        auto world = m_world.lock();
+
+        if (!world)
+            return nullptr;
+
+        return &world->Registry;
     }
 	
 }
