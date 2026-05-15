@@ -3,7 +3,6 @@
 
 Customer::Customer(std::shared_ptr<Core::World> world, uint32_t atlasId) 
     : Actor(world), m_atlasId(atlasId) {
-    OnStart();
 }
 
 bool Customer::MoveTowards(Vec2 target, float dt) {
@@ -58,6 +57,8 @@ void Customer::OnUpdate(float dt) {
             if (MoveTowards(seatPos, dt)) {
                 m_state = State::Sitting;
                 m_timer = 0;
+                seat->OnTakeSeat();
+
             }
         }
         break;
@@ -68,7 +69,8 @@ void Customer::OnUpdate(float dt) {
         if (m_timer >= m_useTime) {
             m_state = State::Leaving;
             if (auto seat = m_targetSeat.lock()) {
-                seat->isEmpty = true;
+                seat->Release();
+                seat->OnLeaveSeat();
             }
         }
         break;

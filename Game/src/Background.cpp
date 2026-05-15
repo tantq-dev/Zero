@@ -2,7 +2,6 @@
 #include "Components.h"
 
 Background::Background(std::shared_ptr<Core::World> world) : Actor(world) {
-  OnStart();
 }
 void Background::OnUpdate(float dt) {}
 

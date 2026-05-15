@@ -1,10 +1,20 @@
 #pragma once
 #include "Actor.h"
+#include "Components.h"
+#include "Vec2.h"
+
+struct DeskConfig {
+    Components::Texture emptyTexture = {};
+    Components::Texture occupiedTexture = {};
+    Vec2 position = { 0.0f, 0.0f };
+    int layer = 2;
+};
+
 class Desk : public Core::Actor {
 public:
-    Desk(std::shared_ptr < Core::World> world) :
-        Actor(world) {
-        OnStart();
+    Desk(std::shared_ptr<Core::World> world, DeskConfig config) :
+        Actor(world), m_config(config)
+    {
     }
     // Inherited via Actor
     void OnUpdate(float dt) override;
@@ -20,7 +30,5 @@ public:
 
 private:
     size_t m_currentCustomer = 0;
- uint32_t m_deskSlotTextureIDs = -1;
- uint32_t m_deskWithFoodTextureIDs =-1;
-
+    const DeskConfig m_config;
 };

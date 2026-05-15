@@ -10,6 +10,14 @@
 
 #include "Seat.h"
 #include "Customer.h"
+#include "Desk.h"
+
+namespace {
+constexpr const char* CustomerAtlasPath = "game_assets/json/Customer1SpriteAtlas.json";
+constexpr const char* CustomerTexturePath = "game_assets/images/Customer1.png";
+constexpr const char* ChairAtlasPath = "game_assets/json/ChairSpriteAtlas.json";
+constexpr const char* ChairTexturePath = "game_assets/images/Street_Food_Chair_1.png";
+}
 
 
 
@@ -20,6 +28,7 @@ void GameplayScene::Initialize()
     if (!game)
     {
         LOG_INFO("Game is empty");
+        return;
     }
     m_Font = game->GetResources().GetFontId(EngieResources::DEFAULT_FONT, 24);
     //add camera
@@ -32,29 +41,69 @@ void GameplayScene::Initialize()
    
     // Load customer atlas
     m_customerAtlasId = game->GetResources().GetOrLoadSpriteAtlas(
-        "game_assets/json/Customer1SpriteAtlas.json", 
-        "game_assets/images/Customer1.png", 
+        CustomerAtlasPath,
+        CustomerTexturePath,
         game->GetRenderSystem().GetRenderer()
     );
     game->GetResources().GetOrLoadSpriteAtlas(
-        "game_assets/json/ChairSpriteAtlas.json",
-        "game_assets/images/Street_Food_Chair_1.png",
+        "game_assets/json/StreetFoodTable4.json",
+        "game_assets/images/Street_Food_Table_4.png",
+        game->GetRenderSystem().GetRenderer()
+    );
+    game->GetResources().GetOrLoadSpriteAtlas(
+        "game_assets/json/StreetFoodTable5.json",
+        "game_assets/images/Street_Food_Table_5.png",
+        game->GetRenderSystem().GetRenderer()
+    );
+    game->GetResources().GetOrLoadSpriteAtlas(
+        "game_assets/json/StreetFoodTable6.json",
+        "game_assets/images/Street_Food_Table_6.png",
+        game->GetRenderSystem().GetRenderer()
+    );
+    game->GetResources().GetOrLoadSpriteAtlas(
+        "game_assets/json/StreetFoodTable7.json",
+        "game_assets/images/Street_Food_Table_7.png",
+        game->GetRenderSystem().GetRenderer()
+    );
+    game->GetResources().GetOrLoadSpriteAtlas(
+        ChairAtlasPath,
+        ChairTexturePath,
         game->GetRenderSystem().GetRenderer()
     );
 
-    const auto* chairTex = game->GetResources().GetTexture("game_assets/images/Street_Food_Chair_1.png");
-    if (!chairTex) {
-        LOG_ERROR("Failed to get chair texture");
+    const auto* chairTex = game->GetResources().GetTexture(ChairTexturePath);
+
+    const auto* deskTex4 = game->GetResources().GetTexture("game_assets/images/Street_Food_Table_4.png");
+    const auto* deskTex5 = game->GetResources().GetTexture("game_assets/images/Street_Food_Table_5.png");
+    const auto* deskTex6 = game->GetResources().GetTexture("game_assets/images/Street_Food_Table_6.png");
+    const auto* deskTex7 = game->GetResources().GetTexture("game_assets/images/Street_Food_Table_7.png");
+
+
+    if (!chairTex || !deskTex4 || !deskTex5 || !deskTex6 || !deskTex7) {
+        LOG_ERROR("Failed to get gameplay table/chair textures");
+        return;
     }
 
     for (size_t i = 0; i < 2; i++)
     {
-        auto seat = m_world->SpawnActor<Seat>(chairTex ? *chairTex : Components::Texture{});
-        m_seat.push_back(seat);
+        const float seatX = static_cast<float>(i * 35);
+        const float deskX = static_cast<float>(i * 32);
 
-        auto& transform = seat->GetComponent<Components::Transform2D>();
-        float x = (i * 40);
-        transform.position = { x, -70.0f };
+        auto seat = m_world->SpawnActor<Seat>(SeatConfig{
+            .texture = *chairTex,
+            .position = { seatX, -70.0f },
+            .layer = 2,
+        });
+        auto desk = m_world->SpawnActor<Desk>(DeskConfig{
+            .emptyTexture = i == 0 ? *deskTex5 : *deskTex6,
+            .occupiedTexture = i == 0 ? *deskTex4 : *deskTex7,
+            .position = { deskX, -110.0f },
+            .layer = 2,
+        });
+
+        seat->SetDesk(desk);
+        m_seats.push_back(seat);
+        m_desks.push_back(desk);
     }
 }
 
@@ -93,10 +142,9 @@ void GameplayScene::Update(const double& deltaTime)
             customer->m_queueIndex = waitingIndex++;
             
             // Try to assign seat
-            for (auto& seatActor : m_seat) {
-                auto seat = std::static_pointer_cast<Seat>(seatActor);
-                if (seat->isEmpty) {
-                    seat->isEmpty = false;
+            for (auto& seat : m_seats) {
+                if (seat->IsEmpty()) {
+                    seat->Reserve();
                     customer->m_targetSeat = seat;
                     customer->m_state = Customer::State::MovingToSeat;
                     break;
@@ -137,7 +185,7 @@ void GameplayScene::HandleUI(System::UISystem& ui)
 
 }
 
-std::string GameplayScene::GetCurrentTimeString(double& time)
+std::string GameplayScene::GetCurrentTimeString(double time)
 {
     uint32_t timeInt = std::round(time);
     uint32_t m = timeInt % 60;
