@@ -1,12 +1,16 @@
 //actor is base class for all entity in game without pure ECS implement
 #pragma once
 #include "entt.hpp"
-#include "World.h"
+#include <memory>
+#include <utility>
 namespace Core {
+    class World; //forward declaration 
 	class Actor {
 	private:
 		entt::entity entity = entt::null;
 		std::weak_ptr<World> m_world;
+        entt::registry& Registry();
+        entt::registry* TryRegistry();
 	public:
 		Actor(std::shared_ptr<World> world);
 		~Actor();
@@ -17,12 +21,7 @@ namespace Core {
         template<typename T, typename... Args>
         T& AddComponent(Args&&... args)
         {
-            auto world = m_world.lock();
-
-            if (!world)
-                throw std::runtime_error("World expired");
-
-            return world->Registry.emplace<T>(
+            return Registry().emplace<T>(
                 entity,
                 std::forward<Args>(args)...
             );
@@ -31,23 +30,17 @@ namespace Core {
         template<typename T>
         T& GetComponent()
         {
-            auto world = m_world.lock();
-
-            if (!world)
-                throw std::runtime_error("World expired");
-
-            return world->Registry.get<T>(entity);
+            return Registry().get<T>(entity);
         }
 
         template<typename T>
         T* TryGetComponent()
         {
-            auto world = m_world.lock();
-
-            if (!world)
+            auto* registry = TryRegistry();
+            if (!registry)
                 return nullptr;
 
-            return world->Registry.try_get<T>(entity);
+            return registry->try_get<T>(entity);
         }
 		
 	};
