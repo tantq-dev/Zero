@@ -4,6 +4,12 @@
 #include <Game.h>
 #include "stb_image.h"
 #undef min
+#undef max
+
+static bool IsUnsetSortY(float sortY)
+{
+    return sortY != sortY;
+}
 
 SDL_Texture* SDLRenderer2D::CreateWhiteTexture()
 {
@@ -162,45 +168,58 @@ void SDLRenderer2D::EndFrame(int /*windowW*/, int /*windowH*/)
 
 void SDLRenderer2D::CallRender()
 {
-    std::vector<uint32_t> layers;
-    layers.reserve(m_Batches.size());
-
-    for (auto& [l, _] : m_Batches)
-        layers.push_back(l);
-
-    std::sort(layers.begin(), layers.end());
-
-    for (auto layer : layers)
-    {
-        auto it = m_Batches.find(layer);
-        if (it == m_Batches.end()) continue;
-
-        auto& textureMap = it->second;
-
-        for (auto& [texture, batch] : textureMap)
+    std::sort(m_renderQueue.begin(), m_renderQueue.end(),
+        [](const RenderQueueEntry& a, const RenderQueueEntry& b)
         {
-            if (batch.vertices.empty()) continue;
+            if (a.layer != b.layer) return a.layer < b.layer;
+            if (a.sortY != b.sortY) return a.sortY < b.sortY;
+            return a.sequence < b.sequence;
+        });
 
-            SDL_RenderGeometry(
-                m_renderer.get(),
-                texture,
-                batch.vertices.data(),
-                (int)batch.vertices.size(),
-                batch.indices.data(),
-                (int)batch.indices.size()
-            );
+    GeometryBatch renderBatch;
+    SDL_Texture* currentTexture = nullptr;
+
+    auto flushBatch = [&]()
+    {
+        if (!currentTexture || renderBatch.vertices.empty()) return;
+
+        SDL_RenderGeometry(
+            m_renderer.get(),
+            currentTexture,
+            renderBatch.vertices.data(),
+            (int)renderBatch.vertices.size(),
+            renderBatch.indices.data(),
+            (int)renderBatch.indices.size()
+        );
+
+        renderBatch.vertices.clear();
+        renderBatch.indices.clear();
+    };
+
+    for (const auto& entry : m_renderQueue)
+    {
+        const auto& batch = entry.batch;    
+        if (!entry.texture || batch.vertices.empty()) continue;
+
+        if (entry.texture != currentTexture)
+        {
+            flushBatch();
+            currentTexture = entry.texture;
+            renderBatch.texture = currentTexture;
+        }
+
+        int vertexOffset = (int)renderBatch.vertices.size();
+        renderBatch.vertices.insert(renderBatch.vertices.end(), batch.vertices.begin(), batch.vertices.end());
+        for (int index : batch.indices)
+        {
+            renderBatch.indices.push_back(vertexOffset + index);
         }
     }
 
-    // clear batches
-    for (auto& [_, texMap] : m_Batches)
-    {
-        for (auto& [__, batch] : texMap)
-        {
-            batch.vertices.clear();
-            batch.indices.clear();
-        }
-    }
+    flushBatch();
+
+    m_renderQueue.clear();
+    m_nextRenderSequence = 0;
 }
 
 
@@ -233,14 +252,17 @@ void SDLRenderer2D::PushSpriteToRenderQueue(const Components::Sprite& sprite,
         sprite.opacity
     };
 
-    auto& batch = m_Batches[sprite.layer][it->second.ptr];
+    auto& entry = m_renderQueue.emplace_back();
+    entry.layer = sprite.layer;
+    entry.sortY = transform.position.y;
+    entry.sequence = m_nextRenderSequence++;
+    entry.texture = it->second.ptr;
+
+    auto& batch = entry.batch;
     batch.texture = it->second.ptr;
 
-    if (batch.vertices.capacity() == 0)
-    {
-        batch.vertices.reserve(2048);
-        batch.indices.reserve(3072);
-    }
+    batch.vertices.reserve(4);
+    batch.indices.reserve(6);
 
     AddSpriteToBatch(batch, src, dst, transform, &it->second, sdlColor);
 }
@@ -371,13 +393,18 @@ void SDLRenderer2D::PushTextToRenderQueue(
     float height,
     const Components::Transform2D& transform,
     int layer,
-    Components::TextAlign align)
+    Components::TextAlign align,
+    float sortY)
 {
     auto it = m_textures.find(textureId);
     if (it == m_textures.end() || !it->second.ptr)
         return;
 
     SDLTextureEntry* texEntry = &it->second;
+    if (IsUnsetSortY(sortY))
+    {
+        sortY = transform.position.y;
+    }
 
     // Source = full texture
     SDL_FRect src{
@@ -399,23 +426,28 @@ void SDLRenderer2D::PushTextToRenderQueue(
         height * transform.scale.y
     };
 
-    dst = ApplyCamera(dst);
+    auto& entry = m_renderQueue.emplace_back();
+    entry.layer = layer;
+    entry.sortY = sortY;
+    entry.sequence = m_nextRenderSequence++;
+    entry.texture = texEntry->ptr;
 
-    
-    auto& batch = m_Batches[layer][texEntry->ptr];
+    auto& batch = entry.batch;
     batch.texture = texEntry->ptr;
 
-    if (batch.vertices.capacity() == 0)
-    {
-        batch.vertices.reserve(512);
-        batch.indices.reserve(768);
-    }
+    batch.vertices.reserve(4);
+    batch.indices.reserve(6);
 
     AddSpriteToBatch(batch, src, dst, transform, texEntry, { 1.0f, 1.0f, 1.0f, 1.0f });
 }
 
-void SDLRenderer2D::DrawRect(Components::Rect rect, Components::Color color, bool fill, int layer)
+void SDLRenderer2D::DrawRect(Components::Rect rect, Components::Color color, bool fill, int layer, float sortY)
 {
+    if (IsUnsetSortY(sortY))
+    {
+        sortY = rect.y + rect.h;
+    }
+
     SDL_FRect sdlRect = { rect.x,rect.y,rect.w,rect.h };
     SDL_FColor sdlColor = { color.r / 255.0f, color.g / 255.0f, color.b / 255.0f, color.a / 255.0f };
     sdlRect = ApplyCamera(sdlRect);
@@ -426,20 +458,28 @@ void SDLRenderer2D::DrawRect(Components::Rect rect, Components::Color color, boo
         return;
     }
 
-    auto& batch = m_Batches[layer][m_whiteTexture];
+    auto& entry = m_renderQueue.emplace_back();
+    entry.layer = layer;
+    entry.sortY = sortY;
+    entry.sequence = m_nextRenderSequence++;
+    entry.texture = m_whiteTexture;
+
+    auto& batch = entry.batch;
     batch.texture = m_whiteTexture;
 
-    if (batch.vertices.capacity() == 0)
-    {
-        batch.vertices.reserve(2048);
-        batch.indices.reserve(3072);
-    }
+    batch.vertices.reserve(4);
+    batch.indices.reserve(6);
 
     AddColoredQuad(batch, sdlRect, sdlColor);
 }
 
-void SDLRenderer2D::DrawLine(float x1, float y1, float x2, float y2, Components::Color color, int layer)
+void SDLRenderer2D::DrawLine(float x1, float y1, float x2, float y2, Components::Color color, int layer, float sortY)
 {
+    if (IsUnsetSortY(sortY))
+    {
+        sortY = std::max(y1, y2);
+    }
+
     float thickness = 1.0f;
 
     // Apply Camera
@@ -474,8 +514,17 @@ void SDLRenderer2D::DrawLine(float x1, float y1, float x2, float y2, Components:
         v[i].color = { color.r / 255.0f, color.g / 255.0f, color.b / 255.0f, color.a / 255.0f };
     }
 
-    auto& batch = m_Batches[layer][m_whiteTexture];
+    auto& entry = m_renderQueue.emplace_back();
+    entry.layer = layer;
+    entry.sortY = sortY;
+    entry.sequence = m_nextRenderSequence++;
+    entry.texture = m_whiteTexture;
+
+    auto& batch = entry.batch;
     batch.texture = m_whiteTexture;
+
+    batch.vertices.reserve(4);
+    batch.indices.reserve(6);
 
     int start = (int)batch.vertices.size();
 

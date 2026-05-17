@@ -107,7 +107,8 @@ namespace System
 				text._cachedHeight,
 				transform,
 				text.layer,
-				text.align
+				text.align,
+				transform.position.y
 			);
 		}
 
@@ -137,7 +138,7 @@ namespace System
 					height
 				};
 
-				m_renderer->DrawRect(rect, shape.color, shape.fill, shape.layer);
+				m_renderer->DrawRect(rect, shape.color, shape.fill, shape.layer, transform.position.y);
 			}
 			else if (shape.type == Components::Shape::Type::Circle)
 			{
@@ -151,7 +152,7 @@ namespace System
 					size,
 					size
 				};
-				m_renderer->DrawRect(rect, shape.color, shape.fill, shape.layer);
+				m_renderer->DrawRect(rect, shape.color, shape.fill, shape.layer, transform.position.y);
 			}
 		}
 	}

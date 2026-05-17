@@ -1,6 +1,7 @@
 #pragma once
 #include "Components.h"
 #include <cstdint>
+#include <limits>
 #include <CoreComponents.h>
 
 class IRenderer2D {
@@ -34,11 +35,12 @@ public:
 		float width, float height,
 		const Components::Transform2D& transform,
 		int layer,
-		Components::TextAlign align) = 0;
+		Components::TextAlign align,
+		float sortY = std::numeric_limits<float>::quiet_NaN()) = 0;
 
 	// Primitive rendering (world-space, affected by camera)
-	virtual void DrawRect(Components::Rect rect, Components::Color color, bool fill, int layer) = 0;
-	virtual void DrawLine(float x1, float y1, float x2, float y2, Components::Color color, int layer) = 0;
+	virtual void DrawRect(Components::Rect rect, Components::Color color, bool fill, int layer, float sortY = std::numeric_limits<float>::quiet_NaN()) = 0;
+	virtual void DrawLine(float x1, float y1, float x2, float y2, Components::Color color, int layer, float sortY = std::numeric_limits<float>::quiet_NaN()) = 0;
 
 	// Screen-space rendering (UI) — bypasses camera transform, drawn after world render
 	virtual void DrawRectScreen(Components::Rect rect, Components::Color color, bool fill) = 0;
