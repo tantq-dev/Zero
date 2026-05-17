@@ -4,6 +4,8 @@
 #include <memory>
 #include <vector>
 #include <algorithm>
+#include <cstdint>
+#include <limits>
 #include "Components.h"
 #include "IRenderer2D.h"
 #include <SDL3_ttf/SDL_ttf.h>
@@ -39,6 +41,15 @@ struct PrimitiveData
     SDL_Color color;
 };
 
+struct RenderQueueEntry
+{
+    int layer = 0;
+    float sortY = 0.0f;
+    uint64_t sequence = 0;
+    SDL_Texture* texture = nullptr;
+    GeometryBatch batch;
+};
+
 class SDLRenderer2D: public IRenderer2D
 {
 public:
@@ -68,10 +79,13 @@ public:
     }
     void PushSpriteToRenderQueue(const Components::Sprite& sprite, const Components::Transform2D& transform) override;
     void PushTextToRenderQueue(uint32_t textureId, float width, float height,
-        const Components::Transform2D& transform, int layer, Components::TextAlign align) override;
+        const Components::Transform2D& transform, int layer, Components::TextAlign align,
+        float sortY = std::numeric_limits<float>::quiet_NaN()) override;
 
-    void DrawRect(Components::Rect rect, Components::Color color, bool fill, int layer) override;
-    void DrawLine(float x1, float y1, float x2, float y2, Components::Color color, int layer) override;
+    void DrawRect(Components::Rect rect, Components::Color color, bool fill, int layer,
+        float sortY = std::numeric_limits<float>::quiet_NaN()) override;
+    void DrawLine(float x1, float y1, float x2, float y2, Components::Color color, int layer,
+        float sortY = std::numeric_limits<float>::quiet_NaN()) override;
 
     // Screen-space UI draw (no camera transform)
     void DrawRectScreen(Components::Rect rect, Components::Color color, bool fill) override;
@@ -102,12 +116,11 @@ private:
     std::unordered_map<uint32_t, SDLTextureEntry> m_textures;
     std::unordered_map<uint32_t, TTF_Font*> m_fonts;
 
-    std::unordered_map<int, std::unordered_map<SDL_Texture*, GeometryBatch>> m_Batches;
-
-
+    std::vector<RenderQueueEntry> m_renderQueue;
 
     uint32_t m_nextId = 1;
     uint32_t m_nextFontId = 1;
+    uint64_t m_nextRenderSequence = 0;
     Components::CameraComponent* m_Camera = nullptr;
     SDL_Texture* m_whiteTexture = nullptr;
     SDLTextureEntry m_whiteTextureEntry = {
