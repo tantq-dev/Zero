@@ -59,3 +59,25 @@ void Seat::Release()
 {
     m_isEmpty = true;
 }
+
+SeatDirection Seat::GetDirection() const
+{
+    return m_config.direction;
+}
+
+Vec2 Seat::GetFacingVector() const
+{
+    switch (m_config.direction)
+    {
+    case SeatDirection::Up:
+        return { 0.0f, -1.0f };
+    case SeatDirection::Down:
+        return { 0.0f, 1.0f };
+    case SeatDirection::Left:
+        return { -1.0f, 0.0f };
+    case SeatDirection::Right:
+        return { 1.0f, 0.0f };
+    default:
+        return { 0.0f, 1.0f };
+    }
+}

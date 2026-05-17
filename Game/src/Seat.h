@@ -5,10 +5,18 @@
 #include "Vec2.h"
 class Desk;
 
+enum class SeatDirection {
+    Up,
+    Down,
+    Left,
+    Right
+};
+
 struct SeatConfig {
     Components::Texture texture = {};
     Vec2 position = { 0.0f, 0.0f };
-    int layer = 2;
+    int layer = 4;
+    SeatDirection direction = SeatDirection::Down;
 };
 
 class Seat : public Core::Actor {
@@ -25,6 +33,8 @@ public:
     bool IsEmpty() const;
     void Reserve();
     void Release();
+    SeatDirection GetDirection() const;
+    Vec2 GetFacingVector() const;
 
 private:
     const SeatConfig m_config;

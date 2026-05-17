@@ -17,8 +17,48 @@ constexpr const char* CustomerAtlasPath = "game_assets/json/Customer1SpriteAtlas
 constexpr const char* CustomerTexturePath = "game_assets/images/Customer1.png";
 constexpr const char* ChairAtlasPath = "game_assets/json/ChairSpriteAtlas.json";
 constexpr const char* ChairTexturePath = "game_assets/images/Street_Food_Chair_1.png";
+constexpr const char* FoodCartTexturePath = "game_assets/images/FoodCart.png";
+constexpr const char* FoodCartAtlasPath = "game_assets/json/StreetFoodCart.json";
+
 }
 
+struct FoodCartConfig {
+    Components::Texture texture = {};
+    Vec2 position = { 0.0f, 0.0f };
+    int layer = 4;
+};
+
+class FoodCart : public Core::Actor {
+
+public:
+    // Inherited via Actor
+    FoodCart(std::shared_ptr<Core::World> world, FoodCartConfig config): Actor(world), m_config(config) {
+
+    }
+
+    void OnUpdate(float dt) override
+    {
+    }
+    void OnFixedUpdate(float dt) override
+    {
+    }
+    void OnStart() override
+    {
+        auto& transform = AddComponent<Components::Transform2D>();
+        transform.position = m_config.position;
+
+        auto& sprite = AddComponent<Components::Sprite>();
+        sprite.texture = m_config.texture;
+        sprite.source = { 0, 0, 96, 96 };
+        sprite.layer = m_config.layer;
+    }
+    void OnDestroy() override
+    {
+    }
+private: 
+    const FoodCartConfig m_config;
+
+};
 
 
 
@@ -36,7 +76,6 @@ void GameplayScene::Initialize()
     m_world->Registry.emplace<Components::CameraComponent>(cam,Vec2{0,0}, 1280.0f,720.0f);
 
     m_backgroundActor = m_world->SpawnActor<Background>();
-    
     
    
     // Load customer atlas
@@ -70,6 +109,11 @@ void GameplayScene::Initialize()
         ChairTexturePath,
         game->GetRenderSystem().GetRenderer()
     );
+    game->GetResources().GetOrLoadSpriteAtlas(
+        FoodCartAtlasPath,
+        FoodCartTexturePath,
+        game->GetRenderSystem().GetRenderer()
+    );
 
     const auto* chairTex = game->GetResources().GetTexture(ChairTexturePath);
 
@@ -77,6 +121,7 @@ void GameplayScene::Initialize()
     const auto* deskTex5 = game->GetResources().GetTexture("game_assets/images/Street_Food_Table_5.png");
     const auto* deskTex6 = game->GetResources().GetTexture("game_assets/images/Street_Food_Table_6.png");
     const auto* deskTex7 = game->GetResources().GetTexture("game_assets/images/Street_Food_Table_7.png");
+    const auto* foodCartTex = game->GetResources().GetTexture(FoodCartTexturePath);
 
 
     if (!chairTex || !deskTex4 || !deskTex5 || !deskTex6 || !deskTex7) {
@@ -84,27 +129,50 @@ void GameplayScene::Initialize()
         return;
     }
 
-    for (size_t i = 0; i < 2; i++)
-    {
-        const float seatX = static_cast<float>(i * 35);
-        const float deskX = static_cast<float>(i * 32);
+    auto spawnDesk = [&](Vec2 position, bool isLeft) {
+        auto desk = m_world->SpawnActor<Desk>(DeskConfig{
+            .emptyTexture = isLeft ? *deskTex5 : *deskTex6,
+            .occupiedTexture = isLeft ? *deskTex4 : *deskTex7,
+            .position = position,
+            .layer = 2,
+        });
+        m_desks.push_back(desk);
+        return desk;
+    };
 
+    auto spawnSeat = [&](Vec2 position, SeatDirection direction, std::shared_ptr<Desk> desk) {
         auto seat = m_world->SpawnActor<Seat>(SeatConfig{
             .texture = *chairTex,
-            .position = { seatX, -70.0f },
+            .position = position,
             .layer = 2,
+            .direction = direction,
         });
-        auto desk = m_world->SpawnActor<Desk>(DeskConfig{
-            .emptyTexture = i == 0 ? *deskTex5 : *deskTex6,
-            .occupiedTexture = i == 0 ? *deskTex4 : *deskTex7,
-            .position = { deskX, -110.0f },
-            .layer = 2,
-        });
-
         seat->SetDesk(desk);
         m_seats.push_back(seat);
-        m_desks.push_back(desk);
-    }
+    };
+
+    auto spawnTwoSeatTable = [&](Vec2 deskPos) {
+        Vec2 leftPos = deskPos - Vec2(16, 0);
+        Vec2 rightPos = deskPos + Vec2(16, 0);
+        auto deskLeft = spawnDesk(leftPos, true);
+        auto deskRight = spawnDesk(rightPos, false);
+
+
+        spawnSeat({ leftPos.x - 35.0f, leftPos.y + 10.0f }, SeatDirection::Right, deskLeft);
+        spawnSeat({ rightPos.x + 35.0f, rightPos.y + 10.0f }, SeatDirection::Left, deskRight);
+    };
+
+    spawnTwoSeatTable({ -150.0f, 0.0f });
+    spawnTwoSeatTable({ 0.0f, 0.0f });
+    spawnTwoSeatTable({ 150.0f, -0.0f });
+
+    auto foodCart = m_world->SpawnActor<FoodCart>(FoodCartConfig{
+           .texture = *foodCartTex,
+           .position = {0,-50},
+           .layer = 2
+        });
+    m_FoodCart.push_back(foodCart);
+
 }
 
 void GameplayScene::Update(const double& deltaTime)

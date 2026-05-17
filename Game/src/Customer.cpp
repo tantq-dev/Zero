@@ -65,7 +65,9 @@ void Customer::OnUpdate(float dt) {
     }
     case State::Sitting: {
         m_timer += dt;
-        UpdateAnimation(Vec2(0, -1), false); // IdleDown when sitting
+        if (auto seat = m_targetSeat.lock()) {
+            UpdateAnimation(seat->GetFacingVector(), false);
+        }
         if (m_timer >= m_useTime) {
             m_state = State::Leaving;
             if (auto seat = m_targetSeat.lock()) {

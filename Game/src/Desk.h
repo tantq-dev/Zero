@@ -7,7 +7,7 @@ struct DeskConfig {
     Components::Texture emptyTexture = {};
     Components::Texture occupiedTexture = {};
     Vec2 position = { 0.0f, 0.0f };
-    int layer = 2;
+    int layer = 5;
 };
 
 class Desk : public Core::Actor {

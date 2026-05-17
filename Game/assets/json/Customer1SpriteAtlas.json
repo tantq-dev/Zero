@@ -60,8 +60,9 @@
   "animations": {
     "IdleLeft": {
       "loop": true,
-      "frames": [0, 1, 2, 3, 4, 5],
+      "frames": [ 12, 13, 14, 15, 16, 17 ],
       "frameDuration": 0.1
+
     },
 
     "IdleUp": {
@@ -72,7 +73,7 @@
 
     "IdleRight": {
       "loop": true,
-      "frames": [12, 13, 14, 15, 16, 17],
+      "frames": [ 0, 1, 2, 3, 4, 5 ],
       "frameDuration": 0.1
     },
 
@@ -84,7 +85,7 @@
 
     "MoveLeft": {
       "loop": true,
-      "frames": [24, 25, 26, 27, 28, 29],
+      "frames": [ 36, 37, 38, 39, 40, 41 ],
       "frameDuration": 0.1
     },
 
@@ -96,8 +97,9 @@
 
     "MoveRight": {
       "loop": true,
-      "frames": [36, 37, 38, 39, 40, 41],
+      "frames": [ 24, 25, 26, 27, 28, 29 ],
       "frameDuration": 0.1
+ 
     },
 
     "MoveDown": {

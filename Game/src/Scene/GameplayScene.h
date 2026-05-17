@@ -23,6 +23,8 @@ private:
 	 std::shared_ptr<Core::Actor> m_backgroundActor;
 	 std::vector<std::shared_ptr<Seat>> m_seats;
 	 std::vector<std::shared_ptr<Desk>> m_desks;
+	 std::vector<std::shared_ptr<Core::Actor>> m_FoodCart;
+
 
 	 std::vector<std::shared_ptr<Core::Actor>> m_customers;
 	 double m_spawnTimer = 0;
