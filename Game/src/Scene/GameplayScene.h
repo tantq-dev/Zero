@@ -27,6 +27,8 @@ private:
 
 
 	 std::vector<std::shared_ptr<Core::Actor>> m_customers;
+	 std::vector<std::shared_ptr<Core::Actor>> m_staffs;
+
 	 double m_spawnTimer = 0;
 	 uint32_t m_customerAtlasId = 0;
 	 std::string GetCurrentTimeString(double time);

@@ -11,12 +11,14 @@ void Seat::OnFixedUpdate(float dt) {}
 
 void Seat::OnStart() {
     auto& transform = AddComponent<Components::Transform2D>();
-    transform.position = m_config.position;
+    constexpr float SeatSpriteHeight = 32.0f;
+    transform.position = { m_config.position.x, m_config.position.y };
 
     auto& sprite = AddComponent<Components::Sprite>();
     sprite.texture = m_config.texture;
     sprite.source = { 0, 0, 32, 32 };
     sprite.layer = m_config.layer;
+    sprite.pivot = { 0.5f, 0.5f };
 }
 
 void Seat::OnDestroy() {}

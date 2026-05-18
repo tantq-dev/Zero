@@ -9,7 +9,7 @@
 #undef max
 
 #include "Seat.h"
-#include "Customer.h"
+#include "Character.h"
 #include "Desk.h"
 
 namespace {
@@ -19,6 +19,8 @@ constexpr const char* ChairAtlasPath = "game_assets/json/ChairSpriteAtlas.json";
 constexpr const char* ChairTexturePath = "game_assets/images/Street_Food_Chair_1.png";
 constexpr const char* FoodCartTexturePath = "game_assets/images/FoodCart.png";
 constexpr const char* FoodCartAtlasPath = "game_assets/json/StreetFoodCart.json";
+constexpr const char* StaffAtlasPath = "game_assets/json/Staff1SpriteAtlas.json";
+constexpr const char* StaffTexturePath = "game_assets/images/Staff.png";
 
 }
 
@@ -60,6 +62,11 @@ private:
 
 };
 
+struct StaffConfig {
+    Components::Texture texture = {};
+    Vec2 position = { 0.0f, 0.0f };
+    int layer = 4;
+};
 
 
 void GameplayScene::Initialize()
@@ -114,6 +121,11 @@ void GameplayScene::Initialize()
         FoodCartTexturePath,
         game->GetRenderSystem().GetRenderer()
     );
+    const auto staffAtlas  =  game->GetResources().GetOrLoadSpriteAtlas(
+        StaffAtlasPath,
+        StaffTexturePath,
+        game->GetRenderSystem().GetRenderer()
+    );
 
     const auto* chairTex = game->GetResources().GetTexture(ChairTexturePath);
 
@@ -124,7 +136,7 @@ void GameplayScene::Initialize()
     const auto* foodCartTex = game->GetResources().GetTexture(FoodCartTexturePath);
 
 
-    if (!chairTex || !deskTex4 || !deskTex5 || !deskTex6 || !deskTex7) {
+    if (!chairTex || !deskTex4 || !deskTex5 || !deskTex6 || !deskTex7 || !foodCartTex ) {
         LOG_ERROR("Failed to get gameplay table/chair textures");
         return;
     }
@@ -172,7 +184,10 @@ void GameplayScene::Initialize()
            .layer = 2
         });
     m_FoodCart.push_back(foodCart);
-
+    auto staff = m_world->SpawnActor<Character>(staffAtlas);
+   auto& staffTransform = staff->GetComponent<Components::Transform2D>();
+   staffTransform.position = { -10,-30 };
+    m_staffs.push_back(staff);
 }
 
 void GameplayScene::Update(const double& deltaTime)

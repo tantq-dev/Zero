@@ -1,11 +1,11 @@
-#include "Customer.h"
+#include "Character.h"
 #include "Seat.h"
 
-Customer::Customer(std::shared_ptr<Core::World> world, uint32_t atlasId) 
+Character::Character(std::shared_ptr<Core::World> world, uint32_t atlasId) 
     : Actor(world), m_atlasId(atlasId) {
 }
 
-bool Customer::MoveTowards(Vec2 target, float dt) {
+bool Character::MoveTowards(Vec2 target, float dt) {
     auto& pos = GetComponent<Components::Transform2D>().position;
     Vec2 dir = target - pos;
     float d = dir.length();
@@ -22,7 +22,7 @@ bool Customer::MoveTowards(Vec2 target, float dt) {
     return false;
 }
 
-void Customer::UpdateAnimation(const Vec2& dir, bool isMoving) {
+void Character::UpdateAnimation(const Vec2& dir, bool isMoving) {
     auto& anim = GetComponent<Components::Animation>();
     
     std::string direction = m_lastDir;
@@ -42,7 +42,31 @@ void Customer::UpdateAnimation(const Vec2& dir, bool isMoving) {
     }
 }
 
-void Customer::OnUpdate(float dt) {
+void Character::OnUpdate(float dt) {
+   
+}
+
+void Character::OnFixedUpdate(float dt) {}
+
+void Character::OnStart() {
+    auto& transform = AddComponent<Components::Transform2D>();
+    transform.position = { 0, 120 };
+
+    auto& sprite = AddComponent<Components::Sprite>();
+    sprite.layer = 2;
+    sprite.sortOffsetY = 1.0f;
+    sprite.pivot = { 0.5f, 1.0f }; // Bottom pivot for characters
+
+    auto& anim = AddComponent<Components::Animation>();
+    anim.atlasId = m_atlasId;
+    anim.currentAnimationName = "IdleDown";
+    anim.isPlaying = true;
+}
+
+void Character::OnDestroy() {}
+
+void Customer::OnUpdate(float dt)
+{
     auto& transform = GetComponent<Components::Transform2D>();
 
     switch (m_state) {
@@ -86,21 +110,3 @@ void Customer::OnUpdate(float dt) {
     }
     }
 }
-
-void Customer::OnFixedUpdate(float dt) {}
-
-void Customer::OnStart() {
-    auto& transform = AddComponent<Components::Transform2D>();
-    transform.position = { 0, 120 };
-
-    auto& sprite = AddComponent<Components::Sprite>();
-    sprite.layer = 2;
-    sprite.pivot = { 0.5f, 1.0f }; // Bottom pivot for characters
-
-    auto& anim = AddComponent<Components::Animation>();
-    anim.atlasId = m_atlasId;
-    anim.currentAnimationName = "IdleDown";
-    anim.isPlaying = true;
-}
-
-void Customer::OnDestroy() {}
