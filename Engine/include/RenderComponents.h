@@ -48,6 +48,7 @@ namespace Components
 		bool flipHorizontal = false;
 		bool visible = true;
 		int layer = 0;
+		float sortOffsetY = 0.0f;
 		float opacity = 1;
 		Vec2 pivot = { 0.5f, 0.5f }; // Normalized (0 to 1)
 		Rect source = { 0, 0, 0, 0 }; //
