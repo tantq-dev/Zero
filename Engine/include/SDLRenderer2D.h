@@ -45,6 +45,7 @@ struct RenderQueueEntry
 {
     int layer = 0;
     float sortY = 0.0f;
+    float sortOffsetY = 0.0f;
     uint64_t sequence = 0;
     SDL_Texture* texture = nullptr;
     GeometryBatch batch;

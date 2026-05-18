@@ -173,6 +173,7 @@ void SDLRenderer2D::CallRender()
         {
             if (a.layer != b.layer) return a.layer < b.layer;
             if (a.sortY != b.sortY) return a.sortY < b.sortY;
+            if (a.sortOffsetY != b.sortOffsetY) return a.sortOffsetY < b.sortOffsetY;
             return a.sequence < b.sequence;
         });
 
@@ -254,7 +255,8 @@ void SDLRenderer2D::PushSpriteToRenderQueue(const Components::Sprite& sprite,
 
     auto& entry = m_renderQueue.emplace_back();
     entry.layer = sprite.layer;
-    entry.sortY = transform.position.y;
+    entry.sortY = transform.position.y + (sprite.source.h* (1-sprite.pivot.y) * transform.scale.y) + sprite.sortOffsetY;
+    entry.sortOffsetY = sprite.sortOffsetY;
     entry.sequence = m_nextRenderSequence++;
     entry.texture = it->second.ptr;
 
