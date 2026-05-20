@@ -184,7 +184,7 @@ void GameplayScene::Initialize()
            .layer = 2
         });
     m_FoodCart.push_back(foodCart);
-    auto staff = m_world->SpawnActor<Character>(staffAtlas);
+    auto staff = m_world->SpawnActor<Staff>(staffAtlas);
    auto& staffTransform = staff->GetComponent<Components::Transform2D>();
    staffTransform.position = { -10,-30 };
     m_staffs.push_back(staff);
@@ -213,7 +213,7 @@ void GameplayScene::Update(const double& deltaTime)
 
     // Customer management logic
     m_spawnTimer += deltaTime;
-    if (m_spawnTimer >= 3.0) {
+    if (m_spawnTimer >= 10.0) {
         m_spawnTimer = 0;
         m_customers.push_back(m_world->SpawnActor<Customer>(m_customerAtlasId));
     }
@@ -226,7 +226,7 @@ void GameplayScene::Update(const double& deltaTime)
             
             // Try to assign seat
             for (auto& seat : m_seats) {
-                if (seat->IsEmpty()) {
+                if (seat->IsAvailable()) {
                     seat->Reserve();
                     customer->m_targetSeat = seat;
                     customer->m_state = Customer::State::MovingToSeat;
@@ -236,12 +236,23 @@ void GameplayScene::Update(const double& deltaTime)
         }
     }
 
+    Vec2 foodCartPosition = { 0.0f, -50.0f };
+    if (!m_FoodCart.empty() && m_FoodCart.front()) {
+        foodCartPosition = m_FoodCart.front()->GetComponent<Components::Transform2D>().position;
+    }
+
+    for (auto& actor : m_staffs) {
+        auto staff = std::static_pointer_cast<Staff>(actor);
+        staff->SetWorkContext(&m_customers, &m_desks, foodCartPosition);
+    }
+
     // Cleanup finished customers and collect money
     auto it = m_customers.begin();
     while (it != m_customers.end()) {
         auto customer = std::static_pointer_cast<Customer>(*it);
         if (customer->m_state == Customer::State::Finished) {
             m_currentMoney += 10;
+            m_world->RemoveActor(*it);
             it = m_customers.erase(it);
         } else {
             ++it;

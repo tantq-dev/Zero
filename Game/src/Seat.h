@@ -31,10 +31,13 @@ public:
     void OnLeaveSeat();
     void SetDesk(std::shared_ptr<Desk> desk);
     bool IsEmpty() const;
+    bool IsAvailable() const;
+    std::shared_ptr<Desk> GetDesk() const;
     void Reserve();
     void Release();
     SeatDirection GetDirection() const;
     Vec2 GetFacingVector() const;
+
 
 private:
     const SeatConfig m_config;

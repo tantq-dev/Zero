@@ -33,20 +33,49 @@ void Desk::OnCustomerLeave()
 	m_currentCustomer--;
 	if (m_currentCustomer == 0)
 	{
-		auto& sprite = GetComponent<Components::Sprite>();
-		sprite.texture = m_config.emptyTexture;
-		sprite.source = { 0, 0, 32, 64 };
+		m_needCleanUp = true;
 	}
 }
 
 void Desk::OnCustomerEnter()
 {
-	if (m_currentCustomer == 0)
-	{
+    if (m_currentCustomer == 0)
+    {
+        m_isServedFood = false;
+
+    }
+    m_currentCustomer++;
+}
+
+void Desk::OnCleaningUp()
+{
+	m_needCleanUp = false;
+	m_isServedFood = false;
+	auto& sprite = GetComponent<Components::Sprite>();
+	sprite.texture = m_config.emptyTexture;
+	sprite.source = { 0, 0, 32, 64 };
+
+}
+
+void Desk::OnFoodServing()
+{
 		auto& sprite = GetComponent<Components::Sprite>();
 		sprite.texture = m_config.occupiedTexture;
 		sprite.source = { 0, 0, 32, 64 };
+		m_isServedFood = true;
+}
 
-	}
-	m_currentCustomer++;
+bool Desk::NeedsCleanUp() const
+{
+	return m_needCleanUp;
+}
+
+bool Desk::IsClean() const
+{
+	return !m_needCleanUp;
+}
+
+bool Desk::HasCustomer() const
+{
+	return m_currentCustomer > 0;
 }

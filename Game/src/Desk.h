@@ -27,8 +27,15 @@ public:
     
     void OnCustomerLeave();
     void OnCustomerEnter();
+    void OnCleaningUp();
+    void OnFoodServing();
+    bool NeedsCleanUp() const;
+    bool IsClean() const;
+    bool HasCustomer() const;
 
 private:
     size_t m_currentCustomer = 0;
+    bool m_needCleanUp = false;
+    bool  m_isServedFood = false;
     const DeskConfig m_config;
 };

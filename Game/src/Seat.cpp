@@ -52,6 +52,17 @@ bool Seat::IsEmpty() const
     return m_isEmpty;
 }
 
+bool Seat::IsAvailable() const
+{
+    auto desk = m_desk.lock();
+    return m_isEmpty && (!desk || desk->IsClean());
+}
+
+std::shared_ptr<Desk> Seat::GetDesk() const
+{
+    return m_desk.lock();
+}
+
 void Seat::Reserve()
 {
     m_isEmpty = false;
