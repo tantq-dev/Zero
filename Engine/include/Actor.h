@@ -14,6 +14,7 @@ namespace Core {
 	public:
 		Actor(std::shared_ptr<World> world);
 		~Actor();
+		void DestroyEntity();
 		virtual void OnUpdate(float dt) = 0;
 		virtual void OnFixedUpdate(float dt) = 0;
 		virtual void OnStart() = 0;

@@ -1,16 +1,43 @@
-//#include "World.h"
-//namespace Core
-//{
-//    template<typename T, typename... Args>
-//    std::shared_ptr<T> World::SpawnActor(Args&&... args)
-//    {
-//        auto actor = std::make_shared<T>(
-//            shared_from_this(),
-//            std::forward<Args>(args)...
-//        );
-//
-//        actor->OnStart();
-//
-//        return actor;
-//    }
-//}
+#include "World.h"
+#include <algorithm>
+
+namespace Core
+{
+    bool World::RemoveActor(const std::shared_ptr<Actor>& actor)
+    {
+        if (!actor)
+        {
+            return false;
+        }
+
+        return RemoveActor(actor.get());
+    }
+
+    bool World::RemoveActor(const Actor* actor)
+    {
+        if (!actor)
+        {
+            return false;
+        }
+
+        auto it = std::find_if(
+            m_actors.begin(),
+            m_actors.end(),
+            [actor](const std::shared_ptr<Actor>& storedActor)
+            {
+                return storedActor.get() == actor;
+            });
+
+        if (it == m_actors.end())
+        {
+            return false;
+        }
+
+        auto removedActor = *it;
+        removedActor->OnDestroy();
+        removedActor->DestroyEntity();
+        m_actors.erase(it);
+
+        return true;
+    }
+}
