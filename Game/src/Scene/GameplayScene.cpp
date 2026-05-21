@@ -229,7 +229,7 @@ void GameplayScene::Update(const double& deltaTime)
                 if (seat->IsAvailable()) {
                     seat->Reserve();
                     customer->m_targetSeat = seat;
-                    customer->m_state = Customer::State::MovingToSeat;
+                    customer->ChangeState(Customer::State::MovingToSeat);
                     break;
                 }
             }

@@ -32,7 +32,7 @@ public:
         : Character(world, atlasId)
     {
     }
-    enum class State { Waiting, MovingToSeat, Sitting, Order,WaitForOder, Use,  Leaving, Finished };
+    enum class State { Waiting, MovingToSeat, Sitting, Order, WaitForOder, WaitForOrder = WaitForOder, Use, Leaving, Finished };
     State m_state = State::Waiting;
     float m_useTime = 5.0f;
     float m_patientTime = 10.0f;
@@ -44,9 +44,12 @@ public:
     bool m_doneOrder = false;
     std::weak_ptr<Seat> m_targetSeat;
 
+    void ChangeState(State state);
     void OnUpdate(float dt) override;
-    
 
+private:
+    void OnEnterState(State state);
+    void ReleaseSeat();
 };
 
 class Staff : public Character {
@@ -66,10 +69,14 @@ public:
     std::vector<std::shared_ptr<Desk>>* m_desks = nullptr;
     Vec2 m_foodCartPosition = { 0.0f, -50.0f };
 
+    void ChangeState(State state);
     void SetWorkContext(
         std::vector<std::shared_ptr<Core::Actor>>* customers,
         std::vector<std::shared_ptr<Desk>>* desks,
         Vec2 foodCartPosition);
     void OnUpdate(float dt) override;
 
+private:
+    void OnEnterState(State state);
+    void ClearCurrentJob();
 };
