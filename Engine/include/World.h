@@ -6,6 +6,7 @@
 #include <vector>
 #include "entt.hpp"
 #include "Actor.h"
+#include "IGameMode.h"
 namespace Core
 {
 
@@ -13,6 +14,7 @@ namespace Core
     {
     private:
         std::vector<std::shared_ptr<Actor>> m_actors;
+        std::unique_ptr<IGameMode> m_gameMode;
     public:
         entt::registry Registry;
 
@@ -32,5 +34,23 @@ namespace Core
 
         bool RemoveActor(const std::shared_ptr<Actor>& actor);
         bool RemoveActor(const Actor* actor);
+
+        // GameMode — per-scene rules, recreated each Initialize()
+        template<typename T, typename... Args>
+        T& SetGameMode(Args&&... args)
+        {
+            static_assert(std::is_base_of_v<IGameMode, T>,
+                "T must inherit from Core::IGameMode");
+            if (m_gameMode) m_gameMode->EndPlay();
+            m_gameMode = std::make_unique<T>(std::forward<Args>(args)...);
+            m_gameMode->BeginPlay();
+            return static_cast<T&>(*m_gameMode);
+        }
+
+        template<typename T>
+        T* GetGameMode()
+        {
+            return dynamic_cast<T*>(m_gameMode.get());
+        }
     };
 }

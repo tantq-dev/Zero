@@ -1,4 +1,5 @@
-#pragma once  
+#pragma once
+#include "IGameInstance.h"
 #include <memory>  
 #include <string>  
 #include <unordered_map>  
@@ -27,6 +28,7 @@ namespace Core
 		bool m_isRunning = false;
 		std::unordered_map<std::string, std::shared_ptr<Scene>> m_scenes;
 		std::unique_ptr<ResourcesManager> m_resources;
+		std::unique_ptr<IGameInstance> m_gameInstance;
 		std::shared_ptr<Scene> m_activeScene;
 		std::string m_activeSceneName;
 #ifdef ZERO_USE_IMGUI
@@ -61,6 +63,24 @@ namespace Core
 		void Tick();       // One frame of work — called by emscripten_set_main_loop
 
 		std::shared_ptr<Window> GetWindow() const { return m_window; }
+
+		// GameInstance — persists across all scene switches
+		template<typename T, typename... Args>
+		T& CreateGameInstance(Args&&... args)
+		{
+			static_assert(std::is_base_of_v<IGameInstance, T>,
+				"T must inherit from Core::IGameInstance");
+			m_gameInstance = std::make_unique<T>(std::forward<Args>(args)...);
+			m_gameInstance->OnCreate();
+			return static_cast<T&>(*m_gameInstance);
+		}
+
+		template<typename T>
+		T& GetGameInstance()
+		{
+			assert(m_gameInstance && "No GameInstance created. Call CreateGameInstance<T>() in main.");
+			return static_cast<T&>(*m_gameInstance);
+		}
 
 		// Scene management  
 		void AddScene(const std::string& name, std::shared_ptr<Scene> scene);
