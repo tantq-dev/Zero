@@ -2,8 +2,7 @@
 #include "UISystem.h"
 #include "Game.h"
 #include "DreamyGameInstance.h"
-#include "UpgradeRegistry.h"
-#include "BuffRegistry.h"
+#include "GameplayAbility/Ability.h"
 
 namespace {
     constexpr float kScreenW = 1280.0f;
@@ -24,6 +23,16 @@ void ResultScene::FixedUpdate(const double&) {}
 void ResultScene::Render(::IRenderer2D&) {}
 void ResultScene::HandleInput() {}
 
+void ResultScene::OnSceneUnload()
+{
+    m_fontTitle = 0;
+    m_fontBody = 0;
+
+    if (m_world) {
+        m_world->Clear();
+    }
+}
+
 void ResultScene::HandleUI(System::UISystem& ui)
 {
     auto game = m_game.lock();
@@ -40,8 +49,8 @@ void ResultScene::HandleUI(System::UISystem& ui)
     // Archetype label
     bool hasDelivery = false;
     for (int uid : rs.activeUpgrades) {
-        const UpgradeData* u = UpgradeRegistry::Find(uid);
-        if (u && u->effect == UpgradeEffect::DeliveryCounter) { hasDelivery = true; break; }
+        const UpgradeDefinition* u = UpgradeRegistry::Find(uid);
+        if (u && UpgradeRegistry::ModifiesAttribute(*u, GameAttribute::HasDeliveryCounter)) { hasDelivery = true; break; }
     }
     std::string archetype = GetArchetypeLabel(rs.money, rs.reputation, hasDelivery);
     ui.Label(archetype, kScreenW * 0.5f, 100.0f, m_fontBody, { 200, 170, 255, 255 }, Components::TextAlign::Center);
@@ -73,8 +82,8 @@ void ResultScene::HandleUI(System::UISystem& ui)
     ui.Label("Upgrades Built:", labelX, upgradeY, m_fontBody, { 160, 220, 160, 255 }, Components::TextAlign::Left);
     float ux = labelX + 170.0f;
     for (int uid : rs.activeUpgrades) {
-        const UpgradeData* u = UpgradeRegistry::Find(uid);
-        if (u) { ui.Label(u->name, ux, upgradeY, m_fontBody, { 200, 240, 200, 200 }, Components::TextAlign::Left); ux += 180.0f; }
+        const UpgradeDefinition* u = UpgradeRegistry::Find(uid);
+        if (u) { ui.Label(u->Name, ux, upgradeY, m_fontBody, { 200, 240, 200, 200 }, Components::TextAlign::Left); ux += 180.0f; }
     }
 
     // Play Again button
@@ -100,12 +109,12 @@ void ResultScene::HandleUI(System::UISystem& ui)
 std::string ResultScene::GetArchetypeLabel(int money, int reputation, bool hasDelivery) const
 {
     if (hasDelivery && money > 300)
-        return "★ Delivery Kitchen — The Passive Income Empire ★";
+        return "Delivery Kitchen — The Passive Income Empire";
     if (reputation >= 80)
-        return "★ Luxury Café — A Boutique Dream ★";
+        return "Luxury Café — A Boutique Dream";
     if (money > 500)
-        return "★ Fast Food Chain — Volume is King ★";
+        return " Fast Food Chain — Volume is King";
     if (reputation >= 60 && money > 200)
-        return "★ Viral Trend Restaurant — Hot Today, Hotter Tomorrow ★";
-    return "★ Humble Street Cart — A Journey Begins ★";
+        return " Viral Trend Restaurant — Hot Today, Hotter Tomorrow ";
+    return " Humble Street Cart — A Journey Begins ";
 }

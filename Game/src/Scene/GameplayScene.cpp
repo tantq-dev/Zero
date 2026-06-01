@@ -9,6 +9,7 @@
 #include "DreamyGameInstance.h"
 #include "RestaurantGameMode.h"
 #include "EventRegistry.h"
+#include <cmath>
 #include <iomanip>
 #include <sstream>
 #include <cstdlib>
@@ -37,9 +38,13 @@ constexpr const char* Table6Json = "game_assets/json/StreetFoodTable6.json";
 constexpr const char* Table6Png  = "game_assets/images/Street_Food_Table_6.png";
 constexpr const char* Table7Json = "game_assets/json/StreetFoodTable7.json";
 constexpr const char* Table7Png  = "game_assets/images/Street_Food_Table_7.png";
+
+constexpr float kUiWidth  = 640.0f;
+constexpr float kUiHeight = 360.0f;
 } // namespace
 
-// ---- FoodCart actor (local, unchanged) --------------------------------------
+// ---- FoodCart actor (local, unchanged) ------------------------------------
+// --
 struct FoodCartConfig {
     Components::Texture texture = {};
     Vec2 position = { 0.0f, 0.0f };
@@ -82,14 +87,14 @@ void GameplayScene::Initialize()
     auto& gi = game->GetGameInstance<DreamyGameInstance>();
     auto& gm = m_world->SetGameMode<RestaurantGameMode>(gi.runState);
 
-    m_spawnInterval    = gm.customerSpawnInterval;
-    m_dayDurationSec   = gm.dayDurationSeconds;
-    m_moneyPerCustomer = gm.moneyPerCustomer;
-    m_customerPatience = gm.customerPatience;
-    m_cookTimeMult     = gm.cookTimeMultiplier;
-    m_hasDelivery      = gm.hasDeliveryCounter;
-    m_deliveryIncome   = gm.deliveryIncomeRate;
-    m_reputation       = std::clamp(gi.runState.reputation + gm.reputationBonus, 0, 100);
+    m_spawnInterval    = gm.GetAttribute(GameAttribute::CustomerSpawnInterval);
+    m_dayDurationSec   = gm.GetAttribute(GameAttribute::DayDurationSeconds);
+    m_moneyPerCustomer = static_cast<int>(std::round(gm.GetAttribute(GameAttribute::MoneyPerCustomer)));
+    m_customerPatience = gm.GetAttribute(GameAttribute::CustomerPatience);
+    m_cookTimeMult     = gm.GetAttribute(GameAttribute::CookTimeMultiplier);
+    m_hasDelivery      = gm.GetAttribute(GameAttribute::HasDeliveryCounter) > 0.0f;
+    m_deliveryIncome   = gm.GetAttribute(GameAttribute::DeliveryIncomeRate);
+    m_reputation       = std::clamp(static_cast<int>(std::round(gi.runState.reputation + gm.GetAttribute(GameAttribute::ReputationBonus))), 0, 100);
 
     // ---- Reset per-day counters ----
     m_dayTimer        = 0.0f;
@@ -168,12 +173,11 @@ void GameplayScene::Initialize()
     spawnTwoSeatTable({    0.0f,  0.0f });
     spawnTwoSeatTable({  150.0f,  0.0f });
 
-    // ---- Upgrade-driven extra tables ----
-    for (int i = 0; i < gm.extraTableCount; ++i) {
-        // Alternate: first row below, second row further below
-        float yOffset = (i % 2 == 0) ? 90.0f : 180.0f;
-        float xPos    = -150.0f + (i / 2) * 150.0f;
-        spawnTwoSeatTable({ xPos, yOffset });
+    const int extraTableCount = std::max(0, static_cast<int>(std::round(gm.GetAttribute(GameAttribute::ExtraTableCount))));
+    for (int i = 0; i < extraTableCount; ++i) {
+        const int row = i / 4;
+        const int col = i % 4;
+        spawnTwoSeatTable({ -225.0f + col * 150.0f, 105.0f + row * 95.0f });
     }
 
     // ---- Food cart ----
@@ -313,6 +317,46 @@ void GameplayScene::HandleUI(System::UISystem& ui)
     DrawHUD(ui);
 }
 
+void GameplayScene::OnSceneUnload()
+{
+    if (m_world) {
+        m_world->Clear();
+    }
+
+    m_backgroundActor.reset();
+    m_customers.clear();
+    m_staffs.clear();
+    m_FoodCart.clear();
+    m_seats.clear();
+    m_desks.clear();
+
+    m_font = 0;
+    m_fontBig = 0;
+    m_fontEvent = 0;
+    m_customerAtlasId = 0;
+    m_clockTime = 0.0;
+    m_dayTimer = 0.0f;
+    m_dayDurationSec = 120.0f;
+    m_dayEnded = false;
+    m_spawnInterval = 10.0f;
+    m_spawnTimer = 0.0f;
+    m_moneyPerCustomer = 10;
+    m_customerPatience = 10.0f;
+    m_cookTimeMult = 1.0f;
+    m_hasDelivery = false;
+    m_deliveryIncome = 0.0f;
+    m_deliveryTimer = 0.0f;
+    m_reputation = 50;
+    m_currentMoney = 0;
+    m_totalServed = 0;
+    m_satisfiedCount = 0;
+    m_eventPending = false;
+    m_eventTriggered = false;
+    m_activeEventId = -1;
+    m_eventSpawnMult = 1.0f;
+    m_eventPatMult = 1.0f;
+}
+
 // ---- HUD --------------------------------------------------------------------
 void GameplayScene::DrawHUD(System::UISystem& ui)
 {
@@ -321,21 +365,21 @@ void GameplayScene::DrawHUD(System::UISystem& ui)
     auto& gi = game->GetGameInstance<DreamyGameInstance>();
 
     // Top bar background
-    ui.Panel({ 0, 0, 1280, 44 }, { 10, 8, 22, 210 });
+    ui.Panel({ 0, 0, kUiWidth, 22.0f }, { 10, 8, 22, 210 });
 
     // Day / time
     std::string dayLabel = "Day " + std::to_string(gi.runState.currentDay) + " / 7";
-    ui.Label(dayLabel, 10.0f, 10.0f, m_font, { 255, 220, 100, 255 }, Components::TextAlign::Left);
-    ui.Label(GetCurrentTimeString(m_clockTime), 640.0f, 10.0f, m_font, { 255, 255, 255, 255 }, Components::TextAlign::Center);
+    ui.Label(dayLabel, 5.0f, 5.0f, m_font, { 255, 220, 100, 255 }, Components::TextAlign::Left);
+    ui.Label(GetCurrentTimeString(m_clockTime), kUiWidth * 0.5f, 5.0f, m_font, { 255, 255, 255, 255 }, Components::TextAlign::Center);
 
     // Money
     std::string moneyStr = "$" + std::to_string(m_currentMoney);
-    ui.Label(moneyStr, 1270.0f, 10.0f, m_font, { 100, 255, 120, 255 }, Components::TextAlign::Right);
+    ui.Label(moneyStr, kUiWidth - 5.0f, 5.0f, m_font, { 100, 255, 120, 255 }, Components::TextAlign::Right);
 
     // Reputation bar
-    float barW = 200.0f, barH = 12.0f;
-    float barX = 1270.0f - barW;
-    float barY = 30.0f;
+    float barW = 100.0f, barH = 6.0f;
+    float barX = kUiWidth - 5.0f - barW;
+    float barY = 15.0f;
     ui.Panel({ static_cast<float>(barX),                          static_cast<float>(barY),
                static_cast<float>(barW),                          static_cast<float>(barH) }, { 40, 20, 20, 200 });
     float fillW = barW * (static_cast<float>(m_reputation) / 100.0f);
@@ -344,13 +388,13 @@ void GameplayScene::DrawHUD(System::UISystem& ui)
                                                    : Components::Color{200, 60, 60, 255};
     ui.Panel({ static_cast<float>(barX), static_cast<float>(barY),
                static_cast<float>(fillW), static_cast<float>(barH) }, repColor);
-    ui.Label("REP", barX - 38.0f, barY - 1.0f, m_font, { 180, 180, 200, 255 }, Components::TextAlign::Left);
+    ui.Label("REP", barX - 19.0f, barY - 0.5f, m_font, { 180, 180, 200, 255 }, Components::TextAlign::Left);
 
     // Day progress bar
     float progress = m_dayTimer / m_dayDurationSec;
-    float pBarW = 400.0f, pBarH = 8.0f;
-    float pBarX = 640.0f - pBarW * 0.5f;
-    float pBarY = 34.0f;
+    float pBarW = 200.0f, pBarH = 4.0f;
+    float pBarX = kUiWidth * 0.5f - pBarW * 0.5f;
+    float pBarY = 17.0f;
     ui.Panel({ static_cast<float>(pBarX), static_cast<float>(pBarY),
                static_cast<float>(pBarW), static_cast<float>(pBarH) }, { 30, 30, 60, 200 });
     ui.Panel({ static_cast<float>(pBarX), static_cast<float>(pBarY),
@@ -358,12 +402,12 @@ void GameplayScene::DrawHUD(System::UISystem& ui)
 
     // Delivery indicator
     if (m_hasDelivery) {
-        ui.Label("📦 Delivery Active", 10.0f, 50.0f, m_font, { 100, 200, 255, 200 }, Components::TextAlign::Left);
+        ui.Label("📦 Delivery Active", 5.0f, 25.0f, m_font, { 100, 200, 255, 200 }, Components::TextAlign::Left);
     }
 
     // Satisfaction counter
     std::string satStr = "Served: " + std::to_string(m_satisfiedCount) + " / " + std::to_string(m_totalServed);
-    ui.Label(satStr, 10.0f, 70.0f, m_font, { 200, 200, 220, 200 }, Components::TextAlign::Left);
+    ui.Label(satStr, 5.0f, 35.0f, m_font, { 200, 200, 220, 200 }, Components::TextAlign::Left);
 }
 
 // ---- Event overlay ----------------------------------------------------------
@@ -374,35 +418,35 @@ void GameplayScene::DrawEventOverlay(System::UISystem& ui)
     if (!ev) { m_eventPending = false; return; }
 
     // Dim background
-    ui.Panel({ 0, 0, 1280, 720 }, { 0, 0, 0, 160 });
+    ui.Panel({ 0, 0, kUiWidth, kUiHeight }, { 0, 0, 0, 160 });
 
     // Event card
-    float cW = 660.0f, cH = 320.0f;
-    float cX = (1280.0f - cW) * 0.5f;
-    float cY = (720.0f  - cH) * 0.5f;
+    float cW = 330.0f, cH = 160.0f;
+    float cX = (kUiWidth - cW) * 0.5f;
+    float cY = (kUiHeight - cH) * 0.5f;
 
     ui.Panel({ static_cast<float>(cX),   static_cast<float>(cY),
                static_cast<float>(cW),   static_cast<float>(cH) }, { 22, 18, 45, 250 });
-    ui.Panel({ static_cast<float>(cX)+3, static_cast<float>(cY)+3,
-               static_cast<float>(cW)-6, static_cast<float>(cH)-6 }, { 80, 60, 140, 200 });
-    ui.Panel({ static_cast<float>(cX)+5, static_cast<float>(cY)+5,
-               static_cast<float>(cW)-10, static_cast<float>(cH)-10 }, { 22, 18, 45, 255 });
+    ui.Panel({ static_cast<float>(cX)+1.5f, static_cast<float>(cY)+1.5f,
+               static_cast<float>(cW)-3.0f, static_cast<float>(cH)-3.0f }, { 80, 60, 140, 200 });
+    ui.Panel({ static_cast<float>(cX)+2.5f, static_cast<float>(cY)+2.5f,
+               static_cast<float>(cW)-5.0f, static_cast<float>(cH)-5.0f }, { 22, 18, 45, 255 });
 
     // Event title
-    ui.Label("⚡ Event!", cX + cW * 0.5f, cY + 18.0f, m_fontBig, { 255, 220, 80, 255 }, Components::TextAlign::Center);
-    ui.Label(ev->name, cX + cW * 0.5f, cY + 60.0f, m_fontBig, { 255, 200, 150, 255 }, Components::TextAlign::Center);
-    ui.Label(ev->description, cX + 30.0f, cY + 108.0f, m_fontEvent, { 200, 200, 220, 220 }, Components::TextAlign::Left);
+    ui.Label("⚡ Event!", cX + cW * 0.5f, cY + 9.0f, m_fontBig, { 255, 220, 80, 255 }, Components::TextAlign::Center);
+    ui.Label(ev->name, cX + cW * 0.5f, cY + 30.0f, m_fontBig, { 255, 200, 150, 255 }, Components::TextAlign::Center);
+    ui.Label(ev->description, cX + 15.0f, cY + 54.0f, m_fontEvent, { 200, 200, 220, 220 }, Components::TextAlign::Left);
 
     // Choice A
-    float btnW = 240.0f, btnH = 52.0f;
-    float aX = cX + 40.0f,         aY = cY + cH - 80.0f;
-    float bX = cX + cW - 40.0f - btnW, bY = aY;
+    float btnW = 120.0f, btnH = 26.0f;
+    float aX = cX + 20.0f,         aY = cY + cH - 40.0f;
+    float bX = cX + cW - 20.0f - btnW, bY = aY;
 
     ui.Panel({ static_cast<float>(aX), static_cast<float>(aY), static_cast<float>(btnW), static_cast<float>(btnH) }, { 60, 140, 90, 255 });
-    ui.Label(ev->choiceAText, aX + btnW * 0.5f, aY + 14.0f, m_fontEvent, { 240, 255, 240, 255 }, Components::TextAlign::Center);
+    ui.Label(ev->choiceAText, aX + btnW * 0.5f, aY + 7.0f, m_fontEvent, { 240, 255, 240, 255 }, Components::TextAlign::Center);
 
     ui.Panel({ static_cast<float>(bX), static_cast<float>(bY), static_cast<float>(btnW), static_cast<float>(btnH) }, { 140, 70, 60, 255 });
-    ui.Label(ev->choiceBText, bX + btnW * 0.5f, bY + 14.0f, m_fontEvent, { 255, 230, 220, 255 }, Components::TextAlign::Center);
+    ui.Label(ev->choiceBText, bX + btnW * 0.5f, bY + 7.0f, m_fontEvent, { 255, 230, 220, 255 }, Components::TextAlign::Center);
 
     if (ui.Button(ev->choiceAText,
         { static_cast<float>(aX), static_cast<float>(aY), static_cast<float>(btnW), static_cast<float>(btnH) },

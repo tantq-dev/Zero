@@ -2,8 +2,7 @@
 #include "UISystem.h"
 #include "Game.h"
 #include "DreamyGameInstance.h"
-#include "UpgradeRegistry.h"
-#include "BuffRegistry.h"
+#include "GameplayAbility/Ability.h"
 #include <cstdlib>
 #include <ctime>
 
@@ -40,29 +39,34 @@ void PreparationScene::Initialize()
     m_offeredUpgrades.clear();
     m_selectedUpgrade = -1;
     {
-        const int total = static_cast<int>(UpgradeRegistry::k_upgrades.size());
-        std::vector<int> pool;
-        for (int i = 0; i < total; ++i) pool.push_back(i);
-        // shuffle first 3
-        for (int i = 0; i < 3; ++i) {
-            int j = i + std::rand() % (total - i);
-            std::swap(pool[i], pool[j]);
+        std::vector<int> available;
+        for (const auto& upgrade : UpgradeRegistry::All()) {
+            if (!gi.runState.HasUpgrade(upgrade.Id)) {
+                available.push_back(upgrade.Id);
+            }
         }
-        for (int i = 0; i < 3; ++i) m_offeredUpgrades.push_back(pool[i]);
+
+        while (!available.empty() && m_offeredUpgrades.size() < 3) {
+            const int index = std::rand() % static_cast<int>(available.size());
+            m_offeredUpgrades.push_back(available[index]);
+            available.erase(available.begin() + index);
+        }
     }
 
     // Draw 3 unique buff offers
     m_offeredBuffs.clear();
     m_selectedBuff = -1;
     {
-        const int total = static_cast<int>(BuffRegistry::k_buffs.size());
-        std::vector<int> pool;
-        for (int i = 0; i < total; ++i) pool.push_back(i);
-        for (int i = 0; i < 3; ++i) {
-            int j = i + std::rand() % (total - i);
-            std::swap(pool[i], pool[j]);
+        std::vector<int> available;
+        for (const auto& buff : BuffRegistry::All()) {
+            available.push_back(buff.Id);
         }
-        for (int i = 0; i < 3; ++i) m_offeredBuffs.push_back(pool[i]);
+
+        while (!available.empty() && m_offeredBuffs.size() < 3) {
+            const int index = std::rand() % static_cast<int>(available.size());
+            m_offeredBuffs.push_back(available[index]);
+            available.erase(available.begin() + index);
+        }
     }
 
     m_currentState = EPreparationState::Upgrade;
@@ -95,6 +99,21 @@ void PreparationScene::HandleUI(System::UISystem& ui)
         DrawBuffPhase(ui);
 }
 
+void PreparationScene::OnSceneUnload()
+{
+    m_offeredUpgrades.clear();
+    m_offeredBuffs.clear();
+    m_selectedUpgrade = -1;
+    m_selectedBuff = -1;
+    m_currentState = EPreparationState::Upgrade;
+    m_font = 0;
+    m_fontBig = 0;
+
+    if (m_world) {
+        m_world->Clear();
+    }
+}
+
 void PreparationScene::DrawUpgradePhase(System::UISystem& ui)
 {
     auto game = m_game.lock();
@@ -105,15 +124,16 @@ void PreparationScene::DrawUpgradePhase(System::UISystem& ui)
 
     for (int slot = 0; slot < 3; ++slot)
     {
-        int uid = m_offeredUpgrades[slot];
-        const UpgradeData* u = UpgradeRegistry::Find(uid);
-        if (!u) continue;
+        if (slot >= static_cast<int>(m_offeredUpgrades.size())) break;
 
-        float x = kCardsStartX + slot * (kCardW + kCardGap);
-        bool selected = (m_selectedUpgrade == slot);
+        const UpgradeDefinition* upgrade = UpgradeRegistry::Find(m_offeredUpgrades[slot]);
+        if (!upgrade) continue;
 
-        if (CardButton(ui, x, kCardY, kCardW, kCardH, u->name, u->description, selected))
+        const float x = kCardsStartX + slot * (kCardW + kCardGap);
+        const bool selected = (m_selectedUpgrade == slot);
+        if (CardButton(ui, x, kCardY, kCardW, kCardH, upgrade->Name, upgrade->Description, selected)) {
             m_selectedUpgrade = slot;
+        }
     }
 
     // Confirm button — only active when a card is chosen
@@ -130,12 +150,8 @@ void PreparationScene::DrawUpgradePhase(System::UISystem& ui)
             { btnX, btnY, btnW, btnH },
             m_font))
         {
-            auto game2 = m_game.lock();
-            if (game2)
-            {
-                auto& gi = game2->GetGameInstance<DreamyGameInstance>();
-                gi.runState.activeUpgrades.push_back(m_offeredUpgrades[m_selectedUpgrade]);
-            }
+            auto& gi = game->GetGameInstance<DreamyGameInstance>();
+            gi.runState.activeUpgrades.push_back(m_offeredUpgrades[m_selectedUpgrade]);
             m_currentState = EPreparationState::Buff;
         }
     }
@@ -151,15 +167,16 @@ void PreparationScene::DrawBuffPhase(System::UISystem& ui)
 
     for (int slot = 0; slot < 3; ++slot)
     {
-        int bid = m_offeredBuffs[slot];
-        const BuffData* b = BuffRegistry::Find(bid);
-        if (!b) continue;
+        if (slot >= static_cast<int>(m_offeredBuffs.size())) break;
 
-        float x = kCardsStartX + slot * (kCardW + kCardGap);
-        bool selected = (m_selectedBuff == slot);
+        const BuffDefinition* buff = BuffRegistry::Find(m_offeredBuffs[slot]);
+        if (!buff) continue;
 
-        if (CardButton(ui, x, kCardY, kCardW, kCardH, b->name, b->description, selected))
+        const float x = kCardsStartX + slot * (kCardW + kCardGap);
+        const bool selected = (m_selectedBuff == slot);
+        if (CardButton(ui, x, kCardY, kCardW, kCardH, buff->Name, buff->Description, selected)) {
             m_selectedBuff = slot;
+        }
     }
 
     // Confirm button
@@ -185,6 +202,12 @@ void PreparationScene::DrawBuffPhase(System::UISystem& ui)
             }
         }
     }
+}
+
+void PreparationScene::DrawCard(System::UISystem& ui, float x, float y, float w, float h, const char* title, const char* desc, bool selected, int cardIndex)
+{
+    (void)cardIndex;
+    CardButton(ui, x, y, w, h, title, desc, selected);
 }
 
 bool PreparationScene::CardButton(System::UISystem& ui,
@@ -216,8 +239,15 @@ bool PreparationScene::CardButton(System::UISystem& ui,
     if (selected)
         ui.Label("✓ Selected", x + w * 0.5f, y + h - 36.0f, m_font, { 100, 255, 140, 255 }, Components::TextAlign::Center);
 
-    // Invisible hit-test button on top
+    // Transparent hit-test button on top.
+    UI::UIStyle transparentStyle{};
+    transparentStyle.buttonNormal = { 0, 0, 0, 0 };
+    transparentStyle.buttonHover = { 255, 255, 255, 18 };
+    transparentStyle.buttonPressed = { 100, 180, 255, 35 };
+    transparentStyle.textColor = { 0, 0, 0, 0 };
+
     return ui.Button("",
         { static_cast<float>(x), static_cast<float>(y), static_cast<float>(w), static_cast<float>(h) },
-        m_font);
+        m_font,
+        transparentStyle);
 }

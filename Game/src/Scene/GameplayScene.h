@@ -16,6 +16,7 @@ class GameplayScene : public Core::Scene
     void Render(::IRenderer2D& renderer) override;
     void HandleInput() override;
     void HandleUI(System::UISystem& ui) override;
+    void OnSceneUnload() override;
 
 private:
     // ---- Fonts ----

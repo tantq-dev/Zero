@@ -11,6 +11,8 @@ public:
     void Render(::IRenderer2D& renderer) override;
     void HandleInput() override;
     void HandleUI(System::UISystem& ui) override;
+    void OnSceneUnload() override;
+
 
 private:
     uint32_t m_fontTitle  = 0;
