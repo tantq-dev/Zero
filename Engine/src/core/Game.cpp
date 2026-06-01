@@ -202,6 +202,10 @@ namespace Core
 		auto it = m_scenes.find(name);
 		if (it != m_scenes.end())
 		{
+			if (m_activeScene)
+			{
+				m_activeScene->OnSceneUnload();
+			}
 			m_activeScene = it->second;
 			m_activeSceneName = name;
 			m_activeScene->Initialize();

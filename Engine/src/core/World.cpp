@@ -40,4 +40,29 @@ namespace Core
 
         return true;
     }
+
+    void World::Clear()
+    {
+        auto actors = std::move(m_actors);
+        m_actors.clear();
+
+        for (auto& actor : actors)
+        {
+            if (!actor)
+            {
+                continue;
+            }
+
+            actor->OnDestroy();
+            actor->DestroyEntity();
+        }
+
+        if (m_gameMode)
+        {
+            m_gameMode->EndPlay();
+            m_gameMode.reset();
+        }
+
+        Registry.clear();
+    }
 }
