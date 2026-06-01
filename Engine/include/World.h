@@ -34,6 +34,7 @@ namespace Core
 
         bool RemoveActor(const std::shared_ptr<Actor>& actor);
         bool RemoveActor(const Actor* actor);
+        void Clear();
 
         // GameMode — per-scene rules, recreated each Initialize()
         template<typename T, typename... Args>

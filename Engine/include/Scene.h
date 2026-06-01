@@ -28,6 +28,7 @@ namespace Core
 		virtual void Render(::IRenderer2D& renderer) = 0;
 		virtual void HandleInput() = 0;
 		virtual void HandleUI(System::UISystem& ui) = 0;
+		virtual void OnSceneUnload() = 0;
 
 		void SetGame(std::weak_ptr<Game> game) { m_game = std::move(game); }
 		std::shared_ptr<World> GetWorld()
