@@ -64,5 +64,6 @@ namespace Core
         }
 
         Registry.clear();
+        m_eventSystem.ClearQueued();
     }
 }

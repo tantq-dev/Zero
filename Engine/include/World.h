@@ -7,6 +7,7 @@
 #include "entt.hpp"
 #include "Actor.h"
 #include "IGameMode.h"
+#include "EventSystem.h"
 namespace Core
 {
 
@@ -15,8 +16,10 @@ namespace Core
     private:
         std::vector<std::shared_ptr<Actor>> m_actors;
         std::unique_ptr<IGameMode> m_gameMode;
+        EventSystem m_eventSystem;
     public:
         entt::registry Registry;
+        EventSystem& GetEvents() { return m_eventSystem; }
 
         template<typename T, typename... Args>
         std::shared_ptr<T> SpawnActor(Args&&... args)

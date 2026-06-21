@@ -8,6 +8,7 @@
 #include "../vendored/imgui/backends/imgui_impl_sdlrenderer3.h"
 #endif
 #include "Game.h"
+#include "EngineEvents.h"
 #include "RendererFactory.h"
 #include "IRenderer2D.h"
 #include "DefaultConfig.h"
@@ -105,6 +106,7 @@ namespace Core
 
 		if (frameTime > MAX_FRAME) frameTime = MAX_FRAME;
 		m_accumulator += frameTime;
+		m_eventSystem.Publish(Events::FrameStarted{ frameTime });
 
 #ifdef ZERO_USE_IMGUI
 		// TODO: Implement ImGui abstraction if needed
@@ -129,6 +131,7 @@ namespace Core
 		{
 			m_deltaTime = (float)FIXED_DT;
 			m_accumulator -= FIXED_DT;
+			m_eventSystem.Publish(Events::FixedUpdate{ m_deltaTime });
 			m_activeScene->FixedUpdate(m_deltaTime);
 			m_actorSystem.FixedUpdate(frameTime, m_activeScene->GetWorld()->Registry);
 
@@ -167,6 +170,12 @@ namespace Core
 			m_window->Delay((uint32_t)((FIXED_DT - elapsed) * 1000.0));
 		}
 #endif
+		m_eventSystem.Publish(Events::FrameEnded{ frameTime });
+		m_eventSystem.DispatchQueued();
+		if (m_activeScene)
+		{
+			m_activeScene->GetWorld()->GetEvents().DispatchQueued();
+		}
 		m_inputSystem.PostUpdate();
 	}
 
@@ -202,6 +211,7 @@ namespace Core
 		auto it = m_scenes.find(name);
 		if (it != m_scenes.end())
 		{
+			m_eventSystem.Publish(Events::SceneChanging{ m_activeSceneName, name });
 			if (m_activeScene)
 			{
 				m_activeScene->OnSceneUnload();
@@ -209,6 +219,7 @@ namespace Core
 			m_activeScene = it->second;
 			m_activeSceneName = name;
 			m_activeScene->Initialize();
+			m_eventSystem.Publish(Events::SceneChanged{ m_activeSceneName, m_activeScene });
 		}
 		else
 		{

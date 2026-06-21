@@ -4,6 +4,23 @@
 #include <string>
 #include <vector>
 
+enum class GameTrigger {
+    ServeCustomer,
+    CustomerPay,
+    TimeTicking,
+    PartOfDayChange,
+    Count
+};
+
+class RestaurantEvent {
+protected:
+    GameTrigger trigger;
+    public:
+    virtual void OnTrigger() = 0;
+    virtual void OnEnd() = 0;
+
+};
+
 enum class GameAttribute {
     CustomerSpawnInterval,
     DayDurationSeconds,
