@@ -7,10 +7,10 @@ Designed for learning, experimentation, and building small to mid-scale 2D games
 
 ## Features
 
-- ⚙️ **Entity Component System (ECS)** using EnTT
-- 🎮 **SDL3-based rendering and input handling**
-- 🧱 Modular architecture for easy extension
-- 🛠️ CMake-based build system (cross-platform ready)
-- 🚀 Focus on performance and simplicity
+- **Entity Component System (ECS)** using EnTT
+- **SDL3-based rendering and input handling**
+- Modular architecture for easy extension
+- CMake-based build system (cross-platform ready)
+- Focus on performance and simplicity
 
 ---
