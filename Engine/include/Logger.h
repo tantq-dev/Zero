@@ -10,6 +10,7 @@ public:
 	enum class Level { INFO, WARNING, ERR, DEBUG };
 	static void Log(Level level, const std::string& message, const char* file, int line);
 	static void LogInfo(const std::string& message, const char* file, int line);
+	static void LogWarning(const std::string& message, const char* file, int line);
 	static void LogError(const std::string& message, const char* file, int line);
 private:
 

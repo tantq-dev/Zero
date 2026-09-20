@@ -1,7 +1,8 @@
 #include "SDLRenderer2D.h"
 #include <set>
+#include <cmath>
 #define _USE_MATH_DEFINES
-#include <Game.h>
+#include "Logger.h"
 #include "stb_image.h"
 #undef min
 #undef max
@@ -156,6 +157,35 @@ void SDLRenderer2D::EndFrame(int /*windowW*/, int /*windowH*/)
 
         // Restore logical presentation.
         SDL_SetRenderLogicalPresentation(m_renderer.get(), m_virtualWidth, m_virtualHeight, SDL_LOGICAL_PRESENTATION_LETTERBOX);
+    }
+
+    m_currentFrame++;
+
+    // Prune stale cached text textures periodically (every 180 frames ~ 3 seconds)
+    if (m_currentFrame % 180 == 0)
+    {
+        constexpr uint64_t kMaxTextAgeFrames = 300; // ~5 seconds
+        for (auto itCache = m_textCache.begin(); itCache != m_textCache.end(); )
+        {
+            if (m_currentFrame > itCache->second.lastUsedFrame + kMaxTextAgeFrames)
+            {
+                uint32_t texId = itCache->second.textureId;
+                auto texIt = m_textures.find(texId);
+                if (texIt != m_textures.end())
+                {
+                    if (texIt->second.ptr)
+                    {
+                        SDL_DestroyTexture(texIt->second.ptr);
+                    }
+                    m_textures.erase(texIt);
+                }
+                itCache = m_textCache.erase(itCache);
+            }
+            else
+            {
+                ++itCache;
+            }
+        }
     }
 
     // Clear UI queues for next frame.
@@ -336,6 +366,29 @@ void SDLRenderer2D::UnloadFont(uint32_t fontId)
         TTF_CloseFont(it->second);
         m_fonts.erase(it);
     }
+
+    // Clean up cached text textures associated with this font
+    for (auto itCache = m_textCache.begin(); itCache != m_textCache.end(); )
+    {
+        if (itCache->first.fontId == fontId)
+        {
+            uint32_t texId = itCache->second.textureId;
+            auto texIt = m_textures.find(texId);
+            if (texIt != m_textures.end())
+            {
+                if (texIt->second.ptr)
+                {
+                    SDL_DestroyTexture(texIt->second.ptr);
+                }
+                m_textures.erase(texIt);
+            }
+            itCache = m_textCache.erase(itCache);
+        }
+        else
+        {
+            ++itCache;
+        }
+    }
 }
 
 uint32_t SDLRenderer2D::RenderTextToTexture(uint32_t fontId, const std::string& text, Components::Color color, bool wordWrap, int wrapWidth, float& outWidth, float& outHeight)
@@ -345,6 +398,26 @@ uint32_t SDLRenderer2D::RenderTextToTexture(uint32_t fontId, const std::string& 
     {
         return 0;
     }
+
+    uint32_t colorRgba = (static_cast<uint32_t>(static_cast<uint8_t>(color.r)) << 24) |
+                         (static_cast<uint32_t>(static_cast<uint8_t>(color.g)) << 16) |
+                         (static_cast<uint32_t>(static_cast<uint8_t>(color.b)) << 8)  |
+                         (static_cast<uint32_t>(static_cast<uint8_t>(color.a)));
+
+    TextCacheKey key{ fontId, text, colorRgba, wordWrap, wrapWidth };
+    auto cacheIt = m_textCache.find(key);
+    if (cacheIt != m_textCache.end())
+    {
+        auto texIt = m_textures.find(cacheIt->second.textureId);
+        if (texIt != m_textures.end() && texIt->second.ptr)
+        {
+            cacheIt->second.lastUsedFrame = m_currentFrame;
+            outWidth = texIt->second.meta.size.width;
+            outHeight = texIt->second.meta.size.height;
+            return cacheIt->second.textureId;
+        }
+    }
+
     SDL_Color sdlColor = {
         static_cast<Uint8>(color.r),
         static_cast<Uint8>(color.g),
@@ -385,6 +458,8 @@ uint32_t SDLRenderer2D::RenderTextToTexture(uint32_t fontId, const std::string& 
         { textureId, { outWidth, outHeight } },
         texture
     };
+
+    m_textCache[std::move(key)] = CachedTextEntry{ textureId, m_currentFrame };
 
     return textureId;
 }

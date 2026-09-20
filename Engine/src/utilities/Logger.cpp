@@ -15,6 +15,11 @@ void Logger::LogInfo(const std::string& message, const char* file, int line)
 	Log(Level::INFO, message, file, line);
 }
 
+void Logger::LogWarning(const std::string& message, const char* file, int line)
+{
+	Log(Level::WARNING, message, file, line);
+}
+
 void Logger::LogError(const std::string& message, const char* file, int line)
 {
 	const char* fileName = GetFileName(file);

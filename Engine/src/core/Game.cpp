@@ -121,19 +121,22 @@ namespace Core
 
 		if (m_activeScene) {
 			m_activeScene->HandleInput();
+			m_activeScene->Update(frameTime);
+			m_animationSystem.Update(m_activeScene->GetWorld()->Registry, (float)frameTime, *m_resources);
+			m_actorSystem.Update((float)frameTime, m_activeScene->GetWorld()->Registry);
 		}
 
 		int steps = 0;
-		m_activeScene->Update(frameTime);
-		m_animationSystem.Update(m_activeScene->GetWorld()->Registry, (float)frameTime, *m_resources);
-		m_actorSystem.Update(frameTime, m_activeScene->GetWorld()->Registry);
 		while (m_accumulator >= FIXED_DT && steps < MAX_STEPS)
 		{
 			m_deltaTime = (float)FIXED_DT;
 			m_accumulator -= FIXED_DT;
 			m_eventSystem.Publish(Events::FixedUpdate{ m_deltaTime });
-			m_activeScene->FixedUpdate(m_deltaTime);
-			m_actorSystem.FixedUpdate(frameTime, m_activeScene->GetWorld()->Registry);
+			if (m_activeScene)
+			{
+				m_activeScene->FixedUpdate(m_deltaTime);
+				m_actorSystem.FixedUpdate(m_deltaTime, m_activeScene->GetWorld()->Registry);
+			}
 
 			steps++;
 		}
@@ -143,16 +146,22 @@ namespace Core
 
 		m_renderSystem.GetRenderer().BeginFrame();
 		
-		// Render entities from the registry
-		m_renderSystem.Update(m_activeScene->GetWorld()->Registry);
+		if (m_activeScene)
+		{
+			// Render entities from the registry
+			m_renderSystem.Update(m_activeScene->GetWorld()->Registry);
 
-		// Render scene-specific UI and overlays
-		m_activeScene->Render(m_renderSystem.GetRenderer());
+			// Render scene-specific UI and overlays
+			m_activeScene->Render(m_renderSystem.GetRenderer());
+		}
 
 		m_renderSystem.GetRenderer().CallRender();
 
 		// ---- UI pass (screen-space, on top of world) ----
-		m_activeScene->HandleUI(m_uiSystem);
+		if (m_activeScene)
+		{
+			m_activeScene->HandleUI(m_uiSystem);
+		}
 		m_uiSystem.Flush(m_renderSystem.GetRenderer());
 
 #ifdef ZERO_USE_IMGUI

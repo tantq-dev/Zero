@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <memory>
 #include <vector>
+#include <string>
 #include <algorithm>
 #include <cstdint>
 #include <limits>
@@ -141,4 +142,44 @@ private:
     std::vector<UITextEntry>   m_uiTexts;
     std::vector<UISpriteEntry> m_uiSprites;
     GeometryBatch              m_uiWhiteBatch; // batched rects, flushed each EndFrame
+
+    // ---- Text texture caching ----
+    struct TextCacheKey
+    {
+        uint32_t fontId = 0;
+        std::string text;
+        uint32_t colorRgba = 0;
+        bool wordWrap = false;
+        int wrapWidth = 0;
+
+        bool operator==(const TextCacheKey& other) const
+        {
+            return fontId == other.fontId &&
+                   colorRgba == other.colorRgba &&
+                   wordWrap == other.wordWrap &&
+                   wrapWidth == other.wrapWidth &&
+                   text == other.text;
+        }
+    };
+
+    struct TextCacheKeyHash
+    {
+        size_t operator()(const TextCacheKey& k) const
+        {
+            size_t h1 = std::hash<uint32_t>{}(k.fontId);
+            size_t h2 = std::hash<std::string>{}(k.text);
+            size_t h3 = std::hash<uint32_t>{}(k.colorRgba);
+            size_t h4 = std::hash<int>{}(k.wrapWidth ^ (k.wordWrap ? 0x55555555 : 0));
+            return h1 ^ (h2 << 1) ^ (h3 << 2) ^ (h4 << 3);
+        }
+    };
+
+    struct CachedTextEntry
+    {
+        uint32_t textureId = 0;
+        uint64_t lastUsedFrame = 0;
+    };
+
+    std::unordered_map<TextCacheKey, CachedTextEntry, TextCacheKeyHash> m_textCache;
+    uint64_t m_currentFrame = 0;
 };
